@@ -1,0 +1,54 @@
+Java
+Spring Boot
+Spring
+Hibernate
+JPA
+SQL
+PostgreSQL
+MySQL
+MongoDB
+React
+JavaScript
+TypeScript
+HTML
+CSS
+REST
+API
+Docker
+Kubernetes
+AWS
+GCP
+Azure
+Git
+Linux
+Algorithms
+Data Structures
+DSA
+Problem Solving
+System Design
+Microservices
+GraphQL
+CI/CD
+Jenkins
+GitHub Actions
+Kafka
+RabbitMQ
+Redis
+NoSQL
+Unit Testing
+JUnit
+Mockito
+Agile
+Tailwind
+Bootstrap
+Node.js
+Express
+TensorFlow
+PyTorch
+NLP
+Docker Compose
+OAuth
+JWT
+BCrypt
+HTML5
+CSS3

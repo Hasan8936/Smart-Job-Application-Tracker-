@@ -1,0 +1,60 @@
+{
+    "info": {
+        "name": "Smart Job Tracker API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [{
+            "name": "Register",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "http://localhost:8080/api/auth/register", "host": ["http://localhost:8080"], "path": ["api", "auth", "register"] },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password\"\n}" }
+            }
+        },
+        {
+            "name": "Login",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "http://localhost:8080/api/auth/login", "host": ["http://localhost:8080"], "path": ["api", "auth", "login"] },
+                "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password\"\n}" }
+            }
+        },
+        {
+            "name": "Create Application",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "{{token}}" }],
+                "url": { "raw": "http://localhost:8080/api/applications", "host": ["http://localhost:8080"], "path": ["api", "applications"] },
+                "body": { "mode": "raw", "raw": "{\n  \"companyName\": \"Acme Corp\",\n  \"roleTitle\": \"SDE\",\n  \"jobDescription\": \"Work on backend services\",\n  \"status\": \"APPLIED\"\n}" }
+            }
+        },
+        {
+            "name": "List Applications",
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "{{token}}" }],
+                "url": { "raw": "http://localhost:8080/api/applications", "host": ["http://localhost:8080"], "path": ["api", "applications"] }
+            }
+        },
+        {
+            "name": "Upload Resume",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "{{token}}" }],
+                "url": { "raw": "http://localhost:8080/api/resume/upload", "host": ["http://localhost:8080"], "path": ["api", "resume", "upload"] },
+                "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] }
+            }
+        },
+        {
+            "name": "Match Score",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "{{token}}" }],
+                "url": { "raw": "http://localhost:8080/api/match/score", "host": ["http://localhost:8080"], "path": ["api", "match", "score"] },
+                "body": { "mode": "raw", "raw": "{\n  \"resumeId\": 1,\n  \"jobDescriptionText\": \"Java Spring Boot developer\"\n}" }
+            }
+        }
+    ]
+}

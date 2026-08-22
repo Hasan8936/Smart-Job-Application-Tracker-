@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+
+      - name: Build backend
+        run: mvn -B -DskipTests=false test package
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: frontend
+          start: npm run dev
+          wait-on: 'http://localhost:5173'
+          wait-on-timeout: 60
+
+      - name: Build backend Docker image
+        run: docker build -t sjt-backend .
+
+      - name: Build frontend Docker image
+        working-directory: ./frontend
+        run: docker build -t sjt-frontend .
