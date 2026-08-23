@@ -2,6 +2,7 @@ import React, { useContext } from 'react'
 import { NavLink } from 'react-router-dom'
 import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
+import BrandLogo from './BrandLogo'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutGrid, end: true },
@@ -17,10 +18,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-ink text-white">
       <div className="flex items-center gap-2 px-6 h-16 border-b border-white/10">
-        <span className="h-7 w-7 rounded-md bg-accent flex items-center justify-center text-ink-soft font-display font-semibold text-sm">
-          S
-        </span>
-        <span className="font-display text-[17px] tracking-tight">Smart Job Tracker</span>
+        <BrandLogo className="w-44 h-auto" />
       </div>
 
       <nav className="flex-1 px-3 py-5 space-y-1">

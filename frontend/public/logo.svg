@@ -1,0 +1,24 @@
+<svg width="320" height="96" viewBox="0 0 320 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Smart Job Tracker</title>
+  <desc id="desc">An envelope with a briefcase handle beside the Smart Job Tracker wordmark</desc>
+  <defs>
+    <linearGradient id="line" x1="6" y1="14" x2="105" y2="82" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#41D5FF" />
+      <stop offset="0.72" stop-color="#49B6FF" />
+      <stop offset="1" stop-color="#D46DFF" />
+    </linearGradient>
+  </defs>
+  <g stroke="url(#line)" stroke-width="2.2" stroke-linejoin="round">
+    <path d="M35 18V10C35 7.8 36.8 6 39 6H67C69.2 6 71 7.8 71 10V18" />
+    <path d="M42 18V12H64V18" />
+    <rect x="6" y="18" width="99" height="65" rx="7" />
+    <path d="M7 23L48 56C51.2 58.6 54.8 58.6 58 56L104 20" />
+    <path d="M7 80L38 49M104 80L72 49" />
+    <path d="M39 68L48 62L56 68L64 62L73 68" />
+    <path d="M28 43H48M37 35H62" opacity=".85" />
+  </g>
+  <g fill="#51D4FF" font-family="Arial, sans-serif" font-size="22" font-weight="400" letter-spacing="1">
+    <text x="120" y="43">Smart</text>
+    <text x="120" y="69">Job Tracker</text>
+  </g>
+</svg>

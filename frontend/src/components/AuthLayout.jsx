@@ -1,5 +1,6 @@
 import React from 'react'
 import { STATUS_META } from '../lib/status'
+import BrandLogo from './BrandLogo'
 
 const previewStages = ['APPLIED', 'OA', 'INTERVIEW', 'OFFER']
 
@@ -7,9 +8,8 @@ export default function AuthLayout({ heading, copy, children }) {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-paper">
       <div className="hidden lg:flex flex-col justify-between bg-ink text-white p-10">
-        <div className="flex items-center gap-2">
-          <span className="h-7 w-7 rounded-md bg-accent flex items-center justify-center text-ink-soft font-display font-semibold text-sm">S</span>
-          <span className="font-display text-[17px] tracking-tight">Smart Job Tracker</span>
+        <div>
+          <BrandLogo className="w-56 h-auto" />
         </div>
 
         <div>
