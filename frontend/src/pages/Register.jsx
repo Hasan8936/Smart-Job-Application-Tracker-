@@ -1,36 +1,78 @@
 import React, { useState, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import AuthLayout from '../components/AuthLayout'
 
-export default function Register(){
+export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const auth = useContext(AuthContext)
   const nav = useNavigate()
 
   const submit = async (e) => {
     e.preventDefault()
-    try{
+    setError('')
+    try {
+      setLoading(true)
       await auth.register(name, email, password)
       nav('/login')
-    }catch(err){
-      alert('Register failed')
+    } catch (err) {
+      setError('Registration failed. That email may already be in use.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl mb-4">Register</h2>
-      <form onSubmit={submit}>
-        <label className="block mb-2">Name</label>
-        <input className="w-full p-2 border mb-4" value={name} onChange={e=>setName(e.target.value)} />
-        <label className="block mb-2">Email</label>
-        <input className="w-full p-2 border mb-4" value={email} onChange={e=>setEmail(e.target.value)} />
-        <label className="block mb-2">Password</label>
-        <input type="password" className="w-full p-2 border mb-4" value={password} onChange={e=>setPassword(e.target.value)} />
-        <button className="bg-green-600 text-white px-4 py-2 rounded">Register</button>
+    <AuthLayout heading="Create your account" copy="Track every application, resume, and follow-up in one place.">
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-muted mb-1.5">Name</label>
+          <input
+            required
+            className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-muted mb-1.5">Email</label>
+          <input
+            type="email"
+            required
+            className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-muted mb-1.5">Password</label>
+          <input
+            type="password"
+            required
+            className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 8 characters"
+          />
+        </div>
+        {error && <p className="text-sm text-status-rejected">{error}</p>}
+        <button
+          disabled={loading}
+          className="w-full bg-accent text-accent-ink text-sm font-semibold py-2.5 rounded-lg hover:bg-accent-dark hover:text-white disabled:opacity-50"
+        >
+          {loading ? 'Creating account…' : 'Create account'}
+        </button>
       </form>
-    </div>
+      <p className="mt-6 text-sm text-muted text-center">
+        Already have an account?{' '}
+        <Link to="/login" className="text-ink font-medium hover:text-accent-dark">Sign in</Link>
+      </p>
+    </AuthLayout>
   )
 }

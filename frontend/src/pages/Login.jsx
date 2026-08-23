@@ -1,35 +1,69 @@
 import React, { useState, useContext } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import AuthLayout from '../components/AuthLayout'
 
-export default function Login(){
+export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const auth = useContext(AuthContext)
   const nav = useNavigate()
   const location = useLocation()
 
   const submit = async (e) => {
     e.preventDefault()
-    try{
+    setError('')
+    try {
+      setLoading(true)
       await auth.login(email, password)
       const dest = location.state?.from?.pathname || '/'
       nav(dest)
-    }catch(err){
-      alert('Login failed')
+    } catch (err) {
+      setError('That email and password combination didn\'t work.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl mb-4">Login</h2>
-      <form onSubmit={submit}>
-        <label className="block mb-2">Email</label>
-        <input className="w-full p-2 border mb-4" value={email} onChange={e=>setEmail(e.target.value)} />
-        <label className="block mb-2">Password</label>
-        <input type="password" className="w-full p-2 border mb-4" value={password} onChange={e=>setPassword(e.target.value)} />
-        <button className="bg-blue-600 text-white px-4 py-2 rounded">Login</button>
+    <AuthLayout heading="Welcome back" copy="Pick up your job search right where you left off.">
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-muted mb-1.5">Email</label>
+          <input
+            type="email"
+            required
+            className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-muted mb-1.5">Password</label>
+          <input
+            type="password"
+            required
+            className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        {error && <p className="text-sm text-status-rejected">{error}</p>}
+        <button
+          disabled={loading}
+          className="w-full bg-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-ink-soft disabled:opacity-50"
+        >
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
       </form>
-    </div>
+      <p className="mt-6 text-sm text-muted text-center">
+        New here?{' '}
+        <Link to="/register" className="text-ink font-medium hover:text-accent-dark">Create an account</Link>
+      </p>
+    </AuthLayout>
   )
 }
