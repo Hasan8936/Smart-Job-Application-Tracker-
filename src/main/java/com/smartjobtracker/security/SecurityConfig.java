@@ -25,14 +25,6 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
-    /**
-     * Origins allowed to call the API from a browser. Comma-separated.
-     * Defaults cover any *.vercel.app deployment plus local Vite/CRA dev servers.
-     * Override in production via the APP_CORS_ALLOWED_ORIGIN_PATTERNS env var, e.g.
-     *   APP_CORS_ALLOWED_ORIGIN_PATTERNS=https://your-custom-domain.com,https://*.vercel.app
-     */
-    @Value("${app.cors.allowed-origin-patterns:https://*.vercel.app,http://localhost:5173,http://localhost:3000}")
-    private String[] allowedOriginPatterns;
     @Value("${app.cors.allowed-origin-patterns:https://*.vercel.app,http://localhost:5173,http://localhost:3000}")
     private String[] allowedOriginPatterns;
 
@@ -46,17 +38,25 @@ public class SecurityConfig {
         JwtFilter jwtFilter = new JwtFilter(jwtUtil, userDetailsService);
 
         http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
-            .anyRequest().authenticated())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // /actuator/health and /actuator/prometheus need to be reachable without a
+                        // JWT — infra healthchecks and the Prometheus scraper don't have one — while
+                        // the rest of Actuator (env, beans, etc.) stays behind auth.
+                        .requestMatchers("/api/auth/**", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    /**
+     * Without this, the browser blocks every request from a frontend hosted on a
+     * different origin (e.g. your Vercel URL) to this API — set CORS_ALLOWED_ORIGINS
+     * as an env var in production, comma-separated if you have more than one.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
