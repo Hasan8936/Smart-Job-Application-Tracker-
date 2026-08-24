@@ -30,8 +30,8 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   cors:
     # Comma-separated origin patterns; wildcard Vercel subdomains work with credentials.
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://*.vercel.app,http://localhost:5173,http://localhost:3000}

@@ -45,3 +45,19 @@ To stop and remove containers:
 docker compose down
 ```
 
+## Password reset and Google sign-in
+
+Password reset uses SMTP and sends links to `${FRONTEND_URL}/reset-password`. Set
+`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and `FRONTEND_URL` in
+the backend environment. The reset-token table is created by Flyway migration V4.
+
+Google sign-in is enabled when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are
+set. In Google Cloud Console, add this redirect URI:
+
+```
+https://<your-backend-host>/login/oauth2/code/google
+```
+
+For local development use `http://localhost:8080/login/oauth2/code/google` and
+set `VITE_API_BASE=http://localhost:8080/api` for the frontend.
+

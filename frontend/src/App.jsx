@@ -8,12 +8,18 @@ import ResumeMatch from './pages/ResumeMatch'
 import Reminders from './pages/Reminders'
 import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import OAuth2Callback from './pages/OAuth2Callback'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/oauth2/callback" element={<OAuth2Callback />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
       <Route path="/resume-match" element={<ProtectedRoute><ResumeMatch /></ProtectedRoute>} />

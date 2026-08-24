@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,13 +25,19 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @Value("${app.cors.allowed-origin-patterns:https://*.vercel.app,http://localhost:5173,http://localhost:3000}")
     private String[] allowedOriginPatterns;
 
-    public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService,
+                          OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
+                          org.springframework.beans.factory.ObjectProvider<ClientRegistrationRepository> clientRegistrationRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.oauth2LoginSuccessHandler = oauth2LoginSuccessHandler;
+        this.clientRegistrationRepository = clientRegistrationRepository.getIfAvailable();
     }
 
     @Bean
@@ -45,9 +52,13 @@ public class SecurityConfig {
                         // /actuator/health and /actuator/prometheus need to be reachable without a
                         // JWT — infra healthchecks and the Prometheus scraper don't have one — while
                         // the rest of Actuator (env, beans, etc.) stays behind auth.
-                        .requestMatchers("/api/auth/**", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (clientRegistrationRepository != null) {
+            http.oauth2Login(oauth -> oauth.successHandler(oauth2LoginSuccessHandler));
+        }
 
         return http.build();
     }

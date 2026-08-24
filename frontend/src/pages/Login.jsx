@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import AuthLayout from '../components/AuthLayout'
 
+const API_ORIGIN = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api').replace(/\/api\/?$/, '')
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,6 +53,9 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
           />
+          <div className="text-right mt-2">
+            <Link to="/forgot-password" className="text-xs text-muted hover:text-ink">Forgot password?</Link>
+          </div>
         </div>
         {error && <p className="text-sm text-status-rejected">{error}</p>}
         <button
@@ -60,6 +65,12 @@ export default function Login() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+      <a
+        href={`${API_ORIGIN}/oauth2/authorization/google`}
+        className="w-full mt-3 border border-line text-ink text-sm font-medium py-2.5 rounded-lg hover:bg-paper flex items-center justify-center"
+      >
+        Continue with Google
+      </a>
       <p className="mt-6 text-sm text-muted text-center">
         New here?{' '}
         <Link to="/register" className="text-ink font-medium hover:text-accent-dark">Create an account</Link>
