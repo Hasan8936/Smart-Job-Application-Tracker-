@@ -1,5 +1,10 @@
 server:
   port: 8080
+  # Render (and most PaaS) terminate TLS at their edge and forward the request to the app
+  # over plain HTTP with X-Forwarded-* headers. This tells Spring to trust those headers so
+  # it builds correct https:// URLs. Critical for OAuth2: without it, the redirect_uri sent
+  # to Google is http://…:8080/… and Google rejects it with redirect_uri_mismatch.
+  forward-headers-strategy: framework
 
 spring:
   datasource:
@@ -14,16 +19,22 @@ spring:
     show-sql: false
 
   mail:
-    host: ${MAIL_HOST:localhost}
-    port: ${MAIL_PORT:25}
+    # Defaults target Gmail SMTP. In production set MAIL_USERNAME + MAIL_PASSWORD — for Gmail,
+    # MAIL_PASSWORD must be a 16-character App Password (not your normal login password).
+    # For another provider (Brevo, SendGrid, Mailgun, ...) override MAIL_HOST / MAIL_PORT too.
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: false
+          # Previously hard-coded to false, which meant mail could NEVER authenticate against a
+          # real SMTP server (that was the "Unable to send the reset email" failure). Now default
+          # to true and remain overridable via env vars.
+          auth: ${MAIL_SMTP_AUTH:true}
           starttls:
-            enable: false
+            enable: ${MAIL_SMTP_STARTTLS:true}
 
   # NOTE: Flyway/CORS properties must live under `spring:` — a top-level
   # `flyway:` block (as this file used to have) is silently ignored by Spring Boot.

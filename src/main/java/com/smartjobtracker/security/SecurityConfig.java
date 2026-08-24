@@ -50,7 +50,10 @@ public class SecurityConfig {
                         // /actuator/health and /actuator/prometheus need to be reachable without a
                         // JWT — infra healthchecks and the Prometheus scraper don't have one — while
                         // the rest of Actuator (env, beans, etc.) stays behind auth.
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
+                        // "/error" must be permitted: when an endpoint is missing (e.g. OAuth
+                        // isn't configured yet) Spring forwards to /error, and without this the
+                        // unauthenticated forward turns a 404 into a confusing 403 Access Denied.
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/error", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
