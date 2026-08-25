@@ -128,7 +128,7 @@ export default function Reminders() {
                   </div>
                   <button
                     onClick={() => remove(r.id)}
-                    className="h-8 w-8 shrink-0 rounded-lg border border-line flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
+                    className="h-11 w-11 sm:h-8 sm:w-8 shrink-0 rounded-lg border border-line flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
                     aria-label="Delete reminder"
                   >
                     <Trash2 size={14} />

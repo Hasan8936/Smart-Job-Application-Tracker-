@@ -66,15 +66,15 @@ export default function ResumeMatch() {
         <div className="space-y-6">
           <section className="bg-surface border border-line rounded-xl2 shadow-card p-5">
             <h2 className="font-display text-[15px] text-ink mb-3">Your resumes</h2>
-            <form onSubmit={upload} className="flex items-center gap-2 mb-4">
-              <label className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-line text-sm text-muted cursor-pointer hover:border-ink/30">
-                <UploadCloud size={16} />
-                {file ? file.name : 'Choose a resume file'}
+            <form onSubmit={upload} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+              <label className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-line text-sm text-muted cursor-pointer hover:border-ink/30 min-w-0">
+                <UploadCloud size={16} className="shrink-0" />
+                <span className="truncate">{file ? file.name : 'Choose a resume file'}</span>
                 <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
               </label>
               <button
                 disabled={!file || uploading}
-                className="px-3.5 py-2.5 rounded-lg bg-ink text-white text-sm font-medium disabled:opacity-40"
+                className="px-3.5 py-2.5 rounded-lg bg-ink text-white text-sm font-medium disabled:opacity-40 shrink-0"
               >
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>

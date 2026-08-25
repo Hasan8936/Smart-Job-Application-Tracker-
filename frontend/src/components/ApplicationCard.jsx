@@ -4,7 +4,7 @@ import StatusBadge from './StatusBadge'
 
 export default function ApplicationCard({ app, onEdit, onDelete }) {
   return (
-    <div className="group bg-surface border border-line rounded-xl2 p-4 flex items-start justify-between gap-4 hover:border-ink/20 transition-colors">
+    <div className="group bg-surface border border-line rounded-xl2 p-3.5 sm:p-4 flex items-start justify-between gap-3 sm:gap-4 hover:border-ink/20 transition-colors">
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display text-[15px] text-ink">{app.companyName}</span>
@@ -25,11 +25,11 @@ export default function ApplicationCard({ app, onEdit, onDelete }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity">
+      <div className="flex flex-col gap-2 shrink-0 opacity-100 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
         {onEdit && (
           <button
             onClick={() => onEdit(app)}
-            className="h-8 w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-ink hover:border-ink/30"
+            className="h-11 w-11 sm:h-8 sm:w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-ink hover:border-ink/30"
             aria-label={`Edit ${app.companyName} application`}
           >
             <Pencil size={14} />
@@ -38,7 +38,7 @@ export default function ApplicationCard({ app, onEdit, onDelete }) {
         {onDelete && (
           <button
             onClick={() => onDelete(app)}
-            className="h-8 w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
+            className="h-11 w-11 sm:h-8 sm:w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
             aria-label={`Delete ${app.companyName} application`}
           >
             <Trash2 size={14} />

@@ -1,5 +1,12 @@
 name: Deploy
 
+# NOTE: Render (smart-job-tracker-api-iflm) and Vercel (frontend) are both connected
+# directly to this repo and auto-deploy on every push to main — see DEPLOYMENT_SETUP.md.
+# This workflow is an OPTIONAL extra path (Docker Hub image + a manual Render deploy-hook
+# call) and only makes sense if you actually publish images to Docker Hub. It's gated on
+# the required secrets existing so it skips cleanly instead of failing when they're not
+# set, rather than showing a red X on every push.
+
 on:
   push:
     branches: [ main ]
@@ -7,6 +14,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_DOCKERHUB_DEPLOY == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,5 +57,3 @@ jobs:
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"dockerImage\": \"${IMAGE_FRONT}\"}"
-
-      # Optional: trigger Render or other provider here using their API (requires additional secrets)
