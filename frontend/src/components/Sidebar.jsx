@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut } from 'lucide-react'
+import { LayoutGrid, ListChecks, FileSearch, BellRing, UserCog, LogOut } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
 
@@ -8,6 +8,7 @@ const links = [
   { to: '/', label: 'Dashboard', icon: LayoutGrid, end: true },
   { to: '/applications', label: 'Applications', icon: ListChecks },
   { to: '/resume-match', label: 'Resume matcher', icon: FileSearch },
+  { to: '/candidate-profile', label: 'Candidate profile', icon: UserCog },
   { to: '/reminders', label: 'Reminders', icon: BellRing },
 ]
 

@@ -7,6 +7,7 @@ import Applications from './pages/Applications'
 import ResumeMatch from './pages/ResumeMatch'
 import Reminders from './pages/Reminders'
 import Profile from './pages/Profile'
+import CandidateProfile from './pages/CandidateProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
@@ -23,6 +24,7 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
       <Route path="/resume-match" element={<ProtectedRoute><ResumeMatch /></ProtectedRoute>} />
+      <Route path="/candidate-profile" element={<ProtectedRoute><CandidateProfile /></ProtectedRoute>} />
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     </Routes>

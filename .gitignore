@@ -6,3 +6,13 @@ target/
 *.jar
 frontend/node_modules/
 frontend/dist/
+
+# Local secrets — keep only *.env.example templates in git
+.env
+*.env
+!*.env.example
+!.env.example
+
+# Database backups produced by scripts/db_backup.sh
+backups/
+*.dump

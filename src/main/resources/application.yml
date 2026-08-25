@@ -43,6 +43,27 @@ spring:
     baseline-on-migrate: true
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  ai-matching:
+    provider: ${AI_MATCHING_PROVIDER:fallback}
+    api-key: ${AI_MATCHING_API_KEY:}
+    model: ${AI_MATCHING_MODEL:gemini-embedding-001}
+    endpoint: ${AI_MATCHING_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+  job-providers:
+    min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
+    max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}
+    greenhouse:
+      enabled: ${GREENHOUSE_ENABLED:false}
+      boards: ${GREENHOUSE_BOARDS:}
+    lever:
+      enabled: ${LEVER_ENABLED:false}
+      sites: ${LEVER_SITES:}
+    ashby:
+      enabled: ${ASHBY_ENABLED:false}
+      boards: ${ASHBY_BOARDS:}
+    apify:
+      enabled: ${APIFY_ENABLED:false}
+      token: ${APIFY_TOKEN:}
+      actor: ${APIFY_ACTOR:}
   cors:
     # Comma-separated origin patterns; wildcard Vercel subdomains work with credentials.
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://*.vercel.app,http://localhost:5173,http://localhost:3000}

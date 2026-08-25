@@ -29,6 +29,15 @@ Render dashboard → your backend service (`smart-job-tracker-api-iflm`) → **E
 | `MAIL_USERNAME` | `youraddress@gmail.com` | The Gmail account that sends reset emails |
 | `MAIL_PASSWORD` | *(16-char App Password from step 3)* | **Not** your normal Gmail password |
 | `JWT_SECRET` | a long random string (32+ chars) | Currently falls back to a weak default — set this for security |
+| `AI_MATCHING_PROVIDER` | `fallback` | Set to `gemini` to enable validated Gemini embedding similarity |
+| `AI_MATCHING_API_KEY` | *(empty)* | Gemini API key; required only when the provider is `gemini` |
+| `AI_MATCHING_MODEL` | `gemini-embedding-001` | Gemini embedding model |
+| `GREENHOUSE_ENABLED` | `false` | Enable configured official Greenhouse boards |
+| `GREENHOUSE_BOARDS` | *(empty)* | Comma-separated public Greenhouse board slugs |
+| `LEVER_ENABLED` | `false` | Enable configured official Lever sites |
+| `LEVER_SITES` | *(empty)* | Comma-separated public Lever site slugs |
+| `ASHBY_ENABLED` | `false` | Enable configured official Ashby boards |
+| `ASHBY_BOARDS` | *(empty)* | Comma-separated public Ashby board slugs |
 
 Optional (only if you change defaults):
 
@@ -37,6 +46,10 @@ Optional (only if you change defaults):
 | `MAIL_HOST` | `smtp.gmail.com` | Different email provider |
 | `MAIL_PORT` | `587` | Different provider/port |
 | `CORS_ALLOWED_ORIGIN_PATTERNS` | `https://*.vercel.app,http://localhost:5173,http://localhost:3000` | Custom frontend domain |
+| `JOB_PROVIDER_MIN_INTERVAL_MS` | `500` | Minimum delay between official-provider requests |
+| `JOB_PROVIDER_MAX_RETRIES` | `3` | Retries for provider `429` and `5xx` responses |
+| `APIFY_ENABLED` | `false` | Optional provider seam; enable only for an approved compliant actor |
+| `APIFY_TOKEN` / `APIFY_ACTOR` | *(empty)* | Required only for an explicitly configured Apify integration |
 
 Your database vars (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`) should already be set — leave them as they are.
 

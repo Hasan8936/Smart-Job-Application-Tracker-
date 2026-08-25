@@ -50,7 +50,7 @@ export default function ResumeMatch() {
     if (!jd.trim()) { setError('Paste a job description to match against.'); return }
     try {
       setMatching(true)
-      const res = await api.post('/match/score', { resumeId: rid, jobDescriptionText: jd })
+      const res = await api.post('/match/hybrid-score', { resumeId: rid, jobDescriptionText: jd })
       setMatchResult(res.data)
     } catch (e) {
       console.error(e)
@@ -141,26 +141,52 @@ export default function ResumeMatch() {
                 <ScoreRing value={matchResult.matchScore} />
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                <div className="sm:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {[
+                    ['Skill', matchResult.skillMatch], ['Semantic', matchResult.semanticSimilarity],
+                    ['Experience', matchResult.experienceMatch], ['Role', matchResult.roleMatch],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-lg border border-line bg-paper px-3 py-2">
+                      <div className="text-xs text-muted">{label}</div>
+                      <div className="font-mono text-lg text-ink">{Math.round(value)}%</div>
+                    </div>
+                  ))}
+                </div>
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-medium text-status-offer mb-2">
-                    <CheckCircle2 size={14} /> Matched keywords
+                    <CheckCircle2 size={14} /> Strong matches
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {matchResult.matchedKeywords?.length ? matchResult.matchedKeywords.map((k) => (
+                    {matchResult.strongMatches?.length ? matchResult.strongMatches.map((k) => (
                       <span key={k} className="px-2 py-1 rounded-md bg-status-offerSoft text-status-offer text-xs font-medium">{k}</span>
                     )) : <span className="text-xs text-muted">None found</span>}
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-medium text-status-rejected mb-2">
-                    <XCircle size={14} /> Missing keywords
+                    <XCircle size={14} /> Missing required skills
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {matchResult.missingKeywords?.length ? matchResult.missingKeywords.map((k) => (
+                    {matchResult.missingRequiredSkills?.length ? matchResult.missingRequiredSkills.map((k) => (
                       <span key={k} className="px-2 py-1 rounded-md bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
                     )) : <span className="text-xs text-muted">None — great coverage</span>}
                   </div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-muted mb-2">Missing preferred skills</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {matchResult.missingPreferredSkills?.length ? matchResult.missingPreferredSkills.map((k) => (
+                      <span key={k} className="px-2 py-1 rounded-md bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
+                    )) : <span className="text-xs text-muted">None found</span>}
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <div className="text-xs font-medium text-muted mb-2">Recommendations</div>
+                  <ul className="space-y-1 text-sm text-ink list-disc pl-5">
+                    {matchResult.recommendations?.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                  <div className="text-xs text-muted mt-3">Semantic source: {matchResult.semanticProvider}</div>
                 </div>
               </div>
             </div>
