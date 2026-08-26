@@ -7,10 +7,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import com.smartjobtracker.config.JobProviderConfig;
 import com.smartjobtracker.config.AiMatchingConfig;
 import com.smartjobtracker.config.GmailConfig;
+import com.smartjobtracker.config.MetaWhatsAppConfig;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties({JobProviderConfig.class, AiMatchingConfig.class, GmailConfig.class})
+@EnableConfigurationProperties({JobProviderConfig.class, AiMatchingConfig.class, GmailConfig.class, MetaWhatsAppConfig.class})
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

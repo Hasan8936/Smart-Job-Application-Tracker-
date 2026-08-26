@@ -53,7 +53,7 @@ public class SecurityConfig {
                         // "/error" must be permitted: when an endpoint is missing (e.g. OAuth
                         // isn't configured yet) Spring forwards to /error, and without this the
                         // unauthenticated forward turns a 404 into a confusing 403 Access Denied.
-                        .requestMatchers("/api/auth/**", "/api/gmail/callback", "/oauth2/**", "/login/**", "/error", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/gmail/callback", "/api/notifications/webhook", "/oauth2/**", "/login/**", "/error", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

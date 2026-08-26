@@ -10,5 +10,9 @@ import java.util.List;
 public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     List<Reminder> findByStatusAndRemindAtBefore(ReminderStatus status, OffsetDateTime before);
 
+    List<Reminder> findByStatusInAndRemindAtBefore(List<ReminderStatus> statuses, OffsetDateTime before);
+
+    java.util.Optional<Reminder> findByDedupeKey(String dedupeKey);
+
     List<Reminder> findByUserIdAndStatusOrderByRemindAtAsc(Long userId, ReminderStatus status);
 }

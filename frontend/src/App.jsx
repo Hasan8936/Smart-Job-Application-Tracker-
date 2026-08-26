@@ -13,6 +13,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import OAuth2Callback from './pages/OAuth2Callback'
 import Discovery from './pages/Discovery'
+import ResumeTailoring from './pages/ResumeTailoring'
+import ApplicationPreparation from './pages/ApplicationPreparation'
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
       <Route path="/resume-match" element={<ProtectedRoute><ResumeMatch /></ProtectedRoute>} />
+      <Route path="/resume-tailoring" element={<ProtectedRoute><ResumeTailoring /></ProtectedRoute>} />
+      <Route path="/application-preparation" element={<ProtectedRoute><ApplicationPreparation /></ProtectedRoute>} />
       <Route path="/candidate-profile" element={<ProtectedRoute><CandidateProfile /></ProtectedRoute>} />
       <Route path="/discovery" element={<ProtectedRoute><Discovery /></ProtectedRoute>} />
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />

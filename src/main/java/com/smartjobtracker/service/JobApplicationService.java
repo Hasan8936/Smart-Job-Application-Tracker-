@@ -7,6 +7,7 @@ import com.smartjobtracker.repository.ApplicationStatusHistoryRepository;
 import com.smartjobtracker.repository.JobApplicationRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -18,10 +19,18 @@ public class JobApplicationService {
 
     private final JobApplicationRepository appRepo;
     private final ApplicationStatusHistoryRepository historyRepo;
+    private final NotificationService notificationService;
 
     public JobApplicationService(JobApplicationRepository appRepo, ApplicationStatusHistoryRepository historyRepo) {
+        this(appRepo, historyRepo, null);
+    }
+
+    @Autowired
+    public JobApplicationService(JobApplicationRepository appRepo, ApplicationStatusHistoryRepository historyRepo,
+                                 NotificationService notificationService) {
         this.appRepo = appRepo;
         this.historyRepo = historyRepo;
+        this.notificationService = notificationService;
     }
 
     public List<JobApplication> listByUser(Long userId) {
@@ -81,7 +90,9 @@ public class JobApplicationService {
         h.setApplicationId(applicationId);
         h.setStatus(status);
         h.setRemark(remark);
-        return historyRepo.save(h);
+        ApplicationStatusHistory saved = historyRepo.save(h);
+        notifyStatusChange(app, status, saved);
+        return saved;
     }
 
     @Transactional
@@ -94,7 +105,9 @@ public class JobApplicationService {
         ApplicationStatusHistory h = new ApplicationStatusHistory();
         h.setApplicationId(applicationId); h.setStatus(status); h.setRemark(remark);
         h.setSource(source); h.setSourceEmailId(sourceEmailId); h.setConfidence(confidence);
-        return historyRepo.save(h);
+        ApplicationStatusHistory saved = historyRepo.save(h);
+        notifyStatusChange(app, status, saved);
+        return saved;
     }
 
     public List<ApplicationStatusHistory> getHistory(Long applicationId, Long userId) {
@@ -110,5 +123,11 @@ public class JobApplicationService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found");
         }
         return app;
+    }
+
+    private void notifyStatusChange(JobApplication app, ApplicationStatus status, ApplicationStatusHistory history) {
+        if (notificationService != null) notificationService.enqueueWhatsApp(app.getUserId(),
+                "application-status:" + app.getId() + ":" + history.getId(),
+                "Application status update: " + status);
     }
 }

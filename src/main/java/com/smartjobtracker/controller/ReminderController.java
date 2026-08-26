@@ -1,8 +1,12 @@
 package com.smartjobtracker.controller;
 
+import com.smartjobtracker.dto.ReminderPreferencesDto;
+import com.smartjobtracker.dto.ReminderScheduleRequest;
 import com.smartjobtracker.model.Reminder;
 import com.smartjobtracker.model.ReminderStatus;
 import com.smartjobtracker.model.User;
+import com.smartjobtracker.service.IntelligentReminderService;
+import java.util.UUID;
 import com.smartjobtracker.repository.ReminderRepository;
 import com.smartjobtracker.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -11,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -20,10 +25,13 @@ public class ReminderController {
 
     private final ReminderRepository reminderRepository;
     private final UserRepository userRepository;
+    private final IntelligentReminderService intelligentReminderService;
 
-    public ReminderController(ReminderRepository reminderRepository, UserRepository userRepository) {
+    public ReminderController(ReminderRepository reminderRepository, UserRepository userRepository,
+                               IntelligentReminderService intelligentReminderService) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
+        this.intelligentReminderService = intelligentReminderService;
     }
 
     private Long currentUserId() {
@@ -49,6 +57,7 @@ public class ReminderController {
         if (uid == null) return ResponseEntity.status(401).build();
         // always tie the reminder to the caller — never trust a userId from the request body
         r.setUserId(uid);
+        if (r.getDedupeKey() == null || r.getDedupeKey().isBlank()) r.setDedupeKey("legacy-" + uid + "-" + UUID.randomUUID());
         Reminder saved = reminderRepository.save(r);
         return ResponseEntity.ok(saved);
     }
@@ -65,5 +74,26 @@ public class ReminderController {
         }
         reminderRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/schedule")
+    public ResponseEntity<List<Reminder>> schedule(@Valid @RequestBody ReminderScheduleRequest request) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(intelligentReminderService.schedule(uid, request));
+    }
+
+    @GetMapping("/preferences")
+    public ResponseEntity<ReminderPreferencesDto> preferences() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(intelligentReminderService.getPreferences(uid));
+    }
+
+    @PutMapping("/preferences")
+    public ResponseEntity<ReminderPreferencesDto> savePreferences(@Valid @RequestBody ReminderPreferencesDto preferences) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(intelligentReminderService.savePreferences(uid, preferences));
     }
 }

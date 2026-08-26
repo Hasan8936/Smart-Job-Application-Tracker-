@@ -18,6 +18,12 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
+    @Column(name = "timezone")
+    private String timezone = "UTC";
+
+    @Column(name = "reminder_preferences", columnDefinition = "TEXT")
+    private String reminderPreferences = "{}";
+
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public Long getId() { return id; }
@@ -28,6 +34,10 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getTimezone() { return timezone; }
+    public void setTimezone(String timezone) { this.timezone = timezone; }
+    public String getReminderPreferences() { return reminderPreferences; }
+    public void setReminderPreferences(String reminderPreferences) { this.reminderPreferences = reminderPreferences; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 }

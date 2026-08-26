@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react'
-import { Plus, Trash2, BellRing } from 'lucide-react'
+import { Plus, Trash2, BellRing, Settings2 } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
 
-const TYPE_LABEL = { INTERVIEW: 'Interview', FOLLOW_UP: 'Follow up', CUSTOM: 'Custom' }
+const TYPE_LABEL = { INTERVIEW: 'Interview', ASSESSMENT: 'Assessment', DEADLINE: 'Deadline', FOLLOW_UP: 'Follow up' }
 
-const emptyForm = { type: 'FOLLOW_UP', remindAt: '', message: '' }
+const emptyForm = { type: 'INTERVIEW', eventAt: '', eventKey: '', applicationId: '', message: '' }
+const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+
+function offsetText(values) { return (values || []).join(', ') }
+function parseOffsets(value) { return value.split(',').map(Number).filter((item) => Number.isInteger(item) && item >= 0) }
 
 export default function Reminders() {
   const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [preferences, setPreferences] = useState(null)
+  const [preferenceSaving, setPreferenceSaving] = useState(false)
+  const [whatsapp, setWhatsapp] = useState(null)
+  const [verificationCode, setVerificationCode] = useState('')
+  const [deliveries, setDeliveries] = useState([])
 
-  useEffect(() => { fetchReminders() }, [])
+  useEffect(() => { fetchReminders(); fetchPreferences(); fetchWhatsapp(); fetchDeliveries() }, [])
 
   async function fetchReminders() {
     try {
@@ -27,15 +36,33 @@ export default function Reminders() {
     }
   }
 
+  async function fetchPreferences() {
+    try {
+      const res = await api.get('/reminders/preferences')
+      setPreferences(res.data)
+    } catch (e) { console.error(e) }
+  }
+
+  async function fetchWhatsapp() {
+    try { const res = await api.get('/notifications/preferences'); setWhatsapp(res.status === 204 ? { phoneE164: '', whatsappOptIn: false } : res.data) } catch (e) { console.error(e) }
+  }
+
+  async function fetchDeliveries() {
+    try { const res = await api.get('/notifications/history'); setDeliveries(res.data) } catch (e) { console.error(e) }
+  }
+
   async function create(e) {
     e.preventDefault()
-    if (!form.remindAt) return
+    if (!form.eventAt) return
     try {
       setSaving(true)
       await api.post('/reminders', {
         type: form.type,
         message: form.message,
-        remindAt: new Date(form.remindAt).toISOString(),
+        eventAt: form.eventAt,
+        timezone: preferences?.timezone || browserTimezone,
+        eventKey: form.eventKey || undefined,
+        applicationId: form.applicationId ? Number(form.applicationId) : undefined,
       })
       setForm(emptyForm)
       fetchReminders()
@@ -44,6 +71,29 @@ export default function Reminders() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function savePreferences(e) {
+    e.preventDefault()
+    try {
+      setPreferenceSaving(true)
+      await api.put('/reminders/preferences', preferences)
+      fetchPreferences()
+    } catch (e) { console.error(e) } finally { setPreferenceSaving(false) }
+  }
+
+  async function saveWhatsapp(e) {
+    e.preventDefault()
+    try { await api.put('/notifications/preferences', { ...whatsapp, consentSource: 'settings' }); fetchWhatsapp() } catch (e) { console.error(e) }
+  }
+
+  async function startVerification() {
+    try { await api.post('/notifications/preferences/verify') } catch (e) { console.error(e) }
+  }
+
+  async function confirmVerification(e) {
+    e.preventDefault()
+    try { await api.post('/notifications/preferences/confirm', { code: verificationCode }); setVerificationCode(''); fetchWhatsapp() } catch (e) { console.error(e) }
   }
 
   async function remove(id) {
@@ -59,7 +109,7 @@ export default function Reminders() {
     <Layout title="Reminders" subtitle="Follow-ups and interviews you don't want to miss">
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="bg-surface border border-line rounded-xl2 shadow-card p-5 lg:col-span-1 h-fit">
-          <h2 className="font-display text-[15px] text-ink mb-3">New reminder</h2>
+          <h2 className="font-display text-[15px] text-ink mb-3">Schedule event reminders</h2>
           <form onSubmit={create} className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">Type</label>
@@ -74,15 +124,16 @@ export default function Reminders() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted mb-1.5">When</label>
+              <label className="block text-xs font-medium text-muted mb-1.5">Event date and time ({browserTimezone})</label>
               <input
                 required
                 type="datetime-local"
                 className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper text-sm"
-                value={form.remindAt}
-                onChange={(e) => setForm({ ...form, remindAt: e.target.value })}
+                value={form.eventAt}
+                onChange={(e) => setForm({ ...form, eventAt: e.target.value })}
               />
             </div>
+            <input className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper text-sm" placeholder="Event key (optional)" value={form.eventKey} onChange={(e) => setForm({ ...form, eventKey: e.target.value })} />
             <div>
               <label className="block text-xs font-medium text-muted mb-1.5">Note</label>
               <textarea
@@ -139,6 +190,29 @@ export default function Reminders() {
           )}
         </section>
       </div>
+      {preferences && <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="flex items-center gap-2 mb-3"><Settings2 size={16} /><h2 className="font-display text-[15px] text-ink">Reminder preferences</h2></div>
+        <form onSubmit={savePreferences} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <label className="sm:col-span-2 text-xs font-medium text-muted">Timezone<input className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={preferences.timezone} onChange={(e) => setPreferences({ ...preferences, timezone: e.target.value })} /></label>
+          {[['interviewsEnabled', 'Interviews'], ['assessmentsEnabled', 'Assessments'], ['deadlinesEnabled', 'Deadlines'], ['followUpsEnabled', 'Follow-ups']].map(([key, label]) => <label key={key} className="flex items-center gap-2 text-sm text-ink"><input type="checkbox" checked={preferences[key]} onChange={(e) => setPreferences({ ...preferences, [key]: e.target.checked })} />{label}</label>)}
+          {[['interviewOffsetsHours', 'Interview offsets (hours)'], ['assessmentOffsetsHours', 'Assessment offsets (hours)'], ['deadlineOffsetsHours', 'Deadline offsets (hours)'], ['followUpOffsetsHours', 'Follow-up offsets (hours)']].map(([key, label]) => <label key={key} className="text-xs font-medium text-muted">{label}<input className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={offsetText(preferences[key])} onChange={(e) => setPreferences({ ...preferences, [key]: parseOffsets(e.target.value) })} /></label>)}
+          <button disabled={preferenceSaving} className="sm:col-span-2 lg:col-span-4 w-fit inline-flex items-center gap-1.5 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-lg disabled:opacity-50">{preferenceSaving ? 'Saving...' : 'Save preferences'}</button>
+        </form>
+      </section>}
+      {whatsapp && <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="flex items-center gap-2 mb-3"><BellRing size={16} /><h2 className="font-display text-[15px] text-ink">WhatsApp notifications</h2></div>
+        <form onSubmit={saveWhatsapp} className="grid sm:grid-cols-2 gap-3">
+          <label className="text-xs font-medium text-muted">Phone number (E.164)<input required pattern="\\+[1-9][0-9]{7,14}" className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={whatsapp.phoneE164 || ''} onChange={(e) => setWhatsapp({ ...whatsapp, phoneE164: e.target.value })} placeholder="+15551234567" /></label>
+          <label className="flex items-center gap-2 text-sm text-ink sm:pt-6"><input type="checkbox" checked={Boolean(whatsapp.whatsappOptIn)} onChange={(e) => setWhatsapp({ ...whatsapp, whatsappOptIn: e.target.checked })} />I agree to receive Smart Job Tracker WhatsApp notifications.</label>
+          <button className="w-fit inline-flex items-center gap-1.5 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-lg">Save consent</button>
+        </form>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <button type="button" onClick={startVerification} disabled={!whatsapp.whatsappOptIn} className="border border-line text-ink text-sm font-medium px-4 py-2.5 rounded-lg disabled:opacity-50">Send verification code</button>
+          <form onSubmit={confirmVerification} className="flex gap-2"><input required pattern="[0-9]{6}" maxLength="6" className="w-32 px-3 py-2 rounded-lg border border-line bg-paper text-sm" placeholder="6-digit code" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} /><button className="border border-line text-ink text-sm font-medium px-4 py-2.5 rounded-lg">Verify number</button></form>
+          <span className="text-xs text-muted">{whatsapp.verifiedAt ? 'Number verified' : 'Verification required before sending'}</span>
+        </div>
+        {deliveries.length > 0 && <div className="mt-5 space-y-2"><h3 className="text-xs font-medium text-muted">Delivery history</h3>{deliveries.slice(0, 10).map((delivery) => <div key={delivery.id} className="flex items-center justify-between gap-3 border-t border-line pt-2 text-sm"><span className="truncate text-ink">{delivery.message}</span><span className="shrink-0 text-xs text-muted">{delivery.status === 'DELIVERED' || delivery.status === 'READ' ? delivery.status : `Not confirmed: ${delivery.status}`}</span></div>)}</div>}
+      </section>}
     </Layout>
   )
 }

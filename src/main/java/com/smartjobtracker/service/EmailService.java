@@ -44,4 +44,14 @@ public class EmailService {
             throw ex;
         }
     }
+
+    public void sendReminderEmail(String toEmail, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        if (fromAddress != null && !fromAddress.isBlank()) message.setFrom(fromAddress);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
+        log.info("Reminder email sent to {}", toEmail);
+    }
 }

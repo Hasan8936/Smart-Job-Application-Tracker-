@@ -5,14 +5,12 @@ import com.smartjobtracker.model.ReminderStatus;
 import com.smartjobtracker.repository.ReminderRepository;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
-@Service
+@Deprecated
 public class ReminderService {
 
     private final ReminderRepository reminderRepository;
@@ -23,7 +21,6 @@ public class ReminderService {
         this.mailSender = mailSender;
     }
 
-    @Scheduled(cron = "0 0/30 * * * *") // every 30 minutes
     @Transactional
     public void sendDueReminders() {
         List<Reminder> due = reminderRepository.findByStatusAndRemindAtBefore(ReminderStatus.PENDING, OffsetDateTime.now());
