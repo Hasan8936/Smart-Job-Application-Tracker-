@@ -84,6 +84,19 @@ public class JobApplicationService {
         return historyRepo.save(h);
     }
 
+    @Transactional
+    public ApplicationStatusHistory changeStatus(Long applicationId, Long userId, ApplicationStatus status,
+                                                  String remark, String source, Long sourceEmailId,
+                                                  Double confidence) {
+        JobApplication app = findOwnedOrThrow(applicationId, userId);
+        app.setStatus(status);
+        appRepo.save(app);
+        ApplicationStatusHistory h = new ApplicationStatusHistory();
+        h.setApplicationId(applicationId); h.setStatus(status); h.setRemark(remark);
+        h.setSource(source); h.setSourceEmailId(sourceEmailId); h.setConfidence(confidence);
+        return historyRepo.save(h);
+    }
+
     public List<ApplicationStatusHistory> getHistory(Long applicationId, Long userId) {
         findOwnedOrThrow(applicationId, userId);
         return historyRepo.findByApplicationId(applicationId);

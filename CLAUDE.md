@@ -148,6 +148,8 @@ Verification note: the extractor's word-boundary regex was fixed so a term endin
 
 **✅ Phase 4 — Hybrid Resume vs Job Description Matching (complete, additive).** The new `POST /api/match/hybrid-score` endpoint combines exact verified skill matching, required/preferred weighting, configurable Gemini embedding similarity with deterministic fallback, experience relevance, and role relevance. It returns an explainable breakdown, missing required/preferred skills, strong/partial matches, and recommendations, and persists analyses in `match_analyses`. The existing `/api/match/score` contract is unchanged. Gmail remains deferred.
 
+**✅ Phase 8 — AI Email Classification (complete, additive).** Gmail sync now applies deterministic job-email filtering before classification, uses strict structured JSON validation for configurable Gemini output with retry and rule fallback, persists category/extracted fields/confidence, and routes low-confidence or unmatched application updates to user review. High-confidence updates use `JobApplicationService.changeStatus()` so status history is preserved. No email body is stored beyond the bounded metadata snippet.
+
 **⛔ Deferred:** Recommendations ranking, job actions, discovery UI, Gmail, and later phases.
 
 ---

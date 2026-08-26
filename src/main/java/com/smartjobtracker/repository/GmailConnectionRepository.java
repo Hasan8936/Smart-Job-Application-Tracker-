@@ -1,0 +1,1 @@
+package com.smartjobtracker.repository; import com.smartjobtracker.model.GmailConnection; import org.springframework.data.jpa.repository.JpaRepository; import java.util.Optional; public interface GmailConnectionRepository extends JpaRepository<GmailConnection,Long>{Optional<GmailConnection> findByUserId(Long userId); Optional<GmailConnection> findByOauthState(String state);}

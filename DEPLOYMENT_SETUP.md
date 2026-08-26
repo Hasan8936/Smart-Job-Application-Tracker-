@@ -29,9 +29,17 @@ Render dashboard → your backend service (`smart-job-tracker-api-iflm`) → **E
 | `MAIL_USERNAME` | `youraddress@gmail.com` | The Gmail account that sends reset emails |
 | `MAIL_PASSWORD` | *(16-char App Password from step 3)* | **Not** your normal Gmail password |
 | `JWT_SECRET` | a long random string (32+ chars) | Currently falls back to a weak default — set this for security |
+| `GMAIL_ENABLED` | `false` | Enable explicit Gmail readonly authorization |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *(empty)* | OAuth client credentials for the Gmail consent flow |
+| `GMAIL_REDIRECT_URI` | `http://localhost:8080/api/gmail/callback` | Must exactly match the Google OAuth redirect URI |
+| `GMAIL_TOKEN_ENCRYPTION_KEY` | *(empty)* | Base64-encoded 32-byte key used to encrypt Gmail tokens at rest |
 | `AI_MATCHING_PROVIDER` | `fallback` | Set to `gemini` to enable validated Gemini embedding similarity |
 | `AI_MATCHING_API_KEY` | *(empty)* | Gemini API key; required only when the provider is `gemini` |
 | `AI_MATCHING_MODEL` | `gemini-embedding-001` | Gemini embedding model |
+| `GMAIL_CLASSIFICATION_PROVIDER` | `fallback` | Set to `gemini` to enable structured email classification |
+| `GMAIL_CLASSIFICATION_API_KEY` | *(empty)* | Gemini key for email classification |
+| `GMAIL_CLASSIFICATION_MODEL` | `gemini-2.0-flash` | Structured classification model |
+| `GMAIL_CLASSIFICATION_MIN_CONFIDENCE` | `0.80` | Below this threshold, application updates require review |
 | `GREENHOUSE_ENABLED` | `false` | Enable configured official Greenhouse boards |
 | `GREENHOUSE_BOARDS` | *(empty)* | Comma-separated public Greenhouse board slugs |
 | `LEVER_ENABLED` | `false` | Enable configured official Lever sites |

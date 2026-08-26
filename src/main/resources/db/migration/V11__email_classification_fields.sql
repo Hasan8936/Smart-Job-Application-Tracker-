@@ -1,0 +1,10 @@
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS company VARCHAR(500);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS job_title VARCHAR(500);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS extracted_status VARCHAR(60);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS interview_date VARCHAR(40);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS interview_time VARCHAR(40);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS deadline VARCHAR(40);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS action_required VARCHAR(1000);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS confidence DOUBLE PRECISION;
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS review_status VARCHAR(40);
+ALTER TABLE ingested_emails ADD COLUMN IF NOT EXISTS matched_application_id BIGINT REFERENCES applications(id) ON DELETE SET NULL;

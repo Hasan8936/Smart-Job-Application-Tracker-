@@ -48,6 +48,18 @@ app:
     api-key: ${AI_MATCHING_API_KEY:}
     model: ${AI_MATCHING_MODEL:gemini-embedding-001}
     endpoint: ${AI_MATCHING_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+  gmail:
+    enabled: ${GMAIL_ENABLED:false}
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GMAIL_REDIRECT_URI:http://localhost:8080/api/gmail/callback}
+    encryption-key: ${GMAIL_TOKEN_ENCRYPTION_KEY:}
+    classification-provider: ${GMAIL_CLASSIFICATION_PROVIDER:fallback}
+    classification-api-key: ${GMAIL_CLASSIFICATION_API_KEY:}
+    classification-model: ${GMAIL_CLASSIFICATION_MODEL:gemini-2.0-flash}
+    classification-endpoint: ${GMAIL_CLASSIFICATION_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+    classification-min-confidence: ${GMAIL_CLASSIFICATION_MIN_CONFIDENCE:0.80}
+    classification-max-retries: ${GMAIL_CLASSIFICATION_MAX_RETRIES:2}
   job-providers:
     min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
     max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}

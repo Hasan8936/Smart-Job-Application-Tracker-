@@ -20,6 +20,10 @@ public class ApplicationStatusHistory {
 
     private String remark;
 
+    private String source;
+    @Column(name = "source_email_id") private Long sourceEmailId;
+    private Double confidence;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getApplicationId() { return applicationId; }
@@ -30,4 +34,10 @@ public class ApplicationStatusHistory {
     public void setChangedAt(OffsetDateTime changedAt) { this.changedAt = changedAt; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+    public Long getSourceEmailId() { return sourceEmailId; }
+    public void setSourceEmailId(Long sourceEmailId) { this.sourceEmailId = sourceEmailId; }
+    public Double getConfidence() { return confidence; }
+    public void setConfidence(Double confidence) { this.confidence = confidence; }
 }
