@@ -9,7 +9,7 @@ import java.util.List;
 public class DeepMatchDtos {
 
     public record DeepMatchRequest(
-            @NotBlank @Size(max = 200_000) String resumeText,
+            @jakarta.validation.constraints.NotNull Long resumeId,
             @NotBlank @Size(max = 100_000) String jobDescription
     ) {}
 
@@ -34,6 +34,9 @@ public class DeepMatchDtos {
     ) {}
 
     public record DeepMatchResult(
+            Long analysisId,
+            Long resumeId,
+            String jobDescription,
             RecruiterTestResult recruiterTest,
             XyzRewriteResult xyzRewrite,
             AtsFilterResult atsFilter

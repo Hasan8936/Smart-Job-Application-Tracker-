@@ -70,8 +70,9 @@ export default function ResumeMatch() {
     if (!jd.trim()) { setError('Paste a job description to match against.'); return }
     try {
       setDeepMatching(true)
-      const res = await api.post('/resume/deep-match', { resumeText: resume.extractedText, jobDescription: jd })
+      const res = await api.post('/resume/deep-match', { resumeId: resume.id, jobDescription: jd })
       setDeepMatchResult(res.data)
+      localStorage.setItem('deepMatchAnalysis', JSON.stringify({ id: res.data.analysisId, resumeId: resume.id, jobDescription: jd }))
     } catch (e) {
       console.error(e)
       setError('Could not complete the deep analysis. Check the server configuration and try again.')

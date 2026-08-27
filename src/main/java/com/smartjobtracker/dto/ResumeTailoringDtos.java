@@ -9,9 +9,9 @@ import java.util.List;
 
 public final class ResumeTailoringDtos {
     private ResumeTailoringDtos() {}
-    public record AnalyzeRequest(@NotNull Long resumeId, @NotBlank @Size(max = 100000) String jobDescription) {}
+    public record AnalyzeRequest(@NotNull Long resumeId, @NotBlank @Size(max = 100000) String jobDescription, Long deepMatchAnalysisId) {}
     public record DecisionRequest(@NotNull TailoringSuggestionDecision decision) {}
     public record Suggestion(Long id, String category, String beforeText, String afterText, String rationale, String evidenceText, TailoringSuggestionDecision decision) {}
     public record Analysis(Long sessionId, Long sourceResumeId, List<String> atsKeywords, List<String> highlightedSkills, List<String> highlightedProjects, List<Suggestion> suggestions, OffsetDateTime createdAt) {}
-    public record Version(Long id, Long sourceResumeId, Long tailoringSessionId, String jobDescription, String content, List<Long> acceptedSuggestionIds, OffsetDateTime createdAt) {}
+    public record Version(Long id, Long sourceResumeId, Long tailoringSessionId, String jobDescription, String content, List<Long> acceptedSuggestionIds, String latexContent, OffsetDateTime createdAt) {}
 }

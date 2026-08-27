@@ -6,6 +6,7 @@ import com.smartjobtracker.dto.ResumeTailoringDtos;
 import com.smartjobtracker.model.*;
 import com.smartjobtracker.repository.*;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -24,15 +25,27 @@ public class ResumeTailoringService {
     private final ResumeTailoringProvider gemini;
     private final com.smartjobtracker.jobs.discovery.JobSkillExtractor skillExtractor;
     private final com.smartjobtracker.config.AiMatchingConfig aiConfig;
+    private final DeepMatchAnalysisRepository deepMatches;
 
+    @Autowired
     public ResumeTailoringService(ResumeRepository resumes, ResumeProfileExtractor extractor, TailoringSessionRepository sessions,
                                   TailoringSuggestionRepository suggestions, ResumeVersionRepository versions, ObjectMapper mapper,
                                   @Qualifier("ruleBasedResumeTailoringProvider") ResumeTailoringProvider fallback,
                                   @Qualifier("geminiResumeTailoringProvider") ResumeTailoringProvider gemini,
                                   com.smartjobtracker.jobs.discovery.JobSkillExtractor skillExtractor,
-                                  com.smartjobtracker.config.AiMatchingConfig aiConfig) {
+                                  com.smartjobtracker.config.AiMatchingConfig aiConfig,
+                                  DeepMatchAnalysisRepository deepMatches) {
         this.resumes = resumes; this.extractor = extractor; this.sessions = sessions; this.suggestions = suggestions; this.versions = versions;
         this.mapper = mapper; this.fallback = fallback; this.gemini = gemini; this.skillExtractor = skillExtractor; this.aiConfig = aiConfig;
+        this.deepMatches = deepMatches;
+    }
+
+    public ResumeTailoringService(ResumeRepository resumes, ResumeProfileExtractor extractor, TailoringSessionRepository sessions,
+                                  TailoringSuggestionRepository suggestions, ResumeVersionRepository versions, ObjectMapper mapper,
+                                  ResumeTailoringProvider fallback, ResumeTailoringProvider gemini,
+                                  com.smartjobtracker.jobs.discovery.JobSkillExtractor skillExtractor,
+                                  com.smartjobtracker.config.AiMatchingConfig aiConfig) {
+        this(resumes, extractor, sessions, suggestions, versions, mapper, fallback, gemini, skillExtractor, aiConfig, null);
     }
 
     @Transactional
@@ -40,12 +53,21 @@ public class ResumeTailoringService {
         Resume resume = resumes.findById(request.resumeId()).filter(item -> Objects.equals(item.getUserId(), userId)).orElseThrow(() -> new IllegalArgumentException("Resume not found"));
         String resumeText = resume.getExtractedText() == null ? "" : resume.getExtractedText();
         List<String> atsKeywords = skillExtractor.extract(null, request.jobDescription()).stream().map(com.smartjobtracker.model.JobSkill::getName).distinct().toList();
+        String providerJobDescription = request.jobDescription();
+        if (request.deepMatchAnalysisId() != null && deepMatches != null) {
+            DeepMatchAnalysis deepMatch = deepMatches.findByIdAndUserId(request.deepMatchAnalysisId(), userId)
+                .filter(item -> Objects.equals(item.getResumeId(), resume.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Deep match analysis not found"));
+            atsKeywords = new ArrayList<>(atsKeywords);
+            atsKeywords.addAll(fromJsonStrings(deepMatch.getMissingKeywords()));
+            providerJobDescription += "\nRECRUITER RED FLAGS TO ADDRESS:\n" + String.join(", ", fromJsonStrings(deepMatch.getRedFlags()));
+        }
         ResumeProfileExtractor.ExtractedProfile profile = extractor.extract(resumeText);
         TailoringSession session = new TailoringSession(); session.setUserId(userId); session.setSourceResumeId(resume.getId()); session.setJobDescription(request.jobDescription());
         session = sessions.save(session);
         List<ResumeTailoringProvider.Proposal> proposals;
-        try { proposals = "gemini".equalsIgnoreCase(aiConfig.getProvider()) ? gemini.suggest(resumeText, request.jobDescription(), atsKeywords) : fallback.suggest(resumeText, request.jobDescription(), atsKeywords); }
-        catch (RuntimeException ex) { proposals = fallback.suggest(resumeText, request.jobDescription(), atsKeywords); }
+        try { proposals = "gemini".equalsIgnoreCase(aiConfig.getProvider()) ? gemini.suggest(resumeText, providerJobDescription, atsKeywords) : fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
+        catch (RuntimeException ex) { proposals = fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
         for (ResumeTailoringProvider.Proposal proposal : proposals) {
             if (!grounded(proposal, resumeText)) continue;
             TailoringSuggestion suggestion = new TailoringSuggestion(); suggestion.setSessionId(session.getId()); suggestion.setCategory(proposal.category()); suggestion.setBeforeText(proposal.beforeText()); suggestion.setAfterText(proposal.afterText()); suggestion.setRationale(proposal.rationale()); suggestion.setEvidenceText(proposal.evidenceText()); suggestions.save(suggestion);
@@ -80,8 +102,17 @@ public class ResumeTailoringService {
     private boolean allWordsFromSource(String candidate, String source) { Set<String> words = Arrays.stream(source.toLowerCase().split("[^a-z0-9+#.]+" )).filter(word -> !word.isBlank()).collect(Collectors.toSet()); return Arrays.stream(candidate.toLowerCase().split("[^a-z0-9+#.]+" )).filter(word -> !word.isBlank()).allMatch(words::contains); }
     private ResumeTailoringDtos.Analysis analysis(TailoringSession session, ResumeProfileExtractor.ExtractedProfile profile, List<String> keywords) { return new ResumeTailoringDtos.Analysis(session.getId(), session.getSourceResumeId(), keywords, profile.getSkills(), profile.getProjects(), suggestions.findBySessionIdOrderByIdAsc(session.getId()).stream().map(this::toSuggestion).toList(), session.getCreatedAt()); }
     private ResumeTailoringDtos.Suggestion toSuggestion(TailoringSuggestion value) { return new ResumeTailoringDtos.Suggestion(value.getId(), value.getCategory(), value.getBeforeText(), value.getAfterText(), value.getRationale(), value.getEvidenceText(), value.getDecision()); }
-    private ResumeTailoringDtos.Version toVersion(ResumeVersion value) { return new ResumeTailoringDtos.Version(value.getId(), value.getSourceResumeId(), value.getTailoringSessionId(), value.getJobDescription(), value.getContent(), fromJson(value.getAcceptedSuggestionIds()), value.getCreatedAt()); }
+    private ResumeTailoringDtos.Version toVersion(ResumeVersion value) { return new ResumeTailoringDtos.Version(value.getId(), value.getSourceResumeId(), value.getTailoringSessionId(), value.getJobDescription(), value.getContent(), fromJson(value.getAcceptedSuggestionIds()), toLatex(value.getContent()), value.getCreatedAt()); }
     private String toJson(List<Long> values) { try { return mapper.writeValueAsString(values); } catch (Exception ex) { throw new IllegalStateException(ex); } }
     private List<Long> fromJson(String value) { try { return mapper.readValue(value, IDS); } catch (Exception ex) { return List.of(); } }
+    private List<String> fromJsonStrings(String value) { try { return mapper.readValue(value, new TypeReference<List<String>>() {}); } catch (Exception ex) { return List.of(); } }
+    private String toLatex(String content) {
+        StringBuilder latex = new StringBuilder("\\documentclass[10pt]{article}\n\\usepackage[margin=0.5in]{geometry}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\pagestyle{empty}\n\\setlist[itemize]{leftmargin=*,itemsep=0.8pt,topsep=2pt}\n\\setlength{\\parindent}{0pt}\n\\begin{document}\n");
+        for (String line : content.split("\\r?\\n")) {
+            String escaped = line.replace("\\", "\\textbackslash{}").replace("&", "\\&").replace("%", "\\%").replace("#", "\\#").replace("{", "\\{").replace("}", "\\}");
+            latex.append(escaped.isBlank() ? "\\par" : escaped).append("\\\\\n");
+        }
+        return latex.append("\\end{document}\n").toString();
+    }
     private boolean nonBlank(String value) { return value != null && !value.isBlank(); }
 }

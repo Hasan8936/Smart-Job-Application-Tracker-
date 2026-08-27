@@ -2,71 +2,47 @@ package com.smartjobtracker.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartjobtracker.dto.DeepMatchDtos.*;
+import com.smartjobtracker.model.DeepMatchAnalysis;
+import com.smartjobtracker.repository.DeepMatchAnalysisRepository;
+import com.smartjobtracker.repository.ResumeRepository;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Objects;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ResumeDeepMatchService {
 
     private final AnthropicClient anthropicClient;
     private final ObjectMapper mapper;
+    private final ResumeRepository resumes;
+    private final DeepMatchAnalysisRepository analyses;
 
-    public ResumeDeepMatchService(AnthropicClient anthropicClient, ObjectMapper mapper) {
+    public ResumeDeepMatchService(AnthropicClient anthropicClient, ObjectMapper mapper, ResumeRepository resumes, DeepMatchAnalysisRepository analyses) {
         this.anthropicClient = anthropicClient;
         this.mapper = mapper;
+        this.resumes = resumes;
+        this.analyses = analyses;
     }
 
-    public DeepMatchResult analyze(String resumeText, String jobDescription) {
-        RecruiterTestResult stage1 = runRecruiterTest(resumeText, jobDescription);
-        XyzRewriteResult stage2 = runXyzRewrite(resumeText, stage1);
-        AtsFilterResult stage3 = runAtsFilter(stage2, jobDescription);
-        return new DeepMatchResult(stage1, stage2, stage3);
+    public DeepMatchResult analyze(Long userId, DeepMatchRequest request) {
+        var resume = resumes.findById(request.resumeId()).filter(item -> Objects.equals(item.getUserId(), userId))
+                .orElseThrow(() -> new IllegalArgumentException("Resume not found"));
+        RecruiterTestResult recruiterTest = runRecruiterTest(resume.getExtractedText(), request.jobDescription());
+        DeepMatchAnalysis saved = new DeepMatchAnalysis();
+        saved.setUserId(userId); saved.setResumeId(resume.getId()); saved.setJobDescription(request.jobDescription());
+        saved.setCompatibilityScore(recruiterTest.compatibilityScore());
+        saved.setMissingKeywords(toJson(recruiterTest.missingKeywords())); saved.setRedFlags(toJson(recruiterTest.redFlags()));
+        saved = analyses.save(saved);
+        return new DeepMatchResult(saved.getId(), resume.getId(), request.jobDescription(), recruiterTest, null, null);
     }
 
     private RecruiterTestResult runRecruiterTest(String resumeText, String jd) {
-        String system = """
-                You are the lead technical recruiter hiring for this exact role.
-                Review the candidate's resume against the job description.
-
-                Return ONLY valid JSON, no markdown fences, matching exactly:
-                {"compatibilityScore": <0-100 integer>,"missingKeywords": [<exactly 5 strings>],"redFlags": [<exactly 3 strings>]}
-                """;
-        String json = anthropicClient.complete(system, "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jd, 1024);
-        return parse(json, RecruiterTestResult.class);
-    }
-
-    private XyzRewriteResult runXyzRewrite(String resumeText, RecruiterTestResult stage1) {
-        String system = """
-                You are a resume writer using the Google XYZ framework: "Accomplished [X] as measured by [Y], by doing [Z]."
-                Rewrite the candidate's Experience, Projects, and Skills sections. Do not invent employers, dates,
-                technologies, or metrics not present in the source resume. Return ONLY valid JSON matching exactly:
-                {"rewrittenExperience":"...","rewrittenProjects":"...","rewrittenSkills":"..."}
-                """;
-        String user = """
-                ORIGINAL RESUME:
-                %s
-
-                MISSING KEYWORDS TO INTEGRATE: %s
-                RED FLAGS TO ELIMINATE: %s
-                """.formatted(resumeText, stage1.missingKeywords(), stage1.redFlags());
-        return parse(anthropicClient.complete(system, user, 2048), XyzRewriteResult.class);
-    }
-
-    private AtsFilterResult runAtsFilter(XyzRewriteResult stage2, String jd) {
-        String system = """
-                Act as a strict ATS parser and a hiring manager skimming resumes. Identify weak rewritten sections
-                against the job description and provide replacements in the same order. Return ONLY valid JSON:
-                {"flaggedSections":["..."],"fixedSections":["..."]}
-                """;
-        String user = """
-                REWRITTEN RESUME:
-                Experience: %s
-                Projects: %s
-                Skills: %s
-
-                JOB DESCRIPTION:
-                %s
-                """.formatted(stage2.rewrittenExperience(), stage2.rewrittenProjects(), stage2.rewrittenSkills(), jd);
-        return parse(anthropicClient.complete(system, user, 1536), AtsFilterResult.class);
+        String system = "Take on the role of a lead recruiter for this specific company. Review my attached resume against the provided job description. Generate a compatibility score out of 100! list the 5 most critical missing keywords! and point out 3 major red flags a hiring manager would notice within the first 10 seconds.";
+        String response = anthropicClient.complete(system, "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jd, 1024);
+        try { return parse(response, RecruiterTestResult.class); } catch (IllegalStateException ignored) { return parseRecruiterText(response); }
     }
 
     private <T> T parse(String json, Class<T> type) {
@@ -76,4 +52,30 @@ public class ResumeDeepMatchService {
             throw new IllegalStateException("Failed to parse model output as " + type.getSimpleName(), e);
         }
     }
+
+    private RecruiterTestResult parseRecruiterText(String response) {
+        Matcher score = Pattern.compile("(?i)(?:score|compatibility)[^0-9]{0,30}(\\d{1,3})").matcher(response);
+        if (!score.find()) throw new IllegalStateException("Claude response did not include a compatibility score");
+        List<String> missing = sectionItems(response, "missing keywords", "red flags");
+        List<String> flags = sectionItems(response, "red flags", null);
+        return new RecruiterTestResult(Math.min(100, Integer.parseInt(score.group(1))), limit(missing, 5), limit(flags, 3));
+    }
+
+    private List<String> sectionItems(String response, String heading, String nextHeading) {
+        String lower = response.toLowerCase();
+        int start = lower.indexOf(heading);
+        if (start < 0) return List.of();
+        int end = nextHeading == null ? response.length() : lower.indexOf(nextHeading, start + heading.length());
+        if (end < 0) end = response.length();
+        List<String> result = new ArrayList<>();
+        for (String line : response.substring(start + heading.length(), end).split("\\r?\\n")) {
+            String item = line.replaceFirst("^\\s*(?:[-*]|\\d+[.)])\\s*", "").trim();
+            if (!item.isBlank() && !item.matches("(?i)[:#]*")) result.add(item);
+        }
+        return result;
+    }
+
+    private List<String> limit(List<String> values, int count) { return values.size() <= count ? values : values.subList(0, count); }
+
+    private String toJson(List<String> values) { try { return mapper.writeValueAsString(values == null ? List.of() : values); } catch (Exception ex) { throw new IllegalStateException(ex); } }
 }
