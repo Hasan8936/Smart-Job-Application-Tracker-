@@ -23,7 +23,7 @@ class ResumeTailoringServiceTest {
         when(suggestions.findBySessionIdOrderByIdAsc(8L)).thenAnswer(invocation -> List.of(savedSuggestion()));
         ResumeTailoringService service = service(resumes, sessions, suggestions, mock(ResumeVersionRepository.class), new RuleBasedResumeTailoringProvider());
 
-        ResumeTailoringDtos.Analysis result = service.analyze(3L, new ResumeTailoringDtos.AnalyzeRequest(4L, "Java and Docker required"));
+        ResumeTailoringDtos.Analysis result = service.analyze(3L, new ResumeTailoringDtos.AnalyzeRequest(4L, "Java and Docker required", null));
 
         assertTrue(result.atsKeywords().contains("Java"));
         assertTrue(result.highlightedProjects().get(0).contains("Job Tracker"));
