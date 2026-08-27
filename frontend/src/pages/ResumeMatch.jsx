@@ -3,6 +3,7 @@ import { UploadCloud, FileText, CheckCircle2, XCircle } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
 import ScoreRing from '../components/ScoreRing'
+import DeepMatchResults from '../components/DeepMatchResults'
 
 export default function ResumeMatch() {
   const [resumes, setResumes] = useState([])
@@ -11,7 +12,9 @@ export default function ResumeMatch() {
   const [jd, setJd] = useState('')
   const [selectedResumeId, setSelectedResumeId] = useState(null)
   const [matchResult, setMatchResult] = useState(null)
+  const [deepMatchResult, setDeepMatchResult] = useState(null)
   const [matching, setMatching] = useState(false)
+  const [deepMatching, setDeepMatching] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => { fetchResumes() }, [])
@@ -57,6 +60,23 @@ export default function ResumeMatch() {
       setError('Could not compute a match score. Try again in a moment.')
     } finally {
       setMatching(false)
+    }
+  }
+
+  async function doDeepMatch() {
+    setError('')
+    const resume = resumes.find((item) => item.id === selectedResumeId) || resumes[0]
+    if (!resume?.extractedText?.trim()) { setError('This resume has no extractable text. Upload a text-based PDF or DOCX.'); return }
+    if (!jd.trim()) { setError('Paste a job description to match against.'); return }
+    try {
+      setDeepMatching(true)
+      const res = await api.post('/resume/deep-match', { resumeText: resume.extractedText, jobDescription: jd })
+      setDeepMatchResult(res.data)
+    } catch (e) {
+      console.error(e)
+      setError('Could not complete the deep analysis. Check the server configuration and try again.')
+    } finally {
+      setDeepMatching(false)
     }
   }
 
@@ -124,12 +144,21 @@ export default function ResumeMatch() {
             >
               {matching ? 'Scoring…' : 'Compute match score'}
             </button>
+            <button
+              onClick={doDeepMatch}
+              disabled={deepMatching}
+              className="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:bg-paper disabled:opacity-50"
+            >
+              {deepMatching ? 'Analyzing…' : 'Run deep Claude analysis'}
+            </button>
           </section>
         </div>
 
         <section className="bg-surface border border-line rounded-xl2 shadow-card p-5">
           <h2 className="font-display text-[15px] text-ink mb-4">Result</h2>
-          {!matchResult ? (
+          {deepMatchResult ? (
+            <DeepMatchResults result={deepMatchResult} />
+          ) : !matchResult ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-10">
               <p className="text-sm text-muted max-w-xs">
                 Select a resume and paste a job description to see your match score and keyword gaps.
