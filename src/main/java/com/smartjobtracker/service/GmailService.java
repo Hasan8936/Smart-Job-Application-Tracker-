@@ -67,8 +67,15 @@ public class GmailService {
     }
 
     @Transactional(readOnly=true)
-    public Map<String,Object> status(Long userId) { return connections.findByUserId(userId).map(c -> Map.<String,Object>of(
-            "connected", "CONNECTED".equals(c.getStatus()), "status", c.getStatus(), "email", c.getGoogleEmail()==null?"":c.getGoogleEmail(), "connectedAt", c.getConnectedAt()==null?"":c.getConnectedAt())).orElse(Map.of("connected",false,"status","DISCONNECTED")); }
+    public Map<String,Object> status(Long userId) {
+        String configurationError = config.configurationError();
+        Map<String,Object> connectionState = connections.findByUserId(userId).map(c -> Map.<String,Object>of(
+            "connected", "CONNECTED".equals(c.getStatus()), "status", c.getStatus(), "email", c.getGoogleEmail()==null?"":c.getGoogleEmail(), "connectedAt", c.getConnectedAt()==null?"":c.getConnectedAt())).orElse(Map.of("connected",false,"status","DISCONNECTED"));
+        if (configurationError == null) return connectionState;
+        Map<String,Object> withError = new HashMap<>(connectionState);
+        withError.put("configurationError", configurationError);
+        return withError;
+    }
 
     @Transactional public void disconnect(Long userId) { connections.findByUserId(userId).ifPresent(c -> { c.setEncryptedAccessToken(null); c.setEncryptedRefreshToken(null); c.setStatus("DISCONNECTED"); c.setOauthState(null); c.setUpdatedAt(OffsetDateTime.now()); connections.save(c); }); }
 
@@ -94,5 +101,5 @@ public class GmailService {
     private void updateMatchingApplication(Long userId,IngestedEmail email,EmailClassifier.Classification result) { if(result.confidence()<config.getClassificationMinConfidence()||result.status()==null){email.setReviewStatus("REVIEW_REQUIRED");return;} EmailApplicationMatcher.MatchResult match=applicationMatcher.match(applications.findByUserId(userId),result,config.getClassificationMinConfidence()); if(match==null){email.setReviewStatus("REVIEW_REQUIRED");return;} JobApplication application=match.application(); email.setMatchedApplicationId(application.getId()); email.setUpdateMethod(match.method()); email.setPreviousApplicationStatus(application.getStatus()==null?null:application.getStatus().name()); email.setReviewStatus("AUTO_APPLIED"); ApplicationStatus next=ApplicationStatus.valueOf(result.status()); if(next!=application.getStatus()) applicationService.changeStatus(application.getId(),userId,next,"Updated from classified Gmail job email","GMAIL",email.getId(),result.confidence()); }
     @Transactional(readOnly=true) public List<IngestedEmail> reviewQueue(Long userId){return emails.findByUserIdAndReviewStatusOrderByReceivedAtDesc(userId,"REVIEW_REQUIRED");}
     @Transactional public void review(Long userId,Long emailId,Long applicationId,ApplicationStatus status){IngestedEmail email=emails.findByIdAndUserId(emailId,userId).orElseThrow(()->new IllegalArgumentException("Email not found"));if(!"REVIEW_REQUIRED".equals(email.getReviewStatus()))throw new IllegalArgumentException("Email is not awaiting review");JobApplication app=applications.findById(applicationId).filter(a->userId.equals(a.getUserId())).orElseThrow(()->new IllegalArgumentException("Application not found"));if(status==null)throw new IllegalArgumentException("Status is required");if(status!=app.getStatus())applicationService.changeStatus(app.getId(),userId,status,"Confirmed from Gmail email review","GMAIL",email.getId(),email.getConfidence());email.setMatchedApplicationId(app.getId());email.setReviewStatus("REVIEWED");emails.save(email);}
-    private void requireEnabled(){if(!config.isEnabled()||config.getClientId()==null||config.getClientId().isBlank()||config.getClientSecret()==null||config.getClientSecret().isBlank())throw new IllegalStateException("Gmail integration is not configured");} private String enc(String value){return URLEncoder.encode(value==null?"":value, StandardCharsets.UTF_8);}
+    private void requireEnabled(){String error=config.configurationError();if(error!=null)throw new IllegalStateException(error);} private String enc(String value){return URLEncoder.encode(value==null?"":value, StandardCharsets.UTF_8);}
 }

@@ -29,6 +29,11 @@ public class JobSyncService {
     }
     @Transactional
     public int sync(JobQuery query) {
+        if (providers.stream().noneMatch(JobProvider::isEnabled)) {
+            throw new IllegalStateException(
+                    "No job source is enabled. Set GREENHOUSE_ENABLED, LEVER_ENABLED, ASHBY_ENABLED, or APIFY_ENABLED "
+                            + "(with the matching boards/sites/token) before running discovery.");
+        }
         int saved = 0;
         for (JobProvider provider : providers) {
             if (!provider.isEnabled()) continue;

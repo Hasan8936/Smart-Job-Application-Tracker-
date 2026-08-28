@@ -40,9 +40,22 @@ public class ResumeDeepMatchService {
     }
 
     private RecruiterTestResult runRecruiterTest(String resumeText, String jd) {
-        String system = "Take on the role of a lead recruiter for this specific company. Review my attached resume against the provided job description. Generate a compatibility score out of 100! list the 5 most critical missing keywords! and point out 3 major red flags a hiring manager would notice within the first 10 seconds.";
+        String system = "Take on the role of a lead recruiter for this specific company. Review the attached resume against the "
+                + "provided job description. Respond with JSON only — no markdown code fences, no commentary before or after — "
+                + "matching exactly this shape: {\"compatibilityScore\": 0, \"missingKeywords\": [\"string\"], \"redFlags\": [\"string\"]}. "
+                + "compatibilityScore is an integer from 0 to 100. missingKeywords lists at most the 5 most critical missing keywords. "
+                + "redFlags lists at most 3 major red flags a hiring manager would notice within the first 10 seconds.";
         String response = anthropicClient.complete(system, "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jd, 1024);
-        try { return parse(response, RecruiterTestResult.class); } catch (IllegalStateException ignored) { return parseRecruiterText(response); }
+        RecruiterTestResult parsed;
+        try { parsed = parse(response, RecruiterTestResult.class); } catch (IllegalStateException ignored) { parsed = parseRecruiterText(response); }
+        return bound(parsed);
+    }
+
+    RecruiterTestResult bound(RecruiterTestResult result) {
+        int score = Math.max(0, Math.min(100, result.compatibilityScore()));
+        List<String> missing = limit(result.missingKeywords() == null ? List.of() : result.missingKeywords(), 5);
+        List<String> flags = limit(result.redFlags() == null ? List.of() : result.redFlags(), 3);
+        return new RecruiterTestResult(score, missing, flags);
     }
 
     private <T> T parse(String json, Class<T> type) {

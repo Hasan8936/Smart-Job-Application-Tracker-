@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, RefreshCw, Search, SlidersHorizontal } from 'lucide-react'
 import Layout from '../components/Layout'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
-import { generateJobDocument, getJob, listJobDocuments, listJobs, markJobApplied, readJobActions, setJobState, updateJobDocument } from '../api/jobs'
+import { discoverJobs, generateJobDocument, getJob, listJobDocuments, listJobs, markJobApplied, readJobActions, setJobState, updateJobDocument } from '../api/jobs'
 
 const initialFilters = { q: '', location: '', employmentType: '', provider: '', postedAfter: '', postedBefore: '' }
 
@@ -18,8 +18,23 @@ export default function Discovery() {
   const [error, setError] = useState('')
   const [documents, setDocuments] = useState([])
   const [documentLoading, setDocumentLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState('')
 
   useEffect(() => { loadJobs() }, [page, sort])
+  async function syncSources() {
+    try {
+      setSyncing(true); setError(''); setSyncMessage('')
+      const result = await discoverJobs()
+      setSyncMessage(`Synced ${result.synchronizedJobs} job${result.synchronizedJobs === 1 ? '' : 's'}.`)
+      setPage(0)
+      await loadJobs()
+    } catch (e) {
+      setError(e.response?.data?.error || 'Could not sync job sources.')
+    } finally {
+      setSyncing(false)
+    }
+  }
   async function loadJobs() {
     try { setLoading(true); setError(''); setJobs(await listJobs({ ...filters, page, size: 10, sort })) } catch { setError('Could not load discovered jobs. Try again.') } finally { setLoading(false) }
   }
@@ -34,7 +49,8 @@ export default function Discovery() {
       <div className="flex flex-col sm:flex-row gap-2"><div className="relative flex-1"><Search size={16} className="absolute left-3 top-3 text-muted" /><input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} placeholder="Search title or company" className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-line bg-paper" /></div><button className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-ink text-white text-sm font-medium"><Search size={15} /> Search</button></div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3"><input placeholder="Location" value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })} className="px-3 py-2 rounded-lg border border-line bg-paper" /><select value={filters.employmentType} onChange={e => setFilters({ ...filters, employmentType: e.target.value })} className="px-3 py-2 rounded-lg border border-line bg-paper"><option value="">All employment types</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option></select><select value={sort} onChange={e => { setSort(e.target.value); setPage(0) }} className="px-3 py-2 rounded-lg border border-line bg-paper"><option value="postedAt,desc">Newest first</option><option value="title,asc">Title A-Z</option><option value="company,asc">Company A-Z</option></select><input type="date" value={filters.postedAfter} onChange={e => setFilters({ ...filters, postedAfter: e.target.value })} className="px-3 py-2 rounded-lg border border-line bg-paper" /><input type="date" value={filters.postedBefore} onChange={e => setFilters({ ...filters, postedBefore: e.target.value })} className="px-3 py-2 rounded-lg border border-line bg-paper" /></div>
     </form>
-    <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><SlidersHorizontal size={16} className="text-muted" /><h2 className="font-display text-lg">Available jobs</h2></div><span className="text-sm text-muted">{jobs.totalElements || 0} roles</span></div>
+    <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><SlidersHorizontal size={16} className="text-muted" /><h2 className="font-display text-lg">Available jobs</h2></div><div className="flex items-center gap-3"><span className="text-sm text-muted">{jobs.totalElements || 0} roles</span><button onClick={syncSources} disabled={syncing} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-line text-sm font-medium disabled:opacity-50">{syncing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} {syncing ? 'Syncing…' : 'Sync sources'}</button></div></div>
+    {syncMessage && <p className="text-xs text-muted mb-3">{syncMessage}</p>}
     {error && <div className="border border-status-rejected/30 bg-status-rejectedSoft text-status-rejected rounded-lg p-3 text-sm mb-4">{error}</div>}
     {loading ? <div className="space-y-3">{[1, 2, 3].map(item => <div key={item} className="h-36 rounded-xl2 bg-surface border border-line animate-pulse" />)}</div> : jobs.content?.length === 0 ? <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center"><h2 className="font-display text-lg">No jobs found</h2><p className="text-sm text-muted mt-1">Try a broader search or run a discovery sync.</p></div> : <div className="space-y-3">{jobs.content.map(job => <JobCard key={job.id} job={job} action={actions[job.id]} onAction={action} onOpen={openDetails} />)}</div>}
     {jobs.totalPages > 1 && <div className="flex items-center justify-center gap-3 mt-5"><button disabled={page === 0} onClick={() => setPage(page - 1)} className="h-10 w-10 rounded-lg border border-line flex items-center justify-center disabled:opacity-40" aria-label="Previous page"><ChevronLeft size={16} /></button><span className="text-sm text-muted">Page {page + 1} of {jobs.totalPages}</span><button disabled={page + 1 >= jobs.totalPages} onClick={() => setPage(page + 1)} className="h-10 w-10 rounded-lg border border-line flex items-center justify-center disabled:opacity-40" aria-label="Next page"><ChevronRight size={16} /></button></div>}

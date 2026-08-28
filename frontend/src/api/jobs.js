@@ -2,8 +2,22 @@ import api from './axios'
 
 const ACTIONS_KEY = 'smart-job-tracker-job-actions'
 
+function withoutBlankParams(params) {
+    const cleaned = {}
+    for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === undefined || value === '') continue
+        cleaned[key] = value
+    }
+    return cleaned
+}
+
 export async function listJobs(params = {}) {
-    const response = await api.get('/jobs', { params })
+    const response = await api.get('/jobs', { params: withoutBlankParams(params) })
+    return response.data
+}
+
+export async function discoverJobs(request = {}) {
+    const response = await api.post('/jobs/discover', request)
     return response.data
 }
 

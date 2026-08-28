@@ -75,7 +75,7 @@ export default function ResumeMatch() {
       localStorage.setItem('deepMatchAnalysis', JSON.stringify({ id: res.data.analysisId, resumeId: resume.id, jobDescription: jd }))
     } catch (e) {
       console.error(e)
-      setError('Could not complete the deep analysis. Check the server configuration and try again.')
+      setError(e.response?.data?.error || 'Could not complete the deep analysis. Check the server configuration and try again.')
     } finally {
       setDeepMatching(false)
     }
