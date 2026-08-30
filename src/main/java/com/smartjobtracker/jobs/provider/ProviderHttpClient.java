@@ -33,7 +33,15 @@ public class ProviderHttpClient {
                 }).body(JsonNode.class));
     }
 
-    private synchronized JsonNode execute(Supplier<JsonNode> request) {
+    /** Raw text/HTML fetch (e.g. Telegram's public channel preview page), sharing the same rate-limit and retry behavior as get()/post(). */
+    public String getHtml(String uri) {
+        return execute(() -> client.get().uri(uri).retrieve()
+                .onStatus(HttpStatusCode::isError, (request, response) -> {
+                    throw new ProviderHttpException(response.getStatusCode().value());
+                }).body(String.class));
+    }
+
+    private synchronized <T> T execute(Supplier<T> request) {
         for (int attempt = 0; ; attempt++) {
             waitForRateLimit();
             try {

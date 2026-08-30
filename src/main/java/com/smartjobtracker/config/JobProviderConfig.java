@@ -11,6 +11,7 @@ public class JobProviderConfig {
     private ProviderSettings lever = new ProviderSettings();
     private ProviderSettings ashby = new ProviderSettings();
     private ApifySettings apify = new ApifySettings();
+    private TelegramSettings telegram = new TelegramSettings();
     private long minIntervalMs = 500;
     private int maxRetries = 3;
 
@@ -22,6 +23,8 @@ public class JobProviderConfig {
     public void setAshby(ProviderSettings value) { ashby = value; }
     public ApifySettings getApify() { return apify; }
     public void setApify(ApifySettings value) { apify = value; }
+    public TelegramSettings getTelegram() { return telegram; }
+    public void setTelegram(TelegramSettings value) { telegram = value; }
     public long getMinIntervalMs() { return minIntervalMs; }
     public void setMinIntervalMs(long value) { minIntervalMs = value; }
     public int getMaxRetries() { return maxRetries; }
@@ -46,5 +49,14 @@ public class JobProviderConfig {
         public void setToken(String value) { token = value; }
         public String getActor() { return actor; }
         public void setActor(String value) { actor = value; }
+    }
+
+    public static class TelegramSettings {
+        private boolean enabled;
+        private List<String> channels = new ArrayList<>();
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean value) { enabled = value; }
+        public List<String> getChannels() { return channels; }
+        public void setChannels(List<String> value) { channels = value; }
     }
 }
