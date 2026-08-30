@@ -45,5 +45,22 @@ public class JobDiscoveryController {
             .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    /**
+     * Jobs first synced into our database after {@code since} (defaults to 7 days ago if omitted),
+     * for a "New" badge/list on the Discovery page. Filters by createdAt (when WE first saw the
+     * posting), not postedAt (the posting's own listed date), so a job posted long ago that only
+     * just appeared in a source we started polling still counts as "new" to this user.
+     */
+    @GetMapping("/new")
+    public Page<JobDtos.JobSummary> listNew(@RequestParam(required = false) OffsetDateTime since,
+                                         @RequestParam(required = false) String q,
+                                         @RequestParam(required = false) String location,
+                                         @RequestParam(required = false) String employmentType,
+                                         @RequestParam(required = false) String provider,
+                                         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        OffsetDateTime effectiveSince = since != null ? since : OffsetDateTime.now().minusDays(7);
+        return repository.findNewSince(effectiveSince, blankToNull(q), blankToNull(location), blankToNull(employmentType), blankToNull(provider), pageable)
+                .map(JobDtos.JobSummary::from);
+    }
         private String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
 }

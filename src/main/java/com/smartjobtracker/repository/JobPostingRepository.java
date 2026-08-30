@@ -23,4 +23,13 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
                             @Param("employmentType") String employmentType, @Param("provider") String provider,
                             @Param("postedAfter") OffsetDateTime postedAfter, @Param("postedBefore") OffsetDateTime postedBefore,
                             Pageable pageable);
+
+    @Query("select j from JobPosting j where j.createdAt > :since " +
+            "and (:q is null or lower(j.title) like lower(concat('%', :q, '%')) or lower(j.company) like lower(concat('%', :q, '%'))) " +
+            "and (:location is null or lower(j.location) like lower(concat('%', :location, '%'))) " +
+            "and (:employmentType is null or lower(j.employmentType) = lower(:employmentType)) " +
+            "and (:provider is null or lower(j.provider) = lower(:provider))")
+    Page<JobPosting> findNewSince(@Param("since") OffsetDateTime since, @Param("q") String q, @Param("location") String location,
+                            @Param("employmentType") String employmentType, @Param("provider") String provider,
+                            Pageable pageable);
 }

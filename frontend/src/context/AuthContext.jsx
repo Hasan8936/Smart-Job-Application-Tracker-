@@ -11,7 +11,7 @@ export function AuthProvider({ children }){
     if (token) {
       // set token immediately for axios interceptor, then fetch profile
       setUser({ token })
-      fetchProfile(token)
+      fetchProfile(token).catch(() => {})
     }
   }, [])
 
@@ -20,9 +20,10 @@ export function AuthProvider({ children }){
       const res = await api.get('/users/me')
       setUser({ token, profile: res.data })
     }catch(err){
-      // invalid token
+      // invalid token, or /users/me itself failed (network, CORS, 404, 500, ...)
       localStorage.removeItem('token')
       setUser(null)
+      throw err
     }
   }
 

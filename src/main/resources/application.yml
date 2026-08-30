@@ -88,12 +88,6 @@ app:
       enabled: ${APIFY_ENABLED:false}
       token: ${APIFY_TOKEN:}
       actor: ${APIFY_ACTOR:}
-  cors:
-    # Comma-separated origin patterns; wildcard Vercel subdomains work with credentials.
-    # CORS_ALLOWED_ORIGIN_PATTERNS is preferred; CORS_ALLOWED_ORIGINS is accepted as a
-    # backward-compatible fallback for existing deployments (e.g. Render) that set that
-    # name instead. If CORS_ALLOWED_ORIGIN_PATTERNS is set, it always wins.
-    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:${CORS_ALLOWED_ORIGINS:https://*.vercel.app,http://localhost:5173,http://localhost:3000}}
 
 management:
   endpoints:
@@ -107,3 +101,8 @@ management:
 logging:
   level:
     root: INFO
+    # Verbose on purpose: this is the one flow (Google authorization-code exchange,
+    # user-info fetch) that fails silently by default if left at INFO, since Spring
+    # doesn't log per-request details or non-exceptional OAuth2 flow steps otherwise.
+    org.springframework.security.oauth2: DEBUG
+    com.smartjobtracker.security: DEBUG

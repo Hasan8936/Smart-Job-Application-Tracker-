@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import AuthLayout from '../components/AuthLayout'
@@ -13,6 +13,27 @@ export default function Login() {
   const auth = useContext(AuthContext)
   const nav = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const code = params.get('error')
+    if (!code) return
+    if (code === 'google-email-required') {
+      setError('Your Google account did not share an email address, so we could not sign you in.')
+    } else if (code === 'google-authorization-failed') {
+      setError('Google could not complete the sign-in (authorization failed). Please try again.')
+    } else if (code === 'google-login-failed-network') {
+      setError('Signed in with Google, but could not reach the server afterward. Check your connection and try again.')
+    } else if (code === 'google-login-failed-server') {
+      setError('Signed in with Google, but the server hit an error finishing your sign-in. Please try again in a moment.')
+    } else if (code.startsWith('google-login-failed-')) {
+      const status = code.replace('google-login-failed-', '')
+      setError(`Signed in with Google, but loading your account failed (server responded ${status}). Please try again.`)
+    } else if (code === 'google-login-failed') {
+      setError('Google sign-in did not complete. Please try again.')
+    }
+    nav(location.pathname, { replace: true })
+  }, [location.pathname, location.search, nav])
 
   const submit = async (e) => {
     e.preventDefault()

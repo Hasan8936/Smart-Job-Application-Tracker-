@@ -1,6 +1,7 @@
 import api from './axios'
 
 const ACTIONS_KEY = 'smart-job-tracker-job-actions'
+const LAST_VISIT_KEY = 'smart-job-tracker-jobs-last-visit'
 
 function withoutBlankParams(params) {
     const cleaned = {}
@@ -19,6 +20,23 @@ export async function listJobs(params = {}) {
 export async function discoverJobs(request = {}) {
     const response = await api.post('/jobs/discover', request)
     return response.data
+}
+
+export async function listNewJobs(params = {}) {
+    const response = await api.get('/jobs/new', { params: withoutBlankParams(params) })
+    return response.data
+}
+
+/** Last time this browser viewed the Discovery page. Null on first-ever visit (no prior baseline). */
+export function getLastJobsVisit() {
+    return localStorage.getItem(LAST_VISIT_KEY)
+}
+
+/** Call after the "New" list has been shown to the user, so today's jobs stop counting as new next time. */
+export function markJobsVisitedNow() {
+    const now = new Date().toISOString()
+    localStorage.setItem(LAST_VISIT_KEY, now)
+    return now
 }
 
 export async function getJob(id) {

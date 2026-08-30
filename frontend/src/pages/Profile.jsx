@@ -1,9 +1,10 @@
 import React, { useContext } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Link2, Loader2, LogOut, Unlink } from 'lucide-react'
+import { AlertTriangle, CalendarClock, CheckCircle2, Link2, Loader2, LogOut, Sparkles, Unlink, X } from 'lucide-react'
 import Layout from '../components/Layout'
 import { AuthContext } from '../context/AuthContext'
 import { beginGmailConnect, disconnectGmail, getGmailReviewQueue, getGmailStatus, reviewGmailEmail, syncGmail } from '../api/gmail'
+import { confirmInterviewCandidate, dismissInterviewCandidate, getInterviewCandidates, syncCalendar } from '../api/interviews'
 import api from '../api/axios'
 
 export default function Profile() {
@@ -17,10 +18,33 @@ export default function Profile() {
   const [gmailMessageIsError, setGmailMessageIsError] = React.useState(false)
   const [reviewQueue, setReviewQueue] = React.useState([])
   const [applications, setApplications] = React.useState([])
+  const [interviewCandidates, setInterviewCandidates] = React.useState([])
+  const [calendarSyncing, setCalendarSyncing] = React.useState(false)
+  const [interviewMessage, setInterviewMessage] = React.useState('')
+  const isInterviewShaped = (email) => email.category === 'INTERVIEW_INVITATION' || email.extractedStatus === 'INTERVIEW'
   React.useEffect(() => {
-    getGmailStatus().then(status => { setGmail(status); if (status.connected) getGmailReviewQueue().then(setReviewQueue).catch(() => {}) }).catch(() => {})
+    getGmailStatus().then(status => {
+      setGmail(status)
+      if (status.connected) {
+        getGmailReviewQueue().then(setReviewQueue).catch(() => {})
+        getInterviewCandidates().then(setInterviewCandidates).catch(() => {})
+      }
+    }).catch(() => {})
     api.get('/applications').then(response => setApplications(response.data)).catch(() => {})
   }, [])
+  async function syncCalendarNow() {
+    try { setCalendarSyncing(true); const result = await syncCalendar(); setInterviewCandidates(await getInterviewCandidates()); setInterviewMessage(`${result.added} new candidate${result.added === 1 ? '' : 's'} found.`) }
+    catch (e) { setInterviewMessage(e.response?.data?.error || 'Could not sync calendar.') }
+    finally { setCalendarSyncing(false) }
+  }
+  async function confirmCandidate(candidate, applicationId, status) {
+    try { await confirmInterviewCandidate(candidate.source, candidate.id, applicationId, status); setInterviewCandidates(current => current.filter(item => !(item.source === candidate.source && item.id === candidate.id))) }
+    catch (e) { setInterviewMessage(e.response?.data?.error || 'Could not confirm this candidate.') }
+  }
+  async function dismissCandidate(candidate) {
+    try { await dismissInterviewCandidate(candidate.source, candidate.id); setInterviewCandidates(current => current.filter(item => !(item.source === candidate.source && item.id === candidate.id))) }
+    catch (e) { setInterviewMessage(e.response?.data?.error || 'Could not dismiss this candidate.') }
+  }
   React.useEffect(() => {
     const gmailParam = searchParams.get('gmail')
     if (!gmailParam) return
@@ -67,8 +91,35 @@ export default function Profile() {
           {gmail.configurationError && <p className="flex items-start gap-1.5 text-xs text-status-rejected mb-3"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> {gmail.configurationError}</p>}
           {!gmail.connected ? <button onClick={connectGmail} disabled={!!gmail.configurationError} className="inline-flex items-center gap-2 border border-line rounded-lg px-3 py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"><Link2 size={15} /> Connect Gmail</button> : <div className="flex flex-wrap gap-2"><button disabled={gmailBusy} onClick={sync} className="inline-flex items-center gap-2 bg-ink text-white rounded-lg px-3 py-2.5 text-sm">{gmailBusy && <Loader2 size={14} className="animate-spin" />} Sync job emails</button><button disabled={gmailBusy} onClick={disconnect} className="inline-flex items-center gap-2 border border-line rounded-lg px-3 py-2.5 text-sm"><Unlink size={15} /> Disconnect</button></div>}
           {gmailMessage && <p className={`text-xs mt-2 ${gmailMessageIsError ? 'text-status-rejected' : 'text-muted'}`}>{gmailMessage}</p>}
-          {gmail.connected && reviewQueue.length > 0 && <div className="mt-5 border-t border-line pt-4"><h3 className="font-display text-sm mb-2">Needs your review</h3>{reviewQueue.map(email => <div key={email.id} className="border border-line rounded-lg p-3 mb-2"><p className="text-sm text-ink">{email.subject || 'Job email'}</p><p className="text-xs text-muted mt-1">{email.category || 'OTHER'} · {email.company || 'Company unavailable'} · confidence {email.confidence == null ? 'unavailable' : `${Math.round(email.confidence * 100)}%`}</p><p className="text-xs text-muted mt-1">Role: {email.jobTitle || 'Unavailable'} · Status: {email.extractedStatus || 'Unavailable'}</p><p className="text-xs text-muted mt-1">Interview: {email.interviewDate || 'Unavailable'} {email.interviewTime || ''} · Deadline: {email.deadline || 'Unavailable'} · Action: {email.actionRequired || 'None identified'}</p><div className="flex gap-2 mt-2"><select id={`gmail-app-${email.id}`} className="min-w-0 flex-1 px-2 py-2 rounded-lg border border-line bg-paper text-sm"><option value="">Select application</option>{applications.map(application => <option key={application.id} value={application.id}>{application.companyName} · {application.roleTitle}</option>)}</select><button onClick={async () => { const applicationId = document.getElementById(`gmail-app-${email.id}`).value; if (!applicationId) return; await reviewGmailEmail(email.id, applicationId, email.extractedStatus || 'APPLIED'); setReviewQueue(current => current.filter(item => item.id !== email.id)) }} className="px-3 py-2 rounded-lg bg-ink text-white text-xs">Confirm</button></div></div>)}</div>}
+          {gmail.connected && reviewQueue.filter(email => !isInterviewShaped(email)).length > 0 && <div className="mt-5 border-t border-line pt-4"><h3 className="font-display text-sm mb-2">Needs your review</h3>{reviewQueue.filter(email => !isInterviewShaped(email)).map(email => <div key={email.id} className="border border-line rounded-lg p-3 mb-2"><p className="text-sm text-ink">{email.subject || 'Job email'}</p><p className="text-xs text-muted mt-1">{email.category || 'OTHER'} · {email.company || 'Company unavailable'} · confidence {email.confidence == null ? 'unavailable' : `${Math.round(email.confidence * 100)}%`}</p><p className="text-xs text-muted mt-1">Role: {email.jobTitle || 'Unavailable'} · Status: {email.extractedStatus || 'Unavailable'}</p><p className="text-xs text-muted mt-1">Deadline: {email.deadline || 'Unavailable'} · Action: {email.actionRequired || 'None identified'}</p><div className="flex gap-2 mt-2"><select id={`gmail-app-${email.id}`} className="min-w-0 flex-1 px-2 py-2 rounded-lg border border-line bg-paper text-sm"><option value="">Select application</option>{applications.map(application => <option key={application.id} value={application.id}>{application.companyName} · {application.roleTitle}</option>)}</select><button onClick={async () => { const applicationId = document.getElementById(`gmail-app-${email.id}`).value; if (!applicationId) return; await reviewGmailEmail(email.id, applicationId, email.extractedStatus || 'APPLIED'); setReviewQueue(current => current.filter(item => item.id !== email.id)) }} className="px-3 py-2 rounded-lg bg-ink text-white text-xs">Confirm</button></div></div>)}</div>}
         </section>
+
+        {gmail.connected && <section className="border-t border-line pt-5 mb-6">
+          <div className="flex items-center justify-between mb-2"><h2 className="font-display text-base">Interview candidates</h2><button disabled={calendarSyncing} onClick={syncCalendarNow} className="inline-flex items-center gap-1.5 border border-line rounded-lg px-2.5 py-1.5 text-xs font-medium">{calendarSyncing ? <Loader2 size={13} className="animate-spin" /> : <CalendarClock size={13} />} Sync calendar</button></div>
+          <p className="text-sm text-muted mb-3">Interview-shaped emails and calendar events. Nothing here changes an application's status until you confirm it.</p>
+          {interviewMessage && <p className="text-xs text-muted mb-2">{interviewMessage}</p>}
+          {interviewCandidates.length === 0 ? <p className="text-xs text-muted">No pending interview candidates right now.</p> : interviewCandidates.map(candidate => (
+            <div key={`${candidate.source}-${candidate.id}`} className="border border-line rounded-lg p-3 mb-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm text-ink flex items-center gap-1.5"><Sparkles size={13} className="text-muted" /> {candidate.title || 'Untitled'}</p>
+                  <p className="text-xs text-muted mt-1">
+                    {candidate.source === 'GMAIL' ? <>Gmail · {candidate.company || 'Company unavailable'} · Interview: {candidate.interviewDate || 'Unavailable'} {candidate.interviewTime || ''}</>
+                      : <>Calendar · {candidate.eventStart ? new Date(candidate.eventStart).toLocaleString() : 'Time unavailable'}</>}
+                  </p>
+                </div>
+                <button onClick={() => dismissCandidate(candidate)} className="text-muted hover:text-ink" aria-label="Dismiss"><X size={15} /></button>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <select id={`interview-app-${candidate.source}-${candidate.id}`} defaultValue={candidate.suggestedApplicationId || ''} className="min-w-0 flex-1 px-2 py-2 rounded-lg border border-line bg-paper text-sm">
+                  <option value="">Select application</option>
+                  {applications.map(application => <option key={application.id} value={application.id}>{application.companyName} · {application.roleTitle}</option>)}
+                </select>
+                <button onClick={() => { const applicationId = document.getElementById(`interview-app-${candidate.source}-${candidate.id}`).value; if (!applicationId) return; confirmCandidate(candidate, applicationId, 'INTERVIEW') }} className="px-3 py-2 rounded-lg bg-ink text-white text-xs">Confirm interview</button>
+              </div>
+            </div>
+          ))}
+        </section>}
 
         <button
           onClick={logout}
