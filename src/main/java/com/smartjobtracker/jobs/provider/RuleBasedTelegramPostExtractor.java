@@ -28,7 +28,10 @@ public class RuleBasedTelegramPostExtractor implements TelegramPostExtractor {
         String title = firstGroup(TITLE_LINE, text);
         String company = firstGroup(COMPANY_LINE, text);
         String location = firstGroup(LOCATION_LINE, text);
-        String employmentType = firstGroup(EMPLOYMENT_TYPE, text);
+        // Strip the Location line before scanning for employment type: "remote" is a
+        // legitimate location value and shouldn't be picked up as the employment type just
+        // because it appears earlier in the text than an actual "Full-time"/"Contract" label.
+        String employmentType = firstGroup(EMPLOYMENT_TYPE, LOCATION_LINE.matcher(text).replaceAll(""));
         String applyUrl = firstLink(input.links(), text);
         // Low, fixed confidence: this path never claims to be sure about anything it finds.
         return new Extraction(company, title, location, employmentType, applyUrl, 0.35, "rules");

@@ -19,13 +19,13 @@ import static org.mockito.Mockito.*;
 
 class ResumeDeepMatchServiceTest {
 
-    private ResumeDeepMatchService service(AnthropicClient client) {
+    private ResumeDeepMatchService service(GeminiClient client) {
         return new ResumeDeepMatchService(client, new ObjectMapper(), mock(ResumeRepository.class), mock(DeepMatchAnalysisRepository.class));
     }
 
     @Test
     void boundClampsScoreAndTrimsListsToMaximums() {
-        ResumeDeepMatchService service = service(mock(AnthropicClient.class));
+        ResumeDeepMatchService service = service(mock(GeminiClient.class));
 
         RecruiterTestResult oversized = new RecruiterTestResult(
                 150,
@@ -43,7 +43,7 @@ class ResumeDeepMatchServiceTest {
 
     @Test
     void boundClampsNegativeScoreToZeroAndHandlesNullLists() {
-        ResumeDeepMatchService service = service(mock(AnthropicClient.class));
+        ResumeDeepMatchService service = service(mock(GeminiClient.class));
 
         RecruiterTestResult negative = new RecruiterTestResult(-20, null, null);
 
@@ -56,7 +56,7 @@ class ResumeDeepMatchServiceTest {
 
     @Test
     void boundLeavesInRangeResultUnchanged() {
-        ResumeDeepMatchService service = service(mock(AnthropicClient.class));
+        ResumeDeepMatchService service = service(mock(GeminiClient.class));
 
         RecruiterTestResult inRange = new RecruiterTestResult(72, List.of("Kubernetes", "Terraform"), List.of("No leadership experience listed"));
 
@@ -84,7 +84,7 @@ class ResumeDeepMatchServiceTest {
             return value;
         });
 
-        AnthropicClient client = mock(AnthropicClient.class);
+        GeminiClient client = mock(GeminiClient.class);
         // Oversized response: score above 100, 6 missing keywords, 4 red flags.
         when(client.complete(any(), any(), anyInt())).thenReturn(
                 "{\"compatibilityScore\": 130, "

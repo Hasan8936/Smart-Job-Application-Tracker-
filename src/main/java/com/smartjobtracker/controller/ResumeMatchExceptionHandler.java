@@ -1,6 +1,6 @@
 package com.smartjobtracker.controller;
 
-import com.smartjobtracker.service.AnthropicApiException;
+import com.smartjobtracker.service.GeminiApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,8 +18,8 @@ import java.util.Map;
 @RestControllerAdvice(assignableTypes = ResumeMatchController.class)
 public class ResumeMatchExceptionHandler {
 
-    @ExceptionHandler(AnthropicApiException.class)
-    public ResponseEntity<Map<String, Object>> handleAnthropic(AnthropicApiException ex) {
+    @ExceptionHandler(GeminiApiException.class)
+    public ResponseEntity<Map<String, Object>> handleGemini(GeminiApiException ex) {
         return ResponseEntity.status(ex.getStatus())
                 .body(Map.of("error", ex.getMessage()));
     }
@@ -33,6 +33,6 @@ public class ResumeMatchExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleParseFailure(IllegalStateException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("error", "Claude's response could not be understood. Please try again."));
+                .body(Map.of("error", "The AI response could not be understood. Please try again."));
     }
 }

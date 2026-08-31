@@ -15,13 +15,13 @@ import java.util.regex.Pattern;
 @Service
 public class ResumeDeepMatchService {
 
-    private final AnthropicClient anthropicClient;
+    private final GeminiClient geminiClient;
     private final ObjectMapper mapper;
     private final ResumeRepository resumes;
     private final DeepMatchAnalysisRepository analyses;
 
-    public ResumeDeepMatchService(AnthropicClient anthropicClient, ObjectMapper mapper, ResumeRepository resumes, DeepMatchAnalysisRepository analyses) {
-        this.anthropicClient = anthropicClient;
+    public ResumeDeepMatchService(GeminiClient geminiClient, ObjectMapper mapper, ResumeRepository resumes, DeepMatchAnalysisRepository analyses) {
+        this.geminiClient = geminiClient;
         this.mapper = mapper;
         this.resumes = resumes;
         this.analyses = analyses;
@@ -45,7 +45,7 @@ public class ResumeDeepMatchService {
                 + "matching exactly this shape: {\"compatibilityScore\": 0, \"missingKeywords\": [\"string\"], \"redFlags\": [\"string\"]}. "
                 + "compatibilityScore is an integer from 0 to 100. missingKeywords lists at most the 5 most critical missing keywords. "
                 + "redFlags lists at most 3 major red flags a hiring manager would notice within the first 10 seconds.";
-        String response = anthropicClient.complete(system, "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jd, 1024);
+        String response = geminiClient.complete(system, "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jd, 1024);
         RecruiterTestResult parsed;
         try { parsed = parse(response, RecruiterTestResult.class); } catch (IllegalStateException ignored) { parsed = parseRecruiterText(response); }
         return bound(parsed);
@@ -68,7 +68,7 @@ public class ResumeDeepMatchService {
 
     private RecruiterTestResult parseRecruiterText(String response) {
         Matcher score = Pattern.compile("(?i)(?:score|compatibility)[^0-9]{0,30}(\\d{1,3})").matcher(response);
-        if (!score.find()) throw new IllegalStateException("Claude response did not include a compatibility score");
+        if (!score.find()) throw new IllegalStateException("AI response did not include a compatibility score");
         List<String> missing = sectionItems(response, "missing keywords", "red flags");
         List<String> flags = sectionItems(response, "red flags", null);
         return new RecruiterTestResult(Math.min(100, Integer.parseInt(score.group(1))), limit(missing, 5), limit(flags, 3));
