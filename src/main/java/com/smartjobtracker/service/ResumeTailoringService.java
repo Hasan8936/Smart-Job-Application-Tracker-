@@ -5,10 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartjobtracker.dto.ResumeTailoringDtos;
 import com.smartjobtracker.model.*;
 import com.smartjobtracker.repository.*;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,6 +101,92 @@ public class ResumeTailoringService {
 
     @Transactional(readOnly = true)
     public List<ResumeTailoringDtos.Version> versions(Long userId) { return versions.findByUserIdOrderByCreatedAtDesc(userId).stream().map(this::toVersion).toList(); }
+
+    @Transactional(readOnly = true)
+    public byte[] renderPdf(Long userId, Long versionId) {
+        ResumeVersion version = versions.findByIdAndUserId(versionId, userId).orElseThrow(() -> new IllegalArgumentException("Resume version not found"));
+        return renderPdf(version.getContent() == null ? "" : version.getContent());
+    }
+
+    /**
+     * Renders plain resume text into a simple, readable PDF -- no LaTeX toolchain is available
+     * in this deployment, so this is a direct PDFBox layout rather than compiling toLatex()'s
+     * output. Wraps lines to the page width and paginates when content overflows a page.
+     */
+    private byte[] renderPdf(String content) {
+        float margin = 50f;
+        float fontSize = 10.5f;
+        float leading = fontSize * 1.35f;
+        PDType1Font font = PDType1Font.HELVETICA;
+        PDType1Font bold = PDType1Font.HELVETICA_BOLD;
+        try (PDDocument document = new PDDocument()) {
+            PDRectangle pageSize = PDRectangle.LETTER;
+            float printableWidth = pageSize.getWidth() - margin * 2;
+            PDPage page = new PDPage(pageSize);
+            document.addPage(page);
+            PDPageContentStream stream = new PDPageContentStream(document, page);
+            float y = pageSize.getHeight() - margin;
+            stream.beginText();
+            stream.setFont(font, fontSize);
+            stream.newLineAtOffset(margin, y);
+            boolean textOpen = true;
+            for (String rawLine : content.split("\\r?\\n")) {
+                boolean heading = !rawLine.isBlank() && rawLine.trim().equals(rawLine.trim().toUpperCase(Locale.ROOT)) && rawLine.trim().length() > 2;
+                PDType1Font lineFont = heading ? bold : font;
+                for (String wrapped : wrap(rawLine, lineFont, fontSize, printableWidth)) {
+                    if (y <= margin) {
+                        stream.endText(); stream.close();
+                        page = new PDPage(pageSize); document.addPage(page);
+                        stream = new PDPageContentStream(document, page);
+                        y = pageSize.getHeight() - margin;
+                        stream.beginText(); stream.setFont(font, fontSize); stream.newLineAtOffset(margin, y);
+                        textOpen = true;
+                    }
+                    if (lineFont != font) stream.setFont(lineFont, fontSize);
+                    stream.showText(sanitize(wrapped));
+                    if (lineFont != font) stream.setFont(font, fontSize);
+                    stream.newLineAtOffset(0, -leading);
+                    y -= leading;
+                }
+            }
+            if (textOpen) stream.endText();
+            stream.close();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            document.save(out);
+            return out.toByteArray();
+        } catch (Exception ex) {
+            throw new IllegalStateException("Could not generate PDF", ex);
+        }
+    }
+
+    private List<String> wrap(String line, PDType1Font font, float fontSize, float maxWidth) {
+        if (line.isBlank()) return List.of("");
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        for (String word : line.split(" ")) {
+            String candidate = current.isEmpty() ? word : current + " " + word;
+            if (textWidth(candidate, font, fontSize) > maxWidth && !current.isEmpty()) {
+                result.add(current.toString());
+                current = new StringBuilder(word);
+            } else {
+                current = new StringBuilder(candidate);
+            }
+        }
+        if (!current.isEmpty()) result.add(current.toString());
+        return result.isEmpty() ? List.of("") : result;
+    }
+
+    private float textWidth(String text, PDType1Font font, float fontSize) {
+        try { return font.getStringWidth(sanitize(text)) / 1000f * fontSize; }
+        catch (Exception ex) { return text.length() * fontSize * 0.5f; }
+    }
+
+    /** PDFBox's standard 14 fonts only support WinAnsiEncoding -- strip anything outside it so showText() doesn't throw. */
+    private String sanitize(String text) {
+        StringBuilder result = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) result.append(c < 32 || c > 255 ? '?' : c);
+        return result.toString();
+    }
 
     private boolean grounded(ResumeTailoringProvider.Proposal proposal, String source) {
         return nonBlank(proposal.beforeText()) && source.contains(proposal.beforeText()) && source.contains(proposal.evidenceText()) && nonBlank(proposal.afterText()) && allWordsFromSource(proposal.afterText(), source);

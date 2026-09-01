@@ -21,6 +21,12 @@ export default function Reminders() {
   const [whatsapp, setWhatsapp] = useState(null)
   const [verificationCode, setVerificationCode] = useState('')
   const [deliveries, setDeliveries] = useState([])
+  const [reminderError, setReminderError] = useState('')
+  const [whatsappError, setWhatsappError] = useState('')
+
+  function errorMessage(e, fallback) {
+    return e?.response?.data?.error || fallback
+  }
 
   useEffect(() => { fetchReminders(); fetchPreferences(); fetchWhatsapp(); fetchDeliveries() }, [])
 
@@ -56,7 +62,8 @@ export default function Reminders() {
     if (!form.eventAt) return
     try {
       setSaving(true)
-      await api.post('/reminders', {
+      setReminderError('')
+      await api.post('/reminders/schedule', {
         type: form.type,
         message: form.message,
         eventAt: form.eventAt,
@@ -68,6 +75,7 @@ export default function Reminders() {
       fetchReminders()
     } catch (e) {
       console.error(e)
+      setReminderError(errorMessage(e, 'Could not save this reminder. Try again.'))
     } finally {
       setSaving(false)
     }
@@ -84,16 +92,22 @@ export default function Reminders() {
 
   async function saveWhatsapp(e) {
     e.preventDefault()
-    try { await api.put('/notifications/preferences', { ...whatsapp, consentSource: 'settings' }); fetchWhatsapp() } catch (e) { console.error(e) }
+    setWhatsappError('')
+    try { await api.put('/notifications/preferences', { ...whatsapp, consentSource: 'settings' }); fetchWhatsapp() }
+    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not save WhatsApp consent. Try again.')) }
   }
 
   async function startVerification() {
-    try { await api.post('/notifications/preferences/verify') } catch (e) { console.error(e) }
+    setWhatsappError('')
+    try { await api.post('/notifications/preferences/verify') }
+    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not send a verification code. Try again.')) }
   }
 
   async function confirmVerification(e) {
     e.preventDefault()
-    try { await api.post('/notifications/preferences/confirm', { code: verificationCode }); setVerificationCode(''); fetchWhatsapp() } catch (e) { console.error(e) }
+    setWhatsappError('')
+    try { await api.post('/notifications/preferences/confirm', { code: verificationCode }); setVerificationCode(''); fetchWhatsapp() }
+    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not verify this code. Try again.')) }
   }
 
   async function remove(id) {
@@ -144,6 +158,7 @@ export default function Reminders() {
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </div>
+            {reminderError && <p className="text-sm text-status-rejected">{reminderError}</p>}
             <button
               disabled={saving}
               className="w-full inline-flex items-center justify-center gap-1.5 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-lg disabled:opacity-50"
@@ -205,6 +220,7 @@ export default function Reminders() {
           <label className="text-xs font-medium text-muted">Phone number (E.164)<input required pattern="\\+[1-9][0-9]{7,14}" className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={whatsapp.phoneE164 || ''} onChange={(e) => setWhatsapp({ ...whatsapp, phoneE164: e.target.value })} placeholder="+15551234567" /></label>
           <label className="flex items-center gap-2 text-sm text-ink sm:pt-6"><input type="checkbox" checked={Boolean(whatsapp.whatsappOptIn)} onChange={(e) => setWhatsapp({ ...whatsapp, whatsappOptIn: e.target.checked })} />I agree to receive Smart Job Tracker WhatsApp notifications.</label>
           <button className="w-fit inline-flex items-center gap-1.5 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-lg">Save consent</button>
+          {whatsappError && <p className="sm:col-span-2 text-sm text-status-rejected">{whatsappError}</p>}
         </form>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <button type="button" onClick={startVerification} disabled={!whatsapp.whatsappOptIn} className="border border-line text-ink text-sm font-medium px-4 py-2.5 rounded-lg disabled:opacity-50">Send verification code</button>

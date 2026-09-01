@@ -6,6 +6,9 @@ import com.smartjobtracker.model.User;
 import com.smartjobtracker.repository.UserRepository;
 import com.smartjobtracker.service.ResumeTailoringService;
 import jakarta.validation.Valid;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,6 +45,16 @@ public class ResumeTailoringController {
     public ResponseEntity<List<ResumeTailoringDtos.Version>> versions() {
         Long userId = userId(); if (userId == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(service.versions(userId));
+    }
+
+    @GetMapping("/versions/{versionId}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable Long versionId) {
+        Long userId = userId(); if (userId == null) return ResponseEntity.status(401).build();
+        byte[] pdf = service.renderPdf(userId, versionId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("resume-version-" + versionId + ".pdf").build().toString())
+                .body(pdf);
     }
 
     private Long userId() {
