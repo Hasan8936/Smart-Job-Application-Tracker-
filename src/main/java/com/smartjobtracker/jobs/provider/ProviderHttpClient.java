@@ -80,7 +80,7 @@ public class ProviderHttpClient {
 
     private static class ProviderHttpException extends RuntimeException {
         private final int status;
-        private ProviderHttpException(int status) { this.status = status; }
+        private ProviderHttpException(int status) { super("Provider responded with HTTP " + status); this.status = status; }
     }
 
     public static class ProviderUnavailableException extends RuntimeException {
