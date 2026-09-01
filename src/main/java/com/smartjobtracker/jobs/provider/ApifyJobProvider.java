@@ -91,13 +91,21 @@ public class ApifyJobProvider implements JobProvider {
     private ProviderJob parse(JsonNode item) {
         String id = first(item, "externalId", "id", "jobId");
         String applyUrl = first(item, "applyUrl", "url", "jobUrl", "externalApplyLink");
+        String logoUrl = first(item, "logoUrl", "companyLogo");
+        if (logoUrl == null) logoUrl = nestedField(item, "company", "logo");
         return new ProviderJob(id, firstText(item, "company", "companyName"), first(item, "title", "jobTitle", "positionName"),
                 firstLocation(item), first(item, "employmentType", "jobType"), first(item, "workMode"), applyUrl,
                 first(item, "postedAt", "datePosted", "createdDate"), first(item, "description", "descriptionText"),
-                first(item, "logoUrl", "companyLogo"), integer(item, "salaryMin"), integer(item, "salaryMax"),
+                logoUrl, integer(item, "salaryMin"), integer(item, "salaryMax"),
                 first(item, "salaryCurrency", "currency"), item.toString());
     }
     private String first(JsonNode item, String... names) { for (String name : names) if (item.hasNonNull(name)) return item.get(name).asText(); return null; }
+    private String nestedField(JsonNode item, String parent, String child) {
+        JsonNode parentNode = item.get(parent);
+        if (parentNode == null || !parentNode.isObject() || !parentNode.hasNonNull(child)) return null;
+        String value = parentNode.get(child).asText();
+        return value.isBlank() ? null : value;
+    }
     /**
      * Like first(), but for fields that some actors (e.g. valig/naukri-jobs-scraper's
      * "company") represent as a nested object ({name, logo, address, ...}) rather than a

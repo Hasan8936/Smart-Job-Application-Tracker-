@@ -62,7 +62,7 @@ export default function Discovery() {
   function submit(e) { e.preventDefault(); setPage(0); loadJobs() }
   async function openDetails(id) { try { setDetails(await getJob(id)); setDocuments(await listJobDocuments(id)) } catch { setError('Could not load job details.') } }
   async function action(id, value) { try { if (value === 'APPLIED') await markJobApplied(id); else await setJobState(id, value); setActions(readJobActions()); setActions(current => ({ ...current, [id]: value })) } catch { setError('Could not update this job action.') } }
-  async function generate(type) { if (!details) return; try { setDocumentLoading(true); const document = await generateJobDocument(details.id, type); setDocuments(current => [document, ...current]) } catch { setError('Could not generate this draft. Add a verified candidate profile first.') } finally { setDocumentLoading(false) } }
+  async function generate(type) { if (!details) return; try { setDocumentLoading(true); const document = await generateJobDocument(details.id, type); setDocuments(current => [document, ...current]) } catch (e) { setError(e.response?.data?.error || 'Could not generate this draft.') } finally { setDocumentLoading(false) } }
   async function saveDocument(document) { try { const saved = await updateJobDocument(document.id, document.content); setDocuments(current => current.map(item => item.id === saved.id ? saved : item)) } catch { setError('Could not save this draft.') } }
 
   return <Layout title="Discover jobs" subtitle="Find roles from configured official job sources">

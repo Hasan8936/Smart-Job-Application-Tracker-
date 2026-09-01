@@ -11,8 +11,8 @@ public final class JobDtos {
                                    @Size(max = 20) java.util.List<@Size(max = 100) String> locations) {}
     public record DiscoverResponse(int synchronizedJobs) {}
     public record JobSummary(Long id, String provider, String company, String title, String location,
-                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt) {
-        public static JobSummary from(JobPosting p) { return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(), p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt()); }
+                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl) {
+        public static JobSummary from(JobPosting p) { return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(), p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl()); }
     }
     public record JobDetail(Long id, String provider, String company, String title, String location,
                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt,

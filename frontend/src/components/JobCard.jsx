@@ -1,13 +1,23 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Bookmark, Check, ExternalLink, MapPin, Star } from 'lucide-react'
 
 export default function JobCard({ job, action, onAction, onOpen }) {
+  const [logoFailed, setLogoFailed] = useState(false)
   return (
     <article className="bg-surface border border-line rounded-xl2 p-4 sm:p-5 shadow-card hover:border-ink/25 transition-colors">
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 shrink-0 rounded-lg bg-ink text-accent flex items-center justify-center font-display text-lg">
-          {(job.company || '?').slice(0, 1).toUpperCase()}
-        </div>
+        {job.logoUrl && !logoFailed ? (
+          <img
+            src={job.logoUrl}
+            alt=""
+            onError={() => setLogoFailed(true)}
+            className="h-10 w-10 shrink-0 rounded-lg object-cover border border-line bg-white"
+          />
+        ) : (
+          <div className="h-10 w-10 shrink-0 rounded-lg bg-ink text-accent flex items-center justify-center font-display text-lg">
+            {(job.company || '?').slice(0, 1).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <button onClick={() => onOpen(job.id)} className="text-left font-display text-base text-ink hover:text-accent-dark truncate max-w-full block">
             {job.title || 'Untitled role'}
