@@ -66,6 +66,7 @@ public class ApifyJobProvider implements JobProvider {
             input.put("position", keywords);
             input.put("location", location == null ? "India" : location);
             input.put("country", "IN");
+            input.put("parseCompanyDetails", true); // without this, companyLogo (and other company fields) are omitted entirely
         } else if (lower.contains("naukri")) {
             input.put("keywords", keywords);
             if (location != null) input.put("location", location);

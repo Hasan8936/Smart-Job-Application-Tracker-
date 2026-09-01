@@ -48,6 +48,20 @@ class ResumeTailoringServiceTest {
         assertEquals("Experience\nBuilt APIs in Java", resume.getExtractedText());
     }
 
+    @Test
+    void renderPdfProducesAValidPdfForRealisticContent() throws java.io.IOException {
+        String content = new String(getClass().getClassLoader().getResourceAsStream("real-tailored-resume.txt").readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        ResumeVersion version = new ResumeVersion(); version.setId(2L); version.setUserId(3L);
+        version.setContent(content);
+        ResumeVersionRepository versions = mock(ResumeVersionRepository.class); when(versions.findByIdAndUserId(2L, 3L)).thenReturn(Optional.of(version));
+        ResumeTailoringService service = service(mock(ResumeRepository.class), mock(TailoringSessionRepository.class), mock(TailoringSuggestionRepository.class), versions, new RuleBasedResumeTailoringProvider());
+
+        byte[] pdf = service.renderPdf(3L, 2L);
+
+        assertTrue(pdf.length > 100);
+        assertEquals("%PDF", new String(pdf, 0, 4));
+    }
+
     private ResumeTailoringService service(ResumeRepository resumes, TailoringSessionRepository sessions, TailoringSuggestionRepository suggestions, ResumeVersionRepository versions, ResumeTailoringProvider fallback) {
         return new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions, versions, new ObjectMapper(), fallback, mock(ResumeTailoringProvider.class), new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), new com.smartjobtracker.config.AiMatchingConfig());
     }

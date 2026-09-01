@@ -1,0 +1,52 @@
+NUSAIBUL HASAN
+Ó +91 8922024316  hasanryan052@gmail.com ¯ LinkedIn  GitHub / LeetCode / Portfolio
+Education
+Thapar Institute of Engineering and Technology 2022 – 2026
+Bachelor of Engineering (B.E.) CGPA:-7.0 Patiala, Punjab
+City Montessori School 2020 – 2021
+12th - 94% Lucknow, UP
+Experience
+Machine Learning Intern – Launch Global Mar 2026 – Present
+Tech Stack: Python, TensorFlow, Scikit-learn, Pandas, Docker, AWS
+• Developed and optimized machine learning pipelines for predictive analytics , improving inference efficiency by 30%.
+• Automated the end-to-end data preprocessing workflow for datasets exceeding 500GB, increasing model accuracy by 5%
+through rigorous feature engineering and data cleaning techniques.
+• Collaborated with engineering teams to deploy containerized ML services using Docker and cloud infrastructure while
+monitoring model performance in production.
+Projects
+Dynamic Surge Pricing System – Real-Time Pricing Engine [LINK]
+Tech Stack: Node.js, PostgreSQL, Redis, Apache Kafka, Docker, GitHub Actions, REST APIs
+• Designed and implemented a real-time distributed pricing engine handling simulated 5,000+ concurrent requests, reducing
+API latency by 40% using Redis caching and Kafka-based asynchronous processing.
+• Built scalable REST APIs using Node.js with optimized indexing strategies, improving query performance by 45%.
+• Architected stateless microservices deployed via Docker with CI/CD pipelines (GitHub Actions), enabling zero-downtime
+deployments and horizontal scalability.
+• Reduced rate limiting and circuit breaker patterns to prevent cascading failures under traffic spikes.
+Healthcare IoT-Based Anomaly Detection System (Edge + Cloud) [LINK]
+Tech Stack: Python, CNN-LSTM, Nvidia Jetson, AWS, REST APIs (FHIR), Docker
+• Designed a fault-tolerant edge-cloud architecture integrating Nvidia Jetson edge inference with AWS cloud analytics.
+• Enhanced existing healthcare data infrastructure by integrating FHIR-based RESTful APIs, improving data accessibility
+for 15+ downstream applications and supporting a user base of 1000+ employees.
+• Developed a hybrid CNN–LSTM model reducing false alarms by 60% and improving anomaly detection latency by 35%.
+• Engineered resilient data ingestion pipelines ensuring consistency and reliability across distributed components.
+Production-Grade Webhook Service (FastAPI) [LINK]
+Tech Stack: Python, FastAPI, PostgreSQL, Docker Compose, Pytest, Prometheus
+• Engineered a fault-tolerant webhook ingestion system featuring HMAC-SHA256 request validation, cutting down webhook
+processing time by 20% and supporting seamless integration with 10+ third-party applications.
+• Integrated HMAC-SHA256 request validation, Prometheus metrics, structured logging, and readiness/liveness probes.
+• Achieved 85%+ unit test coverage using Pytest and automated integration tests within Docker Compose environment.
+• Followed 12-factor app principles with environment-based configuration and containerized deployment.
+Technical Skills
+Languages: Python, JavaScript (Node.js), C/C++, SQL
+Backend & Databases: FastAPI, Flask, Node.js, PostgreSQL, MongoDB, Redis , Next.js ,Scikit-learn , Numpy
+Distributed Systems: Kafka, Event-Driven Architecture, RESTful API Design, Caching Strategies, Rate Limiting
+Cloud & DevOps: AWS, Google Cloud Platform, Docker, GitHub Actions, CI/CD
+Core Concepts: Data Structures, OOP, System Design, Complexity Analysis, Probality & Statistics , A/B testing
+Certifications
+Google Cybersecurity Professional Certificate Jun 2025
+Certified Data Scientist – IBM Jun 2025
+Electronic Arts Software Engineering Virtual Experience (Forage) Jun 2025
+Additional Information
+• Published research paper: "Anomaly Detection in IoT-Based Healthcare Systems Using Machine Learning."
+• Solved 400+ DSA problems on LeetCode focusing on graphs, DP, trees, and system design-oriented problems.
+• Leadership: Executive Committee Member at SATURNALIA (2024); Core Team Member for FROSH (2023).

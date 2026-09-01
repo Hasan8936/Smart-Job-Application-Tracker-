@@ -17,7 +17,8 @@ public class ResumeApplicationPreparationService {
     private static final Pattern PHONE_PATTERN = Pattern.compile("(?:\\+\\d{1,3}[\\s-]?)?(?:\\(?\\d{3,5}\\)?[\\s-]?)\\d{3,4}[\\s-]?\\d{3,4}");
     private static final Pattern GITHUB_PATTERN = Pattern.compile("(https?://)?(www\\.)?github\\.com/[A-Za-z0-9_-]+", Pattern.CASE_INSENSITIVE);
     private static final Pattern LINKEDIN_PATTERN = Pattern.compile("(https?://)?(www\\.)?linkedin\\.com/(in|pub)/[A-Za-z0-9_-]+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern PORTFOLIO_PATTERN = Pattern.compile("(https?://)?(www\\.)?[A-Za-z0-9_-]+\\.(dev|me|io|com|xyz|vercel\\.app|github\\.io)(/[A-Za-z0-9_\\-./]*)?", Pattern.CASE_INSENSITIVE);
+    /** (?<!@) keeps this from matching the domain half of an email address (e.g. "gmail.com" in "user@gmail.com") as a portfolio link. */
+    private static final Pattern PORTFOLIO_PATTERN = Pattern.compile("(?<!@)(https?://)?(www\\.)?[A-Za-z0-9_-]+\\.(dev|me|io|com|xyz|vercel\\.app|github\\.io)(/[A-Za-z0-9_\\-./]*)?", Pattern.CASE_INSENSITIVE);
     /** Default label + type for every field this feature can ground -- the whole standard set is always requested, nothing is manually mapped. */
     private static final List<ApplicationPreparationDtos.MappingRequest> STANDARD_FIELDS = List.of(
             new ApplicationPreparationDtos.MappingRequest("Full name", ApplicationFieldType.NAME),
@@ -112,11 +113,15 @@ public class ResumeApplicationPreparationService {
         return matcher.find() ? matcher.group().trim() : null;
     }
 
+    private static final Set<String> EMAIL_PROVIDER_DOMAINS = Set.of("gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "protonmail.com", "live.com", "aol.com");
+
     private String firstNonSocialUrl(String text) {
         Matcher matcher = PORTFOLIO_PATTERN.matcher(text);
         while (matcher.find()) {
-            String candidate = matcher.group();
-            if (!candidate.toLowerCase(Locale.ROOT).contains("github.com") && !candidate.toLowerCase(Locale.ROOT).contains("linkedin.com")) return candidate.trim();
+            String candidate = matcher.group().trim();
+            String lower = candidate.toLowerCase(Locale.ROOT).replaceFirst("^https?://", "").replaceFirst("^www\\.", "");
+            if (lower.contains("github.com") || lower.contains("linkedin.com") || EMAIL_PROVIDER_DOMAINS.contains(lower)) continue;
+            return candidate;
         }
         return null;
     }
