@@ -48,7 +48,8 @@ public class ProviderHttpClient {
                 return request.get();
             } catch (ProviderHttpException | RestClientResponseException ex) {
                 if (attempt >= maxRetries || !isRetryable(ex)) {
-                    throw new ProviderUnavailableException("Job provider request failed", ex);
+                    String detail = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+                    throw new ProviderUnavailableException("Job provider request failed: " + detail, ex);
                 }
                 long delay = Math.min(10_000L, 250L * (1L << Math.min(attempt, 5)));
                 try { Thread.sleep(delay); } catch (InterruptedException interrupted) {
