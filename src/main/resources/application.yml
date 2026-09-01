@@ -59,7 +59,7 @@ app:
     encryption-key: ${GMAIL_TOKEN_ENCRYPTION_KEY:}
     classification-provider: ${GMAIL_CLASSIFICATION_PROVIDER:fallback}
     classification-api-key: ${GMAIL_CLASSIFICATION_API_KEY:}
-    classification-model: ${GMAIL_CLASSIFICATION_MODEL:gemini-2.0-flash}
+    classification-model: ${GMAIL_CLASSIFICATION_MODEL:gemini-2.5-flash}
     classification-endpoint: ${GMAIL_CLASSIFICATION_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
     classification-min-confidence: ${GMAIL_CLASSIFICATION_MIN_CONFIDENCE:0.80}
     classification-max-retries: ${GMAIL_CLASSIFICATION_MAX_RETRIES:2}

@@ -5,13 +5,14 @@ export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }){
   const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('token'))
 
   useEffect(()=>{
     const token = localStorage.getItem('token')
     if (token) {
       // set token immediately for axios interceptor, then fetch profile
       setUser({ token })
-      fetchProfile(token).catch(() => {})
+      fetchProfile(token).catch(() => {}).finally(() => setLoading(false))
     }
   }, [])
 
@@ -49,7 +50,7 @@ export function AuthProvider({ children }){
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithToken, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

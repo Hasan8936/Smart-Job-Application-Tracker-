@@ -13,10 +13,10 @@ import java.util.Optional;
 public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
     Optional<JobPosting> findByProviderAndExternalId(String provider, String externalId);
     Optional<JobPosting> findByDedupeHash(String dedupeHash);
-    @Query("select j from JobPosting j where (:q is null or lower(j.title) like lower(concat('%', :q, '%')) or lower(j.company) like lower(concat('%', :q, '%'))) " +
-            "and (:location is null or lower(j.location) like lower(concat('%', :location, '%'))) " +
-            "and (:employmentType is null or lower(j.employmentType) = lower(:employmentType)) " +
-            "and (:provider is null or lower(j.provider) = lower(:provider)) " +
+    @Query("select j from JobPosting j where (:q is null or lower(j.title) like lower(concat('%', cast(:q as string), '%')) or lower(j.company) like lower(concat('%', cast(:q as string), '%'))) " +
+            "and (:location is null or lower(j.location) like lower(concat('%', cast(:location as string), '%'))) " +
+            "and (:employmentType is null or lower(j.employmentType) = lower(cast(:employmentType as string))) " +
+            "and (:provider is null or lower(j.provider) = lower(cast(:provider as string))) " +
             "and (:postedAfter is null or j.postedAt >= :postedAfter) " +
             "and (:postedBefore is null or j.postedAt <= :postedBefore)")
     Page<JobPosting> search(@Param("q") String q, @Param("location") String location,
@@ -25,10 +25,10 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
                             Pageable pageable);
 
     @Query("select j from JobPosting j where j.createdAt > :since " +
-            "and (:q is null or lower(j.title) like lower(concat('%', :q, '%')) or lower(j.company) like lower(concat('%', :q, '%'))) " +
-            "and (:location is null or lower(j.location) like lower(concat('%', :location, '%'))) " +
-            "and (:employmentType is null or lower(j.employmentType) = lower(:employmentType)) " +
-            "and (:provider is null or lower(j.provider) = lower(:provider))")
+            "and (:q is null or lower(j.title) like lower(concat('%', cast(:q as string), '%')) or lower(j.company) like lower(concat('%', cast(:q as string), '%'))) " +
+            "and (:location is null or lower(j.location) like lower(concat('%', cast(:location as string), '%'))) " +
+            "and (:employmentType is null or lower(j.employmentType) = lower(cast(:employmentType as string))) " +
+            "and (:provider is null or lower(j.provider) = lower(cast(:provider as string)))")
     Page<JobPosting> findNewSince(@Param("since") OffsetDateTime since, @Param("q") String q, @Param("location") String location,
                             @Param("employmentType") String employmentType, @Param("provider") String provider,
                             Pageable pageable);

@@ -13,7 +13,7 @@ public class GmailConfig {
     private String encryptionKey=""; private boolean enabled=false;
     private String classificationProvider="fallback";
     private String classificationApiKey="";
-    private String classificationModel="gemini-2.0-flash";
+    private String classificationModel="gemini-2.5-flash";
     private String classificationEndpoint="https://generativelanguage.googleapis.com/v1beta/models";
     private double classificationMinConfidence=0.80;
     private int classificationMaxRetries=2;
