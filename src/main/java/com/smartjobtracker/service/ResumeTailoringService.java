@@ -143,7 +143,8 @@ public class ResumeTailoringService {
                         textOpen = true;
                     }
                     if (lineFont != font) stream.setFont(lineFont, fontSize);
-                    stream.showText(sanitize(wrapped));
+                    try { stream.showText(sanitize(wrapped)); }
+                    catch (IllegalArgumentException undefinedGlyph) { stream.showText(asciiOnly(wrapped)); }
                     if (lineFont != font) stream.setFont(font, fontSize);
                     stream.newLineAtOffset(0, -leading);
                     y -= leading;
@@ -182,9 +183,23 @@ public class ResumeTailoringService {
     }
 
     /** PDFBox's standard 14 fonts only support WinAnsiEncoding -- strip anything outside it so showText() doesn't throw. */
+    /**
+     * PDFBox's standard 14 fonts only support WinAnsiEncoding, and the excluded range must cover
+     * more than "outside Latin-1": the C1 control block (0x80-0x9F / 128-159) sits inside 0-255
+     * but several of those code points (confirmed live: 0x87) have no glyph and make showText()
+     * throw. Icon-font glyphs mis-extracted from a PDF resume (phone/link icons etc.) land
+     * exactly in this range, so this isn't a hypothetical edge case.
+     */
     private String sanitize(String text) {
         StringBuilder result = new StringBuilder(text.length());
-        for (char c : text.toCharArray()) result.append(c < 32 || c > 255 ? '?' : c);
+        for (char c : text.toCharArray()) result.append(c < 32 || c > 255 || (c >= 128 && c <= 159) ? '?' : c);
+        return result.toString();
+    }
+
+    /** Strips to plain ASCII -- the guaranteed-safe fallback when even sanitize() misses an undefined glyph. */
+    private String asciiOnly(String text) {
+        StringBuilder result = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) result.append(c < 32 || c > 126 ? '?' : c);
         return result.toString();
     }
 

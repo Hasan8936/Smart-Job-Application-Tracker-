@@ -62,6 +62,26 @@ class ResumeTailoringServiceTest {
         assertEquals("%PDF", new String(pdf, 0, 4));
     }
 
+    @Test
+    void renderPdfSucceedsWithAC1ControlCharacterMisextractedFromAnIconFont() {
+        // The actual live failure: U+0087, a C1 control character PDFBox's standard Helvetica
+        // has no glyph for. These come from icon glyphs (phone/link symbols) that survive PDF
+        // text extraction as garbage control characters -- not a hypothetical input. Built via
+        // a numeric (char) cast rather than a literal escape or pasted character: both kept
+        // getting silently stripped somewhere in this authoring pipeline, itself a small
+        // illustration of exactly the kind of character that's easy to lose or mangle in transit.
+        String phoneIconGlyph = String.valueOf((char) 0x87);
+        ResumeVersion version = new ResumeVersion(); version.setId(2L); version.setUserId(3L);
+        version.setContent("JOHN DOE\n" + phoneIconGlyph + " +1 555-0100  john@example.com\nExperience\nBuilt things.");
+        ResumeVersionRepository versions = mock(ResumeVersionRepository.class); when(versions.findByIdAndUserId(2L, 3L)).thenReturn(Optional.of(version));
+        ResumeTailoringService service = service(mock(ResumeRepository.class), mock(TailoringSessionRepository.class), mock(TailoringSuggestionRepository.class), versions, new RuleBasedResumeTailoringProvider());
+
+        byte[] pdf = service.renderPdf(3L, 2L);
+
+        assertTrue(pdf.length > 100);
+        assertEquals("%PDF", new String(pdf, 0, 4));
+    }
+
     private ResumeTailoringService service(ResumeRepository resumes, TailoringSessionRepository sessions, TailoringSuggestionRepository suggestions, ResumeVersionRepository versions, ResumeTailoringProvider fallback) {
         return new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions, versions, new ObjectMapper(), fallback, mock(ResumeTailoringProvider.class), new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), new com.smartjobtracker.config.AiMatchingConfig());
     }
