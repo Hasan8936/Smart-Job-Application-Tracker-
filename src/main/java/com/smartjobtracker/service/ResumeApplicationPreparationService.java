@@ -113,14 +113,19 @@ public class ResumeApplicationPreparationService {
         return matcher.find() ? matcher.group().trim() : null;
     }
 
-    private static final Set<String> EMAIL_PROVIDER_DOMAINS = Set.of("gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "protonmail.com", "live.com", "aol.com");
-
+    /**
+     * A lookbehind at the domain's start isn't enough to keep this from matching a *suffix* of
+     * an email's domain (e.g. "gmail.com" rejected at "g", but the engine just retries starting
+     * at "m" and matches "mail.com" instead). The only fully reliable fix is to remove every
+     * email address from the text before searching for portfolio-looking URLs at all.
+     */
     private String firstNonSocialUrl(String text) {
-        Matcher matcher = PORTFOLIO_PATTERN.matcher(text);
+        String withoutEmails = EMAIL_PATTERN.matcher(text).replaceAll(" ");
+        Matcher matcher = PORTFOLIO_PATTERN.matcher(withoutEmails);
         while (matcher.find()) {
             String candidate = matcher.group().trim();
             String lower = candidate.toLowerCase(Locale.ROOT).replaceFirst("^https?://", "").replaceFirst("^www\\.", "");
-            if (lower.contains("github.com") || lower.contains("linkedin.com") || EMAIL_PROVIDER_DOMAINS.contains(lower)) continue;
+            if (lower.contains("github.com") || lower.contains("linkedin.com")) continue;
             return candidate;
         }
         return null;

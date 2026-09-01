@@ -34,6 +34,9 @@ class ResumeApplicationPreparationServiceTest {
 
         service.prepare(3L, new ApplicationPreparationDtos.PrepareRequest(2L, "Software Engineer role"));
 
-        verify(suggestions, never()).save(argThat(s -> s.getFieldType() == ApplicationFieldType.PORTFOLIO && "gmail.com".equalsIgnoreCase(s.getSuggestedValue())));
+        // This resume has no real portfolio link -- no PORTFOLIO suggestion should be saved at
+        // all. Asserting only "!= gmail.com" would have missed the actual regression (the fix
+        // originally still matched "mail.com", a *different* wrong string).
+        verify(suggestions, never()).save(argThat(s -> s.getFieldType() == ApplicationFieldType.PORTFOLIO));
     }
 }
