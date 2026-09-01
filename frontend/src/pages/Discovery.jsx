@@ -39,7 +39,10 @@ export default function Discovery() {
     try {
       setSyncing(true); setError(''); setSyncMessage('')
       const result = await discoverJobs()
-      setSyncMessage(`Synced ${result.synchronizedJobs} job${result.synchronizedJobs === 1 ? '' : 's'}.`)
+      const errors = result.providerErrors && Object.keys(result.providerErrors).length > 0
+        ? ` (${Object.entries(result.providerErrors).map(([provider, message]) => `${provider}: ${message}`).join('; ')})`
+        : ''
+      setSyncMessage(`Synced ${result.synchronizedJobs} job${result.synchronizedJobs === 1 ? '' : 's'}.${errors}`)
       setPage(0)
       await loadJobs()
       try { const refreshed = await listNewJobs(sessionSince ? { since: sessionSince, size: 1 } : { size: 1 }); setNewJobsCount(refreshed.totalElements || 0) } catch { /* badge refresh is best-effort */ }

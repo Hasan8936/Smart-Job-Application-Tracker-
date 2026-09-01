@@ -28,13 +28,14 @@ public class JobSyncService {
         this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor;
     }
     @Transactional
-    public int sync(JobQuery query) {
+    public SyncResult sync(JobQuery query) {
         if (providers.stream().noneMatch(JobProvider::isEnabled)) {
             throw new IllegalStateException(
                     "No job source is enabled. Set GREENHOUSE_ENABLED, LEVER_ENABLED, ASHBY_ENABLED, APIFY_ENABLED, "
                             + "or TELEGRAM_ENABLED (with the matching boards/sites/token/channels) before running discovery.");
         }
         int saved = 0;
+        java.util.Map<String, String> providerErrors = new java.util.LinkedHashMap<>();
         for (JobProvider provider : providers) {
             if (!provider.isEnabled()) continue;
             String queryKey = key(query);
@@ -54,10 +55,12 @@ public class JobSyncService {
                 log.warn("Job provider sync failed provider={} queryKey={}", provider.id(), queryKey, ex);
                 JobProviderSync sync = syncRepository.findByProviderAndQueryKey(provider.id(), queryKey).orElseGet(JobProviderSync::new);
                 sync.setProvider(provider.id()); sync.setQueryKey(queryKey); sync.setStatus("FAILED"); sync.setLastSyncedAt(OffsetDateTime.now()); syncRepository.save(sync);
+                providerErrors.put(provider.id(), ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
             }
         }
-        return saved;
+        return new SyncResult(saved, providerErrors);
     }
+    public record SyncResult(int saved, java.util.Map<String, String> providerErrors) {}
     private JobPosting upsert(JobPosting candidate) {
         JobPosting existing = postingRepository.findByProviderAndExternalId(candidate.getProvider(), candidate.getExternalId()).orElse(null);
         if (existing == null) existing = postingRepository.findByDedupeHash(candidate.getDedupeHash()).orElse(null);

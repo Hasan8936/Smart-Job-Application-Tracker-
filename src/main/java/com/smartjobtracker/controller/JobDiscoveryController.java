@@ -25,7 +25,8 @@ public class JobDiscoveryController {
     @PostMapping("/discover")
     public JobDtos.DiscoverResponse discover(@Valid @RequestBody(required = false) JobDtos.DiscoverRequest request) {
         JobDtos.DiscoverRequest value = request == null ? new JobDtos.DiscoverRequest(null, List.of(), List.of()) : request;
-        return new JobDtos.DiscoverResponse(syncService.sync(new JobQuery(value.keywords(), value.roles(), value.locations())));
+        JobSyncService.SyncResult result = syncService.sync(new JobQuery(value.keywords(), value.roles(), value.locations()));
+        return new JobDtos.DiscoverResponse(result.saved(), result.providerErrors());
     }
     @GetMapping
     public Page<JobDtos.JobSummary> list(@RequestParam(required = false) String q,
