@@ -46,7 +46,7 @@ public class ApifyJobProvider implements JobProvider {
                 + "/runs?token=" + config.getToken() + "&waitForFinish=60", input);
         String datasetId = run.path("data").path("defaultDatasetId").asText(null);
         if (datasetId == null || datasetId.isBlank()) throw new ProviderHttpClient.ProviderUnavailableException("Apify actor " + actor + " returned no dataset");
-        JsonNode items = http.get("https://api.apify.com/v2/datasets/" + datasetId + "/items?clean=true");
+        JsonNode items = http.get("https://api.apify.com/v2/datasets/" + datasetId + "/items?clean=true&token=" + config.getToken());
         java.util.List<ProviderJob> jobs = new java.util.ArrayList<>();
         for (JsonNode item : items) jobs.add(parse(item));
         return jobs;
