@@ -87,7 +87,7 @@ app:
     apify:
       enabled: ${APIFY_ENABLED:false}
       token: ${APIFY_TOKEN:}
-      actor: ${APIFY_ACTOR:}
+      actors: ${APIFY_ACTORS:}
     telegram:
       enabled: ${TELEGRAM_ENABLED:false}
       channels: ${TELEGRAM_CHANNELS:}

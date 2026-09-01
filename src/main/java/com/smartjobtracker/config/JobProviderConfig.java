@@ -44,11 +44,11 @@ public class JobProviderConfig {
 
     public static class ApifySettings extends ProviderSettings {
         private String token;
-        private String actor;
+        private List<String> actors = new ArrayList<>();
         public String getToken() { return token; }
         public void setToken(String value) { token = value; }
-        public String getActor() { return actor; }
-        public void setActor(String value) { actor = value; }
+        public List<String> getActors() { return actors; }
+        public void setActors(List<String> value) { actors = value; }
     }
 
     public static class TelegramSettings {
