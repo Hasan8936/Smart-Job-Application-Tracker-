@@ -87,8 +87,8 @@ public class GeminiClient {
                         "Gemini API is temporarily unavailable (" + e.getStatusCode().value() + "). Please try again shortly.",
                         HttpStatus.BAD_GATEWAY);
             }
-            String body = e.getResponseBodyAsString();
-            String detail = body == null || body.isBlank() ? "" : ": " + body.substring(0, Math.min(300, body.length()));
+            String responseBody = e.getResponseBodyAsString();
+            String detail = responseBody == null || responseBody.isBlank() ? "" : ": " + responseBody.substring(0, Math.min(300, responseBody.length()));
             throw new GeminiApiException(
                     "Gemini API request failed (" + e.getStatusCode().value() + ")" + detail,
                     HttpStatus.BAD_GATEWAY);
