@@ -51,7 +51,7 @@ public class JobActionService {
                 ? job.getTitle() + " at " + job.getCompany() : job.getDescription();
         String content;
         try { content = generateWithGemini(type, job, resumeText, jobDescription); }
-        catch (RuntimeException ex) { log.warn("Gemini generation failed for type={}, falling back to template", type, ex); content = fallback(type, job, resumeText); }
+        catch (RuntimeException ex) { log.warn("Gemini generation failed for type={}, falling back to template", type, ex); content = fallback(type, job, resumeText, ex); }
         GeneratedDocument document=new GeneratedDocument(); document.setUserId(userId); document.setJobPostingId(jobId); document.setType(type); document.setContent(content); return documents.save(document);
     }
 
@@ -88,13 +88,14 @@ public class JobActionService {
     }
 
     /** Used only if Gemini is unavailable/misconfigured -- still grounded in the actual resume text, just without AI-written prose. */
-    private String fallback(String type, JobPosting job, String resumeText) {
+    private String fallback(String type, JobPosting job, String resumeText, RuntimeException cause) {
         String snippet = resumeText.length() > 400 ? resumeText.substring(0, 400) + "..." : resumeText;
+        String reason = cause.getMessage() == null ? "unavailable" : cause.getMessage();
         return switch (type) {
             case "COVER_LETTER" -> "Dear Hiring Team,\n\nI am interested in the " + job.getTitle() + " opportunity at " + job.getCompany() + ". Relevant background from my resume:\n\n" + snippet + "\n\nPlease review my attached resume for the complete details.\n\nSincerely,\n[Your name]";
             case "COLD_EMAIL" -> "Subject: Interest in " + job.getTitle() + " at " + job.getCompany() + "\n\nHello,\n\nI am reaching out regarding the " + job.getTitle() + " role. Relevant background from my resume:\n\n" + snippet + "\n\nI would welcome the opportunity to discuss the position.\n\nBest,\n[Your name]";
-            case "INTERVIEW_QUESTIONS" -> "Interview questions for " + job.getTitle() + " at " + job.getCompany() + ":\n\n(AI generation is temporarily unavailable -- here are general prompts to prepare with:)\n1. Walk me through your resume and how it led you here.\n2. Which of your past projects is most relevant to this role, and why?\n3. What's a technical challenge from your experience you're proud of solving?\n4. Why this company and this role specifically?\n5. What questions do you have about the team and role?";
-            case "IMPROVE_RESUME" -> "Resume improvement notes for " + job.getTitle() + ":\n\n(AI generation is temporarily unavailable.) Review the job description and reorder your existing, verified experience so the most relevant items appear first. Do not add skills, projects, or experience that aren't already on your resume.";
+            case "INTERVIEW_QUESTIONS" -> "Interview questions for " + job.getTitle() + " at " + job.getCompany() + ":\n\n(AI generation failed -- " + reason + " -- here are general prompts to prepare with instead:)\n1. Walk me through your resume and how it led you here.\n2. Which of your past projects is most relevant to this role, and why?\n3. What's a technical challenge from your experience you're proud of solving?\n4. Why this company and this role specifically?\n5. What questions do you have about the team and role?";
+            case "IMPROVE_RESUME" -> "Resume improvement notes for " + job.getTitle() + ":\n\n(AI generation failed -- " + reason + ".) Review the job description and reorder your existing, verified experience so the most relevant items appear first. Do not add skills, projects, or experience that aren't already on your resume.";
             default -> throw new IllegalArgumentException("Unsupported document type");
         };
     }
