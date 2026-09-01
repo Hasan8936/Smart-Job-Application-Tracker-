@@ -41,7 +41,7 @@ public class ApifyJobProvider implements JobProvider {
         return new JobBatch(jobs, null);
     }
     private List<ProviderJob> runActor(String actor, JobQuery query) {
-        JsonNode input = mapper.createObjectNode().put("query", query.keywords() == null ? "" : query.keywords());
+        JsonNode input = buildInput(actor, query);
         JsonNode run = http.post("https://api.apify.com/v2/acts/" + actorId(actor)
                 + "/runs?token=" + config.getToken() + "&waitForFinish=60", input);
         String datasetId = run.path("data").path("defaultDatasetId").asText(null);
@@ -50,6 +50,29 @@ public class ApifyJobProvider implements JobProvider {
         java.util.List<ProviderJob> jobs = new java.util.ArrayList<>();
         for (JsonNode item : items) jobs.add(parse(item));
         return jobs;
+    }
+    /**
+     * Each configured actor has its own input schema -- there's no shared convention across
+     * third-party Apify scrapers. misceres/indeed-scraper requires position/location/country;
+     * valig/naukri-jobs-scraper takes keywords/location. Detected by actor slug since that's
+     * the only identifying information available here.
+     */
+    private JsonNode buildInput(String actor, JobQuery query) {
+        String keywords = query.keywords() == null || query.keywords().isBlank() ? "software engineer" : query.keywords();
+        String location = query.locations() == null || query.locations().isEmpty() ? null : query.locations().get(0);
+        com.fasterxml.jackson.databind.node.ObjectNode input = mapper.createObjectNode();
+        String lower = actor.toLowerCase();
+        if (lower.contains("indeed")) {
+            input.put("position", keywords);
+            input.put("location", location == null ? "India" : location);
+            input.put("country", "IN");
+        } else if (lower.contains("naukri")) {
+            input.put("keywords", keywords);
+            if (location != null) input.put("location", location);
+        } else {
+            input.put("query", keywords);
+        }
+        return input;
     }
     /**
      * Apify's REST API identifies an actor as either its raw ID or a tilde-separated
@@ -67,13 +90,47 @@ public class ApifyJobProvider implements JobProvider {
             && config.getActors() != null && !config.getActors().isEmpty(); }
     private ProviderJob parse(JsonNode item) {
         String id = first(item, "externalId", "id", "jobId");
-        String applyUrl = first(item, "applyUrl", "url", "jobUrl");
-        return new ProviderJob(id, first(item, "company", "companyName"), first(item, "title", "jobTitle"),
-                first(item, "location"), first(item, "employmentType"), first(item, "workMode"), applyUrl,
-                first(item, "postedAt", "datePosted"), first(item, "description", "descriptionText"),
+        String applyUrl = first(item, "applyUrl", "url", "jobUrl", "externalApplyLink");
+        return new ProviderJob(id, firstText(item, "company", "companyName"), first(item, "title", "jobTitle", "positionName"),
+                firstLocation(item), first(item, "employmentType", "jobType"), first(item, "workMode"), applyUrl,
+                first(item, "postedAt", "datePosted", "createdDate"), first(item, "description", "descriptionText"),
                 first(item, "logoUrl", "companyLogo"), integer(item, "salaryMin"), integer(item, "salaryMax"),
                 first(item, "salaryCurrency", "currency"), item.toString());
     }
     private String first(JsonNode item, String... names) { for (String name : names) if (item.hasNonNull(name)) return item.get(name).asText(); return null; }
+    /**
+     * Like first(), but for fields that some actors (e.g. valig/naukri-jobs-scraper's
+     * "company") represent as a nested object ({name, logo, address, ...}) rather than a
+     * plain string -- JsonNode.asText() on an object node silently returns "", which would
+     * otherwise fail the required-fields check and drop every job from that provider.
+     */
+    private String firstText(JsonNode item, String... names) {
+        for (String name : names) {
+            JsonNode node = item.get(name);
+            if (node == null || node.isNull()) continue;
+            if (node.isObject()) {
+                JsonNode nested = node.get("name");
+                if (nested != null && !nested.isNull() && !nested.asText().isBlank()) return nested.asText();
+                continue;
+            }
+            String text = node.asText();
+            if (!text.isBlank()) return text;
+        }
+        return null;
+    }
+    private String firstLocation(JsonNode item) {
+        JsonNode location = item.get("location");
+        if (location != null && location.isTextual() && !location.asText().isBlank()) return location.asText();
+        JsonNode locations = item.get("locations");
+        if (locations != null && locations.isArray() && !locations.isEmpty()) {
+            JsonNode entry = locations.get(0);
+            if (entry.isTextual()) return entry.asText();
+            if (entry.isObject()) {
+                JsonNode city = entry.hasNonNull("city") ? entry.get("city") : entry.hasNonNull("name") ? entry.get("name") : null;
+                if (city != null) return city.asText();
+            }
+        }
+        return null;
+    }
     private Integer integer(JsonNode item, String name) { return item.hasNonNull(name) && item.get(name).canConvertToInt() ? item.get(name).asInt() : null; }
 }
