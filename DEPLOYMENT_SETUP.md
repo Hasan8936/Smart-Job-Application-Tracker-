@@ -38,7 +38,7 @@ Render dashboard → your backend service (`smart-job-tracker-api-iflm`) → **E
 | `AI_MATCHING_MODEL` | `gemini-embedding-001` | Gemini embedding model |
 | `GMAIL_CLASSIFICATION_PROVIDER` | `fallback` | Set to `gemini` to enable structured email classification |
 | `GMAIL_CLASSIFICATION_API_KEY` | *(empty)* | Gemini key for email classification |
-| `GMAIL_CLASSIFICATION_MODEL` | `gemini-2.5-flash` | Structured classification model (`gemini-2.0-flash` was shut down by Google — update this var on Render if it's still set to the old value) |
+| `GMAIL_CLASSIFICATION_MODEL` | `gemini-3.6-flash` | Structured classification model (Google has retired older Gemini versions for new API keys/projects more than once — if this starts 404ing again, check https://ai.google.dev/gemini-api/docs/models for the current model list and update this var on Render) |
 | `GMAIL_CLASSIFICATION_MIN_CONFIDENCE` | `0.80` | Below this threshold, application updates require review |
 | `GREENHOUSE_ENABLED` | `false` | Enable configured official Greenhouse boards |
 | `GREENHOUSE_BOARDS` | *(empty)* | Comma-separated public Greenhouse board slugs |
