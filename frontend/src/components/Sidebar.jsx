@@ -14,12 +14,19 @@ const links = [
   { to: '/reminders', label: 'Reminders', icon: BellRing },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ variant = 'desktop', onNavigate }) {
   const { user, logout } = useContext(AuthContext)
   const name = user?.profile?.name || user?.profile?.email || 'Account'
+  const isMobile = variant === 'mobile'
 
   return (
-    <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-surface border-r border-line">
+    <aside
+      className={
+        isMobile
+          ? 'flex w-72 max-w-[85vw] h-full flex-col bg-surface border-r border-line'
+          : 'hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-surface border-r border-line'
+      }
+    >
       <div className="flex items-center gap-2 px-6 h-16 border-b border-line">
         <BrandLogo className="w-40 h-auto" />
       </div>
@@ -30,6 +37,7 @@ export default function Sidebar() {
             key={to}
             to={to}
             end={end}
+            onClick={onNavigate}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-full text-sm transition-colors ${
                 isActive
@@ -47,6 +55,7 @@ export default function Sidebar() {
       <div className="px-3 py-4 border-t border-line">
         <NavLink
           to="/profile"
+          onClick={onNavigate}
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2 rounded-full text-sm mb-1 ${
               isActive ? 'bg-accent-soft text-accent' : 'text-ink-soft hover:text-ink hover:bg-mist'
