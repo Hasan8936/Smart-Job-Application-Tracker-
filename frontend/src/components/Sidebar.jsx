@@ -80,7 +80,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
         )}
       </div>
 
-      <nav className={`flex-1 py-5 space-y-1 overflow-x-hidden ${isCollapsed ? 'px-2' : 'px-3'}`}>
+      <nav className={`flex-1 py-5 space-y-1 ${isCollapsed ? 'px-2' : 'px-3'}`}>
         {links.map(({ to, label, icon: Icon, end }) => (
           <NavPill key={to} to={to} end={end} onClick={onNavigate} collapsed={isCollapsed} Icon={Icon}>
             {label}
