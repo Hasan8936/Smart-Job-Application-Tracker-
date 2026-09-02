@@ -1,12 +1,26 @@
-<svg width="64" height="64" viewBox="0 0 160 164" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
   <title id="title">Smart Job Tracker</title>
   <defs>
-    <linearGradient id="hexGrad" x1="21" y1="14" x2="139" y2="150" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#6D5DF6"/>
-      <stop offset="0.55" stop-color="#9B5DE5"/>
-      <stop offset="1" stop-color="#EC5FA0"/>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1b1530"/>
+      <stop offset="55%" stop-color="#241a3d"/>
+      <stop offset="100%" stop-color="#12101c"/>
     </linearGradient>
+    <linearGradient id="ringGrad" x1="8" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f472c9"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <radialGradient id="orbGrad" cx="0.32" cy="0.28" r="0.85">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="16%" stop-color="#ffd9f5"/>
+      <stop offset="42%" stop-color="#f472c9"/>
+      <stop offset="70%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </radialGradient>
   </defs>
-  <polygon points="80,14 139,48 139,116 80,150 21,116 21,48" fill="url(#hexGrad)"/>
-  <polygon points="80,48 109.5,65 109.5,99 80,116 50.5,99 50.5,65" fill="#ffffff" opacity="0.22"/>
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)"/>
+  <path d="M 46.5 39.5 A 16.5 16.5 0 1 1 46.5 24.5" fill="none" stroke="url(#ringGrad)" stroke-width="4.3" stroke-linecap="round"/>
+  <circle cx="46.5" cy="24.5" r="6.8" fill="url(#orbGrad)"/>
+  <circle cx="53.5" cy="32" r="1.9" fill="#a855f7" opacity="0.55"/>
 </svg>

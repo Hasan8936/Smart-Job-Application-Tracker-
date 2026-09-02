@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import AuthLayout from '../components/AuthLayout'
+import WavyHero from '../components/WavyHero'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api').replace(/\/api\/?$/, '')
 
@@ -54,7 +55,9 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout heading="Welcome back" copy="Sign in to continue managing your applications.">
+    <>
+    <WavyHero scrollTargetId="login" />
+    <AuthLayout id="login" heading="Welcome back" copy="Sign in to continue managing your applications.">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className="block text-xs font-medium text-muted mb-1.5">Email address</label>
@@ -115,7 +118,7 @@ export default function Login() {
 
       <div className="flex items-center gap-3 my-5">
         <div className="h-px flex-1 bg-line" />
-        <span className="text-xs text-muted">or</span>
+        <span className="text-xs text-muted">Or continue with</span>
         <div className="h-px flex-1 bg-line" />
       </div>
 
@@ -130,6 +133,7 @@ export default function Login() {
         <Link to="/register" className="text-accent font-medium hover:text-accent-dark">Create an account</Link>
       </p>
     </AuthLayout>
+    </>
   )
 }
 

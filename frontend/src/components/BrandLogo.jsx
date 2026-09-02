@@ -1,17 +1,31 @@
 import React from 'react'
 
-function HexMark({ id }) {
+function OrbitMark({ id }) {
   return (
     <>
       <defs>
-        <linearGradient id={`hexGrad-${id}`} x1="21" y1="14" x2="139" y2="150" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#6D5DF6" />
-          <stop offset="0.55" stopColor="#9B5DE5" />
-          <stop offset="1" stopColor="#EC5FA0" />
+        <linearGradient id={`ringGrad-${id}`} x1="4" y1="6" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#f472c9" />
+          <stop offset="50%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
+        <radialGradient id={`orbGrad-${id}`} cx="0.32" cy="0.28" r="0.85">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="16%" stopColor="#ffd9f5" />
+          <stop offset="42%" stopColor="#f472c9" />
+          <stop offset="70%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#38bdf8" />
+        </radialGradient>
       </defs>
-      <polygon points="80,14 139,48 139,116 80,150 21,116 21,48" fill={`url(#hexGrad-${id})`} />
-      <polygon points="80,48 109.5,65 109.5,99 80,116 50.5,99 50.5,65" fill="#ffffff" opacity="0.22" />
+      <path
+        d="M 30.8 25.2 A 13 13 0 1 1 30.8 14.8"
+        fill="none"
+        stroke={`url(#ringGrad-${id})`}
+        strokeWidth="3.4"
+        strokeLinecap="round"
+      />
+      <circle cx="30.8" cy="14.8" r="4.6" fill={`url(#orbGrad-${id})`} />
+      <circle cx="35.4" cy="20" r="1.5" fill="#a855f7" opacity="0.55" />
     </>
   )
 }
@@ -21,21 +35,23 @@ export default function BrandLogo({ className = '', variant = 'light', markOnly 
 
   if (markOnly) {
     return (
-      <svg viewBox="0 0 160 164" className={className} role="img" aria-label="Smart Job Tracker">
-        <HexMark id="mark" />
+      <svg viewBox="0 0 40 40" className={className} role="img" aria-label="Smart Job Tracker">
+        <OrbitMark id="mark" />
       </svg>
     )
   }
 
   return (
-    <svg viewBox="0 0 640 164" className={className} role="img" aria-label="Smart Job Tracker">
-      <HexMark id="full" />
+    <svg viewBox="0 0 520 100" className={className} role="img" aria-label="Smart Job Tracker">
+      <g transform="translate(8,10) scale(2)">
+        <OrbitMark id="full" />
+      </g>
       <text
-        x="176"
-        y="98"
+        x="110"
+        y="66"
         fontFamily="'DM Sans', 'Inter', sans-serif"
         fontWeight="700"
-        fontSize="52"
+        fontSize="38"
         letterSpacing="-1"
         fill={wordmarkFill}
       >
