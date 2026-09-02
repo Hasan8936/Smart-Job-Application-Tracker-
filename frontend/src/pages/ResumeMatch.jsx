@@ -95,7 +95,7 @@ export default function ResumeMatch() {
               </label>
               <button
                 disabled={!file || uploading}
-                className="px-3.5 py-2.5 rounded-full bg-accent text-white hover:bg-accent-dark text-sm font-medium disabled:opacity-40 shrink-0"
+                className="px-3.5 py-2.5 rounded-full btn-gradient text-sm font-medium disabled:opacity-40 shrink-0"
               >
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
@@ -141,7 +141,7 @@ export default function ResumeMatch() {
             <button
               onClick={doMatch}
               disabled={matching}
-              className="w-full px-4 py-2.5 rounded-full bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark disabled:opacity-50"
+              className="w-full px-4 py-2.5 rounded-full btn-gradient text-sm font-semibold disabled:opacity-50"
             >
               {matching ? 'Scoring…' : 'Compute match score'}
             </button>

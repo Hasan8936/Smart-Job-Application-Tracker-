@@ -1,5 +1,12 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+<svg width="64" height="64" viewBox="0 0 160 164" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
   <title id="title">Smart Job Tracker</title>
-  <rect width="64" height="64" rx="16" fill="#918df6"/>
-  <path d="M18 33L27 42L46 21" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <defs>
+    <linearGradient id="hexGrad" x1="21" y1="14" x2="139" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6D5DF6"/>
+      <stop offset="0.55" stop-color="#9B5DE5"/>
+      <stop offset="1" stop-color="#EC5FA0"/>
+    </linearGradient>
+  </defs>
+  <polygon points="80,14 139,48 139,116 80,150 21,116 21,48" fill="url(#hexGrad)"/>
+  <polygon points="80,48 109.5,65 109.5,99 80,116 50.5,99 50.5,65" fill="#ffffff" opacity="0.22"/>
 </svg>

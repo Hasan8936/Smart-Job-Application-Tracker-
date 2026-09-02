@@ -161,7 +161,7 @@ export default function Reminders() {
             {reminderError && <p className="text-sm text-status-rejected">{reminderError}</p>}
             <button
               disabled={saving}
-              className="w-full inline-flex items-center justify-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50"
             >
               <Plus size={15} /> {saving ? 'Saving…' : 'Add reminder'}
             </button>
@@ -211,7 +211,7 @@ export default function Reminders() {
           <label className="sm:col-span-2 text-xs font-medium text-muted">Timezone<input className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={preferences.timezone} onChange={(e) => setPreferences({ ...preferences, timezone: e.target.value })} /></label>
           {[['interviewsEnabled', 'Interviews'], ['assessmentsEnabled', 'Assessments'], ['deadlinesEnabled', 'Deadlines'], ['followUpsEnabled', 'Follow-ups']].map(([key, label]) => <label key={key} className="flex items-center gap-2 text-sm text-ink"><input type="checkbox" checked={preferences[key]} onChange={(e) => setPreferences({ ...preferences, [key]: e.target.checked })} />{label}</label>)}
           {[['interviewOffsetsHours', 'Interview offsets (hours)'], ['assessmentOffsetsHours', 'Assessment offsets (hours)'], ['deadlineOffsetsHours', 'Deadline offsets (hours)'], ['followUpOffsetsHours', 'Follow-up offsets (hours)']].map(([key, label]) => <label key={key} className="text-xs font-medium text-muted">{label}<input className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={offsetText(preferences[key])} onChange={(e) => setPreferences({ ...preferences, [key]: parseOffsets(e.target.value) })} /></label>)}
-          <button disabled={preferenceSaving} className="sm:col-span-2 lg:col-span-4 w-fit inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50">{preferenceSaving ? 'Saving...' : 'Save preferences'}</button>
+          <button disabled={preferenceSaving} className="sm:col-span-2 lg:col-span-4 w-fit inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50">{preferenceSaving ? 'Saving...' : 'Save preferences'}</button>
         </form>
       </section>}
       {whatsapp && <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
@@ -219,7 +219,7 @@ export default function Reminders() {
         <form onSubmit={saveWhatsapp} className="grid sm:grid-cols-2 gap-3">
           <label className="text-xs font-medium text-muted">Phone number (E.164)<input required pattern="\\+[1-9][0-9]{7,14}" className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={whatsapp.phoneE164 || ''} onChange={(e) => setWhatsapp({ ...whatsapp, phoneE164: e.target.value })} placeholder="+15551234567" /></label>
           <label className="flex items-center gap-2 text-sm text-ink sm:pt-6"><input type="checkbox" checked={Boolean(whatsapp.whatsappOptIn)} onChange={(e) => setWhatsapp({ ...whatsapp, whatsappOptIn: e.target.checked })} />I agree to receive Smart Job Tracker WhatsApp notifications.</label>
-          <button className="w-fit inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2.5 rounded-full hover:bg-accent-dark">Save consent</button>
+          <button className="w-fit inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full">Save consent</button>
           {whatsappError && <p className="sm:col-span-2 text-sm text-status-rejected">{whatsappError}</p>}
         </form>
         <div className="mt-4 flex flex-wrap items-end gap-3">

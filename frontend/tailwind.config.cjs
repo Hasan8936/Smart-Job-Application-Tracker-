@@ -20,18 +20,19 @@ module.exports = {
                 fog: '#e8e8e8',
                 linen: '#fafafa',
                 accent: {
-                    DEFAULT: '#918df6', // lavender
-                    dark: '#7a75f0',
+                    DEFAULT: '#6D5DF6', // violet
+                    dark: '#5A4AE3',
                     ink: '#ffffff',
-                    soft: '#efeefe',
+                    soft: '#EEECFE',
                 },
                 lavender: '#918df6',
-                iris: '#9580ff',
+                iris: '#9B5DE5',
+                pink: '#EC5FA0',
                 mint: '#33c758',
                 mintWash: '#def6e4',
                 amber: '#ffa600',
                 sky: '#2c78fc',
-                magenta: '#d6409f',
+                magenta: '#EC5FA0',
                 ember: '#ff3e00',
                 status: {
                     applied: '#666666',
@@ -60,9 +61,13 @@ module.exports = {
                 card: '0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02)',
                 pop: '0 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.06)',
                 subtle: '0 1px 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.06)',
+                soft: '0 4px 24px rgba(24, 25, 37, 0.06)',
+                glow: '0 12px 24px -8px rgba(109, 93, 246, 0.45)',
+                floaty: '0 20px 45px -12px rgba(109, 93, 246, 0.35)',
             },
             borderRadius: {
                 xl2: '1rem',
+                xl3: '1.5rem',
             },
         },
     },

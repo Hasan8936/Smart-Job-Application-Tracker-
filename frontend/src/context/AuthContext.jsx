@@ -1,14 +1,15 @@
 import React, { createContext, useState, useEffect } from 'react'
 import api from '../api/axios'
+import { getToken, setToken, clearToken } from '../lib/tokenStorage'
 
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }){
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(() => !!localStorage.getItem('token'))
+  const [loading, setLoading] = useState(() => !!getToken())
 
   useEffect(()=>{
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       // set token immediately for axios interceptor, then fetch profile
       setUser({ token })
@@ -22,21 +23,21 @@ export function AuthProvider({ children }){
       setUser({ token, profile: res.data })
     }catch(err){
       // invalid token, or /users/me itself failed (network, CORS, 404, 500, ...)
-      localStorage.removeItem('token')
+      clearToken()
       setUser(null)
       throw err
     }
   }
 
-  const login = async (email, password) => {
+  const login = async (email, password, remember = true) => {
     const res = await api.post('/auth/login', { email, password })
-    localStorage.setItem('token', res.data.token)
+    setToken(res.data.token, remember)
     await fetchProfile(res.data.token)
     return res
   }
 
   const loginWithToken = async (token) => {
-    localStorage.setItem('token', token)
+    setToken(token, true)
     await fetchProfile(token)
   }
 
@@ -45,7 +46,7 @@ export function AuthProvider({ children }){
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    clearToken()
     setUser(null)
   }
 

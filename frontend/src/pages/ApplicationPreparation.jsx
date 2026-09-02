@@ -46,7 +46,7 @@ export default function ApplicationPreparation() {
           </select>
           <textarea required rows={10} className="w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm resize-none" placeholder="Paste the target job description" value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} />
           {error && <p className="text-sm text-status-rejected">{error}</p>}
-          <button disabled={busy} className="w-full inline-flex items-center justify-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50"><ClipboardCheck size={15} />{busy ? 'Preparing...' : 'Prepare for review'}</button>
+          <button disabled={busy} className="w-full inline-flex items-center justify-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50"><ClipboardCheck size={15} />{busy ? 'Preparing...' : 'Prepare for review'}</button>
         </form>
       </section>
       <section className="lg:col-span-2 space-y-4">

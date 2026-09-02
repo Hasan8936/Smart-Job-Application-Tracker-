@@ -7,10 +7,19 @@ import StatCard from '../components/StatCard'
 import PipelineBar from '../components/PipelineBar'
 import ApplicationCard from '../components/ApplicationCard'
 import ApplicationDrawer from '../components/ApplicationDrawer'
+import ScoreRing from '../components/ScoreRing'
+import TopCompanies from '../components/TopCompanies'
 import { AuthContext } from '../context/AuthContext'
 import { getJob, listJobs, readJobActions } from '../api/jobs'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
+
+function timeGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 const emptyForm = { companyName: '', roleTitle: '', jobDescription: '', status: 'APPLIED', appliedDate: '' }
 
@@ -94,34 +103,49 @@ export default function Dashboard() {
 
   return (
     <Layout
-      title={firstName ? `Welcome back, ${firstName}` : 'Dashboard'}
+      title={firstName ? `${timeGreeting()}, ${firstName}! 👋` : 'Dashboard'}
       subtitle="Here's where your search stands today"
       actions={
         <button
           onClick={() => { setForm(emptyForm); setDrawerOpen(true) }}
-          className="inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-3.5 py-2 rounded-full hover:bg-accent-dark"
+          className="btn-gradient inline-flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-full shadow-glow"
         >
           <Plus size={15} /> Add application
         </button>
       }
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total applications" value={total} icon={Briefcase} accent />
-        <StatCard label="Interviews" value={interviews} icon={MessagesSquare} />
-        <StatCard label="Offers" value={offers} icon={PartyPopper} />
-        <StatCard label="Rejections" value={rejections} icon={XCircle} />
+        <StatCard label="Total applications" value={total} icon={Briefcase} tone="violet" />
+        <StatCard label="Interviews" value={interviews} icon={MessagesSquare} tone="sky" />
+        <StatCard label="Offers" value={offers} icon={PartyPopper} tone="mint" />
+        <StatCard label="Rejections" value={rejections} icon={XCircle} tone="ember" />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <StatCard label="Total jobs" value={jobs.length || '—'} icon={Search} />
-        <StatCard label="Recommended jobs" value={jobs.filter((job) => (job.matchScore || 0) >= 70).length || '—'} icon={Sparkles} />
-        <StatCard label="Average match" value={averageMatch == null ? '—' : `${averageMatch}%`} icon={Sparkles} />
-        <StatCard label="Saved jobs" value={savedJobs || '—'} icon={Bookmark} />
-        <StatCard label="Applied jobs" value={appliedJobs || '—'} icon={CheckCircle2} />
-      </div>
-
-      <div className="mb-6">
+      <div className="grid lg:grid-cols-3 gap-4 mb-6">
         <PipelineBar applications={applications} />
+
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5 flex flex-col items-center text-center">
+          <h2 className="font-display text-[15px] text-ink self-start mb-2">Resume match</h2>
+          {averageMatch == null ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-4">
+              <p className="text-sm text-muted max-w-[16rem]">Upload a resume to see how well it matches your recommended jobs.</p>
+            </div>
+          ) : (
+            <ScoreRing value={averageMatch} size={112} />
+          )}
+          <Link to="/resume-match" className="btn-gradient mt-3 w-full text-center text-xs font-medium py-2 rounded-full">
+            View full insights
+          </Link>
+        </div>
+
+        <TopCompanies applications={applications} />
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total jobs" value={jobs.length || '—'} icon={Search} tone="sky" />
+        <StatCard label="Recommended jobs" value={jobs.filter((job) => (job.matchScore || 0) >= 70).length || '—'} icon={Sparkles} tone="violet" />
+        <StatCard label="Saved jobs" value={savedJobs || '—'} icon={Bookmark} tone="amber" />
+        <StatCard label="Applied jobs" value={appliedJobs || '—'} icon={CheckCircle2} tone="mint" />
       </div>
 
       <div className="flex items-center justify-between mb-3">
@@ -145,7 +169,7 @@ export default function Dashboard() {
           <p className="text-sm text-muted mb-4">Add the first role you've applied to — it takes a few seconds.</p>
           <button
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2 rounded-full hover:bg-accent-dark"
+            className="btn-gradient inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full shadow-glow"
           >
             <Plus size={15} /> Add application
           </button>

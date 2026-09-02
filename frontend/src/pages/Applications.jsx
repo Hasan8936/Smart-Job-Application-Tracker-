@@ -90,7 +90,7 @@ export default function Applications() {
       actions={
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-3.5 py-2 rounded-full hover:bg-accent-dark"
+          className="inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-3.5 py-2 rounded-full"
         >
           <Plus size={15} /> Add application
         </button>

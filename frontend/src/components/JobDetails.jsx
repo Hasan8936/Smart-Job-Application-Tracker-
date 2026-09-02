@@ -22,7 +22,7 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
         {job.requiredSkills?.length > 0 && <SkillGroup label="Required skills" skills={job.requiredSkills} />}
         {job.preferredSkills?.length > 0 && <SkillGroup label="Preferred skills" skills={job.preferredSkills} />}
         <div className="mt-6 flex flex-wrap gap-2">
-          <a href={job.applyUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-accent text-white hover:bg-accent-dark rounded-full px-4 py-2.5 text-sm font-medium"><ExternalLink size={15} /> Open official application</a>
+          <a href={job.applyUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 btn-gradient rounded-full px-4 py-2.5 text-sm font-medium"><ExternalLink size={15} /> Open official application</a>
           {onGenerate && <button onClick={() => onGenerate('COVER_LETTER')} className="inline-flex items-center gap-2 border border-line rounded-full px-3 py-2.5 text-sm text-ink-soft"><FileText size={15} /> Cover letter</button>}
           {onGenerate && <><button onClick={() => onGenerate('COLD_EMAIL')} className="inline-flex items-center gap-2 border border-line rounded-full px-3 py-2.5 text-sm text-ink-soft"><Mail size={15} /> Cold email</button>
           <button onClick={() => onGenerate('INTERVIEW_QUESTIONS')} className="inline-flex items-center gap-2 border border-line rounded-full px-3 py-2.5 text-sm text-ink-soft"><MessageSquare size={15} /> Interview questions</button>

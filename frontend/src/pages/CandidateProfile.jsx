@@ -114,7 +114,7 @@ export default function CandidateProfile() {
       <button
         onClick={doSave}
         disabled={saving || extracting || loading}
-        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full btn-gradient text-sm font-semibold disabled:opacity-50"
       >
         <Save size={15} /> {saving ? 'Saving…' : 'Save changes'}
       </button>

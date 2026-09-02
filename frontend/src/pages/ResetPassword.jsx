@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Lock } from 'lucide-react'
 import api from '../api/axios'
 import AuthLayout from '../components/AuthLayout'
 
@@ -32,10 +33,10 @@ export default function ResetPassword() {
     <AuthLayout heading={done ? 'Password updated' : 'Set a new password'} copy={done ? 'You can now sign in with your new password.' : 'Choose a new password for your account.'}>
       {done ? <Link to="/login" className="block text-center text-sm text-ink font-medium">Go to sign in</Link> : (
         <form onSubmit={submit} className="space-y-4">
-          <div><label className="block text-xs font-medium text-muted mb-1.5">New password</label><input type="password" required minLength="8" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm" /></div>
-          <div><label className="block text-xs font-medium text-muted mb-1.5">Confirm password</label><input type="password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm" /></div>
+          <div><label className="block text-xs font-medium text-muted mb-1.5">New password</label><div className="relative"><Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" /><input type="password" required minLength="8" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm" /></div></div>
+          <div><label className="block text-xs font-medium text-muted mb-1.5">Confirm password</label><div className="relative"><Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" /><input type="password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm" /></div></div>
           {error && <p className="text-sm text-status-rejected">{error}</p>}
-          <button disabled={loading} className="w-full bg-accent text-accent-ink text-sm font-medium py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50">{loading ? 'Updating...' : 'Update password'}</button>
+          <button disabled={loading} className="btn-gradient w-full text-sm font-medium py-2.5 rounded-full shadow-glow disabled:opacity-50">{loading ? 'Updating...' : 'Update password'}</button>
         </form>
       )}
     </AuthLayout>

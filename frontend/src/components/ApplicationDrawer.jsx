@@ -86,7 +86,7 @@ export default function ApplicationDrawer({ open, onClose, form, setForm, onSubm
           <button
             onClick={onSubmit}
             type="button"
-            className="flex-1 px-4 py-2.5 rounded-full bg-accent text-accent-ink text-sm font-medium hover:bg-accent-dark"
+            className="flex-1 px-4 py-2.5 rounded-full btn-gradient text-sm font-medium"
           >
             {isEditing ? 'Save changes' : 'Add application'}
           </button>

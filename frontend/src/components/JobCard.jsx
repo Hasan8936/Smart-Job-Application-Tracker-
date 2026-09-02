@@ -46,7 +46,7 @@ export default function JobCard({ job, action, onAction, onOpen }) {
           <button onClick={() => onAction(job.id, 'APPLIED')} className={`h-10 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 border ${action === 'APPLIED' ? 'bg-status-offerSoft border-status-offer text-status-offer' : 'border-line text-ink'}`}>
             <Check size={14} /> {action === 'APPLIED' ? 'Applied' : 'Mark applied'}
           </button>
-          <a href={job.applyUrl} target="_blank" rel="noreferrer" title="Open official application" className="h-10 w-10 rounded-full flex items-center justify-center bg-accent text-white hover:bg-accent-dark">
+          <a href={job.applyUrl} target="_blank" rel="noreferrer" title="Open official application" className="h-10 w-10 rounded-full flex items-center justify-center btn-gradient">
             <ExternalLink size={15} />
           </a>
         </div>
