@@ -2,12 +2,25 @@ import React, { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import Sidebar from './Sidebar'
 
+const COLLAPSE_KEY = 'sidebar-collapsed'
+
 export default function Layout({ title, subtitle, actions, children }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1' } catch { return false }
+  })
+
+  function toggleCollapsed() {
+    setCollapsed((current) => {
+      const next = !current
+      try { localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0') } catch { /* storage unavailable */ }
+      return next
+    })
+  }
 
   return (
     <div className="min-h-screen bg-paper overflow-x-hidden">
-      <Sidebar />
+      <Sidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
 
       {/* mobile drawer */}
       {mobileOpen && (
@@ -26,7 +39,7 @@ export default function Layout({ title, subtitle, actions, children }) {
         </div>
       )}
 
-      <div className="md:pl-60">
+      <div className={`transition-[padding] duration-200 ${collapsed ? 'md:pl-20' : 'md:pl-60'}`}>
         <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-8 h-16">
             <button
