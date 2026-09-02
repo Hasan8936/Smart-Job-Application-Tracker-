@@ -9,7 +9,7 @@ export default function AuthLayout({ heading, copy, children }) {
     <div className="min-h-screen grid lg:grid-cols-2 bg-paper">
       <div className="hidden lg:flex flex-col justify-between bg-ink text-white p-10">
         <div>
-          <BrandLogo className="w-56 h-auto" />
+          <BrandLogo className="w-56 h-auto" variant="dark" />
         </div>
 
         <div>

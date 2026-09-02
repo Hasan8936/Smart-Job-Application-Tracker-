@@ -11,7 +11,7 @@ export default function ApplicationDrawer({ open, onClose, form, setForm, onSubm
       <div className="relative w-full max-w-md h-full bg-surface shadow-pop flex flex-col">
         <div className="flex items-center justify-between px-6 h-16 border-b border-line">
           <h2 className="font-display text-lg text-ink">{isEditing ? 'Edit application' : 'Add application'}</h2>
-          <button onClick={onClose} className="h-11 w-11 sm:h-8 sm:w-8 -mr-2 sm:mr-0 rounded-lg hover:bg-paper flex items-center justify-center text-muted">
+          <button onClick={onClose} className="h-11 w-11 sm:h-8 sm:w-8 -mr-2 sm:mr-0 rounded-full hover:bg-paper flex items-center justify-center text-muted">
             <X size={18} />
           </button>
         </div>
@@ -79,14 +79,14 @@ export default function ApplicationDrawer({ open, onClose, form, setForm, onSubm
           <button
             onClick={onClose}
             type="button"
-            className="flex-1 px-4 py-2.5 rounded-lg border border-line text-sm font-medium text-ink hover:bg-paper"
+            className="flex-1 px-4 py-2.5 rounded-full border border-line text-sm font-medium text-ink-soft hover:bg-paper"
           >
             Cancel
           </button>
           <button
             onClick={onSubmit}
             type="button"
-            className="flex-1 px-4 py-2.5 rounded-lg bg-ink text-white text-sm font-medium hover:bg-ink-soft"
+            className="flex-1 px-4 py-2.5 rounded-full bg-accent text-accent-ink text-sm font-medium hover:bg-accent-dark"
           >
             {isEditing ? 'Save changes' : 'Add application'}
           </button>

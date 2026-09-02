@@ -29,7 +29,7 @@ export default function ApplicationCard({ app, onEdit, onDelete }) {
         {onEdit && (
           <button
             onClick={() => onEdit(app)}
-            className="h-11 w-11 sm:h-8 sm:w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-ink hover:border-ink/30"
+            className="h-11 w-11 sm:h-8 sm:w-8 rounded-full border border-line bg-surface flex items-center justify-center text-muted hover:text-ink hover:border-ink/30"
             aria-label={`Edit ${app.companyName} application`}
           >
             <Pencil size={14} />
@@ -38,7 +38,7 @@ export default function ApplicationCard({ app, onEdit, onDelete }) {
         {onDelete && (
           <button
             onClick={() => onDelete(app)}
-            className="h-11 w-11 sm:h-8 sm:w-8 rounded-lg border border-line bg-surface flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
+            className="h-11 w-11 sm:h-8 sm:w-8 rounded-full border border-line bg-surface flex items-center justify-center text-muted hover:text-status-rejected hover:border-status-rejected/40"
             aria-label={`Delete ${app.companyName} application`}
           >
             <Trash2 size={14} />

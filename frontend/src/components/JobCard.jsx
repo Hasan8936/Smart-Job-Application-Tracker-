@@ -37,16 +37,16 @@ export default function JobCard({ job, action, onAction, onOpen }) {
       <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-line">
         <span className="text-xs text-muted">{job.postedAt ? new Date(job.postedAt).toLocaleDateString() : 'Posted date unavailable'}</span>
         <div className="flex items-center gap-1.5">
-          <button title="Save job" onClick={() => onAction(job.id, 'SAVED')} className={`h-10 w-10 rounded-lg flex items-center justify-center border ${action === 'SAVED' ? 'bg-accent border-accent' : 'border-line'}`}>
+          <button title="Save job" onClick={() => onAction(job.id, 'SAVED')} className={`h-10 w-10 rounded-full flex items-center justify-center border ${action === 'SAVED' ? 'bg-accent border-accent text-white' : 'border-line'}`}>
             <Star size={16} fill={action === 'saved' ? 'currentColor' : 'none'} />
           </button>
-          <button title="Bookmark job" onClick={() => onAction(job.id, 'BOOKMARKED')} className={`h-10 w-10 rounded-lg flex items-center justify-center border ${action === 'BOOKMARKED' ? 'bg-paper border-ink' : 'border-line'}`}>
+          <button title="Bookmark job" onClick={() => onAction(job.id, 'BOOKMARKED')} className={`h-10 w-10 rounded-full flex items-center justify-center border ${action === 'BOOKMARKED' ? 'bg-paper border-ink' : 'border-line'}`}>
             <Bookmark size={16} fill={action === 'bookmarked' ? 'currentColor' : 'none'} />
           </button>
-          <button onClick={() => onAction(job.id, 'APPLIED')} className={`h-10 px-3 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 border ${action === 'APPLIED' ? 'bg-status-offerSoft border-status-offer text-status-offer' : 'border-line text-ink'}`}>
+          <button onClick={() => onAction(job.id, 'APPLIED')} className={`h-10 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 border ${action === 'APPLIED' ? 'bg-status-offerSoft border-status-offer text-status-offer' : 'border-line text-ink'}`}>
             <Check size={14} /> {action === 'APPLIED' ? 'Applied' : 'Mark applied'}
           </button>
-          <a href={job.applyUrl} target="_blank" rel="noreferrer" title="Open official application" className="h-10 w-10 rounded-lg flex items-center justify-center bg-ink text-white">
+          <a href={job.applyUrl} target="_blank" rel="noreferrer" title="Open official application" className="h-10 w-10 rounded-full flex items-center justify-center bg-accent text-white hover:bg-accent-dark">
             <ExternalLink size={15} />
           </a>
         </div>

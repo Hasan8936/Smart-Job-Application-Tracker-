@@ -99,7 +99,7 @@ export default function Dashboard() {
       actions={
         <button
           onClick={() => { setForm(emptyForm); setDrawerOpen(true) }}
-          className="inline-flex items-center gap-1.5 bg-ink text-white text-sm font-medium px-3.5 py-2 rounded-lg hover:bg-ink-soft"
+          className="inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-3.5 py-2 rounded-full hover:bg-accent-dark"
         >
           <Plus size={15} /> Add application
         </button>
@@ -126,14 +126,14 @@ export default function Dashboard() {
 
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg text-ink">Recent applications</h2>
-        <Link to="/applications" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent-dark">
+        <Link to="/applications" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">
           View all <ArrowRight size={14} />
         </Link>
       </div>
 
       <div className="flex items-center justify-between mb-3 mt-8">
         <h2 className="font-display text-lg text-ink">Recommended jobs</h2>
-        <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent-dark">Explore all <ArrowRight size={14} /></Link>
+        <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">Explore all <ArrowRight size={14} /></Link>
       </div>
       {jobLoading ? <div className="h-32 rounded-xl2 bg-surface border border-line animate-pulse" /> : jobError ? <div className="text-sm text-status-rejected">{jobError}</div> : jobs.length === 0 ? <div className="bg-surface border border-dashed border-line rounded-xl2 p-8 text-center"><p className="font-display text-ink">No jobs discovered yet</p><Link to="/discovery" className="text-sm text-muted hover:text-ink">Open job discovery</Link></div> : <div><p className="text-xs text-muted mb-3">Top match: {jobs[0]?.title || 'Unavailable'} {jobs[0]?.matchScore != null ? `· ${Math.round(jobs[0].matchScore)}%` : ''}</p><div className="space-y-3">{jobs.slice(0, 3).map((job) => <JobCard key={job.id} job={job} action={jobActions[job.id]} onAction={updateJobAction} onOpen={(id) => setSelectedJob(jobs.find((item) => item.id === id))} />)}</div></div>}
 
@@ -145,7 +145,7 @@ export default function Dashboard() {
           <p className="text-sm text-muted mb-4">Add the first role you've applied to — it takes a few seconds.</p>
           <button
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 bg-ink text-white text-sm font-medium px-4 py-2 rounded-lg"
+            className="inline-flex items-center gap-1.5 bg-accent text-accent-ink text-sm font-medium px-4 py-2 rounded-full hover:bg-accent-dark"
           >
             <Plus size={15} /> Add application
           </button>

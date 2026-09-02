@@ -17,7 +17,7 @@ export default function Layout({ title, subtitle, actions, children }) {
             <Sidebar variant="mobile" onNavigate={() => setMobileOpen(false)} />
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 h-11 w-11 rounded-full bg-white/10 text-white flex items-center justify-center backdrop-blur"
+              className="absolute top-4 right-4 h-11 w-11 rounded-full bg-surface border border-line text-ink shadow-pop flex items-center justify-center"
               aria-label="Close menu"
             >
               <X size={20} />
@@ -30,7 +30,7 @@ export default function Layout({ title, subtitle, actions, children }) {
         <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-8 h-16">
             <button
-              className="md:hidden h-11 w-11 shrink-0 flex items-center justify-center rounded-lg border border-line bg-surface"
+              className="md:hidden h-11 w-11 shrink-0 flex items-center justify-center rounded-full border border-line bg-surface"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >

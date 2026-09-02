@@ -1,70 +1,7 @@
-<svg width="780" height="260" viewBox="0 0 780 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="640" height="160" viewBox="0 0 640 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Smart Job Tracker</title>
-  <desc id="desc">A rocket launching from a resume and briefcase, beside the Smart Job Tracker wordmark and Track, Apply, Achieve tagline</desc>
-  <defs>
-    <linearGradient id="rocketGrad" x1="60" y1="200" x2="220" y2="20" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#3B7CFF"/>
-      <stop offset="0.55" stop-color="#8A6CFF"/>
-      <stop offset="1" stop-color="#C25CFF"/>
-    </linearGradient>
-    <linearGradient id="caseGrad" x1="70" y1="150" x2="230" y2="250" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#38C6FF"/>
-      <stop offset="1" stop-color="#8B4CFF"/>
-    </linearGradient>
-    <linearGradient id="ringGrad" x1="0" y1="0" x2="260" y2="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#41D5FF"/>
-      <stop offset="1" stop-color="#C25CFF"/>
-    </linearGradient>
-    <linearGradient id="pillGrad" x1="380" y1="150" x2="700" y2="230" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2E6BFF"/>
-      <stop offset="1" stop-color="#9B4CFF"/>
-    </linearGradient>
-  </defs>
-
-  <ellipse cx="130" cy="140" rx="122" ry="108" stroke="url(#ringGrad)" stroke-width="5" opacity="0.55"/>
-
-  <g transform="rotate(-8 95 110)">
-    <rect x="35" y="55" width="120" height="150" rx="14" fill="#F4F7FF"/>
-    <circle cx="70" cy="90" r="12" fill="#4E8CFF"/>
-    <rect x="55" y="112" width="70" height="8" rx="4" fill="#B9C6EE"/>
-    <rect x="55" y="128" width="85" height="8" rx="4" fill="#B9C6EE"/>
-    <rect x="55" y="144" width="60" height="8" rx="4" fill="#B9C6EE"/>
-  </g>
-  <circle cx="150" cy="185" r="18" fill="#34C77A"/>
-  <path d="M141 185L148 192L161 177" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-
-  <g>
-    <path d="M92 150H168C172 150 176 154 176 158V166H84V158C84 154 88 150 92 150Z" fill="#0B1130"/>
-    <rect x="58" y="164" width="152" height="100" rx="16" fill="url(#caseGrad)"/>
-    <rect x="118" y="196" width="32" height="26" rx="6" fill="#0B1130"/>
-    <rect x="126" y="203" width="16" height="12" rx="3" fill="url(#caseGrad)"/>
-  </g>
-
-  <g transform="translate(70,-10) rotate(38 175 90)">
-    <path d="M175 20C193 45 198 75 190 105L160 105C152 75 157 45 175 20Z" fill="white"/>
-    <path d="M175 20C186 33 192 48 193 62L157 62C158 48 164 33 175 20Z" fill="url(#rocketGrad)"/>
-    <circle cx="175" cy="65" r="13" fill="#0B1130"/>
-    <circle cx="175" cy="65" r="8" fill="#41D5FF"/>
-    <path d="M160 90L142 112L160 105Z" fill="url(#rocketGrad)"/>
-    <path d="M190 90L208 112L190 105Z" fill="url(#rocketGrad)"/>
-    <path d="M164 105L175 150L186 105Z" fill="url(#rocketGrad)" opacity="0.85"/>
-  </g>
-
-  <path d="M205 95L225 75L245 85L268 55" stroke="#41D5FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <circle cx="225" cy="75" r="5" fill="#41D5FF"/>
-  <circle cx="245" cy="85" r="5" fill="#41D5FF"/>
-  <path d="M256 58L268 55L266 67" stroke="#41D5FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-
-  <text x="300" y="102" font-family="Georgia, serif" font-weight="700" font-size="74" fill="white" stroke="#0B1130" stroke-width="4" paint-order="stroke" font-style="italic">Smart</text>
-
-  <rect x="298" y="122" width="462" height="82" rx="41" fill="url(#pillGrad)"/>
-  <text x="322" y="180" font-family="Georgia, serif" font-weight="700" font-size="58" fill="white">Job Tracker</text>
-
-  <g font-family="Arial, sans-serif" font-weight="700" font-size="24" letter-spacing="2" fill="#E8ECFF">
-    <text x="300" y="240">TRACK</text>
-    <circle cx="422" cy="232" r="7" fill="#41D5FF"/>
-    <text x="443" y="240">APPLY</text>
-    <circle cx="548" cy="232" r="7" fill="#C25CFF"/>
-    <text x="569" y="240">ACHIEVE</text>
-  </g>
+  <desc id="desc">A checkmark in a lavender circle beside the Smart Job Tracker wordmark</desc>
+  <circle cx="80" cy="80" r="70" fill="#918df6"/>
+  <path d="M50 83L69 102L112 58" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="176" y="98" font-family="'DM Sans', 'Inter', Arial, sans-serif" font-weight="700" font-size="52" letter-spacing="-1" fill="#181925">Smart Job Tracker</text>
 </svg>

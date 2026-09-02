@@ -64,14 +64,14 @@ export default function Register() {
         {error && <p className="text-sm text-status-rejected">{error}</p>}
         <button
           disabled={loading}
-          className="w-full bg-accent text-accent-ink text-sm font-semibold py-2.5 rounded-lg hover:bg-accent-dark hover:text-white disabled:opacity-50"
+          className="w-full bg-accent text-accent-ink text-sm font-semibold py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50"
         >
           {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
       <p className="mt-6 text-sm text-muted text-center">
         Already have an account?{' '}
-        <Link to="/login" className="text-ink font-medium hover:text-accent-dark">Sign in</Link>
+        <Link to="/login" className="text-ink font-medium hover:text-accent">Sign in</Link>
       </p>
     </AuthLayout>
   )

@@ -81,20 +81,20 @@ export default function Login() {
         {error && <p className="text-sm text-status-rejected">{error}</p>}
         <button
           disabled={loading}
-          className="w-full bg-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-ink-soft disabled:opacity-50"
+          className="w-full bg-accent text-accent-ink text-sm font-medium py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50"
         >
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
       <a
         href={`${API_ORIGIN}/oauth2/authorization/google`}
-        className="w-full mt-3 border border-line text-ink text-sm font-medium py-2.5 rounded-lg hover:bg-paper flex items-center justify-center"
+        className="w-full mt-3 border border-line text-ink-soft text-sm font-medium py-2.5 rounded-full hover:bg-paper flex items-center justify-center"
       >
         Continue with Google
       </a>
       <p className="mt-6 text-sm text-muted text-center">
         New here?{' '}
-        <Link to="/register" className="text-ink font-medium hover:text-accent-dark">Create an account</Link>
+        <Link to="/register" className="text-ink font-medium hover:text-accent">Create an account</Link>
       </p>
     </AuthLayout>
   )

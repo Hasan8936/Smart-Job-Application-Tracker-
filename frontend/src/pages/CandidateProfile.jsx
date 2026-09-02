@@ -107,14 +107,14 @@ export default function CandidateProfile() {
       <button
         onClick={doExtract}
         disabled={extracting || saving}
-        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-line bg-surface text-sm font-medium text-ink hover:border-ink/30 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-line bg-surface text-sm font-medium text-ink-soft hover:border-ink/30 disabled:opacity-50"
       >
         <Sparkles size={15} /> {extracting ? 'Extracting…' : 'Extract from resume'}
       </button>
       <button
         onClick={doSave}
         disabled={saving || extracting || loading}
-        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark hover:text-white disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark disabled:opacity-50"
       >
         <Save size={15} /> {saving ? 'Saving…' : 'Save changes'}
       </button>

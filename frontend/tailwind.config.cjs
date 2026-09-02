@@ -4,46 +4,65 @@ module.exports = {
     theme: {
         extend: {
             colors: {
+                // Visitors-style blueprint palette
                 ink: {
-                    DEFAULT: '#14161C',
-                    soft: '#2A2D37',
+                    DEFAULT: '#181925', // carbon
+                    soft: '#666666', // graphite
                 },
-                paper: '#F5F6F8',
-                surface: '#FFFFFF',
-                line: '#E4E6EB',
-                muted: '#6B7078',
+                paper: '#fafafa', // linen — page canvas
+                surface: '#ffffff', // paper white — card/header fill
+                mist: '#f5f5f5',
+                line: '#e8e8e8', // fog — hairline borders
+                muted: '#999999', // ash
+                carbon: '#181925',
+                graphite: '#666666',
+                ash: '#999999',
+                fog: '#e8e8e8',
+                linen: '#fafafa',
                 accent: {
-                    DEFAULT: '#E7A335',
-                    dark: '#B9791C',
-                    ink: '#3A2A06',
-                    soft: '#FCEFD7',
+                    DEFAULT: '#918df6', // lavender
+                    dark: '#7a75f0',
+                    ink: '#ffffff',
+                    soft: '#efeefe',
                 },
+                lavender: '#918df6',
+                iris: '#9580ff',
+                mint: '#33c758',
+                mintWash: '#def6e4',
+                amber: '#ffa600',
+                sky: '#2c78fc',
+                magenta: '#d6409f',
+                ember: '#ff3e00',
                 status: {
-                    applied: '#6B7280',
-                    appliedSoft: '#EEF0F2',
-                    screening: '#B9790C',
-                    screeningSoft: '#FBF0DA',
-                    interview: '#2354D9',
-                    interviewSoft: '#E8EEFC',
-                    offer: '#1F9254',
-                    offerSoft: '#E4F5EC',
-                    rejected: '#C4432B',
-                    rejectedSoft: '#FBEAE6',
-                    withdrawn: '#8B8F98',
-                    withdrawnSoft: '#EFEFF1',
+                    applied: '#666666',
+                    appliedSoft: '#f5f5f5',
+                    screening: '#c47f00',
+                    screeningSoft: '#fff4df',
+                    interview: '#2c78fc',
+                    interviewSoft: '#e7f0fe',
+                    offer: '#1fa348',
+                    offerSoft: '#def6e4',
+                    rejected: '#e0380d',
+                    rejectedSoft: '#ffe9e0',
+                    withdrawn: '#999999',
+                    withdrawnSoft: '#f5f5f5',
                 },
             },
             fontFamily: {
-                display: ['"Fraunces"', 'ui-serif', 'Georgia', 'serif'],
+                display: ['"DM Sans"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                 sans: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                 mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
             },
+            letterSpacing: {
+                tightest: '-0.05em',
+            },
             boxShadow: {
-                card: '0 1px 2px rgba(20, 22, 28, 0.04), 0 1px 12px rgba(20, 22, 28, 0.04)',
-                pop: '0 8px 24px rgba(20, 22, 28, 0.12)',
+                card: '0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02)',
+                pop: '0 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.06)',
+                subtle: '0 1px 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.06)',
             },
             borderRadius: {
-                xl2: '0.875rem',
+                xl2: '1rem',
             },
         },
     },

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --brand: #14161C;
+  --brand: #181925;
 }
 
 * {
@@ -16,10 +16,14 @@ html, body {
 
 body {
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background-color: #F5F6F8;
-  color: #14161C;
+  background-color: #fafafa;
+  color: #181925;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  letter-spacing: -0.02em;
 }
 
 /* Prevent iOS Safari from auto-zooming when focusing inputs (keeps form fields at 16px min) */
@@ -28,8 +32,8 @@ input, select, textarea {
 }
 
 ::selection {
-  background-color: #FCEFD7;
-  color: #3A2A06;
+  background-color: #efeefe;
+  color: #181925;
 }
 
 /* thin, quiet scrollbars for the app shell */
@@ -38,7 +42,7 @@ input, select, textarea {
   height: 8px;
 }
 .scroll-thin::-webkit-scrollbar-thumb {
-  background-color: #E4E6EB;
+  background-color: #e8e8e8;
   border-radius: 999px;
 }
 .scroll-thin::-webkit-scrollbar-track {
@@ -47,7 +51,7 @@ input, select, textarea {
 
 /* visible keyboard focus everywhere, respecting the accent */
 :focus-visible {
-  outline: 2px solid #E7A335;
+  outline: 2px solid #918df6;
   outline-offset: 2px;
 }
 

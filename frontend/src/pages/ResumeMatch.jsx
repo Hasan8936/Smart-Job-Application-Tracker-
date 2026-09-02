@@ -95,7 +95,7 @@ export default function ResumeMatch() {
               </label>
               <button
                 disabled={!file || uploading}
-                className="px-3.5 py-2.5 rounded-lg bg-ink text-white text-sm font-medium disabled:opacity-40 shrink-0"
+                className="px-3.5 py-2.5 rounded-full bg-accent text-white hover:bg-accent-dark text-sm font-medium disabled:opacity-40 shrink-0"
               >
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
@@ -109,13 +109,13 @@ export default function ResumeMatch() {
                   <label
                     key={r.id}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer text-sm ${
-                      selectedResumeId === r.id ? 'border-ink bg-paper' : 'border-line'
+                      selectedResumeId === r.id ? 'border-accent bg-accent-soft' : 'border-line'
                     }`}
                   >
                     <input
                       type="radio"
                       name="resume"
-                      className="accent-ink"
+                      className="accent-accent"
                       checked={selectedResumeId === r.id}
                       onChange={() => setSelectedResumeId(r.id)}
                     />
@@ -141,14 +141,14 @@ export default function ResumeMatch() {
             <button
               onClick={doMatch}
               disabled={matching}
-              className="w-full px-4 py-2.5 rounded-lg bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark hover:text-white disabled:opacity-50"
+              className="w-full px-4 py-2.5 rounded-full bg-accent text-accent-ink text-sm font-semibold hover:bg-accent-dark disabled:opacity-50"
             >
               {matching ? 'Scoring…' : 'Compute match score'}
             </button>
             <button
               onClick={doDeepMatch}
               disabled={deepMatching}
-              className="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:bg-paper disabled:opacity-50"
+              className="mt-2 w-full rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-ink-soft hover:bg-paper disabled:opacity-50"
             >
               {deepMatching ? 'Analyzing…' : 'Run deep Claude analysis'}
             </button>
@@ -189,7 +189,7 @@ export default function ResumeMatch() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {matchResult.strongMatches?.length ? matchResult.strongMatches.map((k) => (
-                      <span key={k} className="px-2 py-1 rounded-md bg-status-offerSoft text-status-offer text-xs font-medium">{k}</span>
+                      <span key={k} className="px-2 py-1 rounded-full bg-status-offerSoft text-status-offer text-xs font-medium">{k}</span>
                     )) : <span className="text-xs text-muted">None found</span>}
                   </div>
                 </div>
@@ -199,7 +199,7 @@ export default function ResumeMatch() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {matchResult.missingRequiredSkills?.length ? matchResult.missingRequiredSkills.map((k) => (
-                      <span key={k} className="px-2 py-1 rounded-md bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
+                      <span key={k} className="px-2 py-1 rounded-full bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
                     )) : <span className="text-xs text-muted">None — great coverage</span>}
                   </div>
                 </div>
@@ -207,7 +207,7 @@ export default function ResumeMatch() {
                   <div className="text-xs font-medium text-muted mb-2">Missing preferred skills</div>
                   <div className="flex flex-wrap gap-1.5">
                     {matchResult.missingPreferredSkills?.length ? matchResult.missingPreferredSkills.map((k) => (
-                      <span key={k} className="px-2 py-1 rounded-md bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
+                      <span key={k} className="px-2 py-1 rounded-full bg-status-rejectedSoft text-status-rejected text-xs font-medium">{k}</span>
                     )) : <span className="text-xs text-muted">None found</span>}
                   </div>
                 </div>

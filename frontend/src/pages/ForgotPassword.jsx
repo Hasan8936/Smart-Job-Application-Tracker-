@@ -32,7 +32,7 @@ export default function ForgotPassword() {
             <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm" placeholder="you@example.com" />
           </div>
           {error && <p className="text-sm text-status-rejected">{error}</p>}
-          <button disabled={loading} className="w-full bg-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-ink-soft disabled:opacity-50">
+          <button disabled={loading} className="w-full bg-accent text-accent-ink text-sm font-medium py-2.5 rounded-full hover:bg-accent-dark disabled:opacity-50">
             {loading ? 'Sending...' : 'Send reset link'}
           </button>
           <p className="text-center text-sm"><Link to="/login" className="text-muted hover:text-ink">Back to sign in</Link></p>

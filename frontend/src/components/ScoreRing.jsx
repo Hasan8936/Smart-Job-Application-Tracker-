@@ -7,14 +7,14 @@ export default function ScoreRing({ value = 0, size = 140 }) {
   const clamped = Math.max(0, Math.min(100, value))
   const offset = circumference - (clamped / 100) * circumference
 
-  const color = clamped >= 75 ? '#1F9254' : clamped >= 50 ? '#B9790C' : '#C4432B'
+  const color = clamped >= 75 ? '#33c758' : clamped >= 50 ? '#ffa600' : '#ff3e00'
   const label = clamped >= 75 ? 'Strong match' : clamped >= 50 ? 'Fair match' : 'Needs work'
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E4E6EB" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e8e8e8" strokeWidth={stroke} />
           <circle
             cx={size / 2}
             cy={size / 2}
