@@ -39,7 +39,10 @@ class RuleBasedInterviewPrepProviderTest {
                 null, null, "Backend Intern at Acme Corp using Java", "Java", null);
         List<InterviewPrepProvider.QuestionAnswer> result = provider.generate(
                 "Looking for a Kubernetes and Java developer.", facts, 20);
+        // Scope to TECHNICAL: a ROLE_SPECIFIC question is allowed to quote a JD sentence that happens to
+        // mention "Kubernetes" -- it doesn't claim the candidate has used it, so it needs no disclaimer.
         result.stream()
+                .filter(qa -> qa.category() == com.smartjobtracker.model.InterviewQuestionCategory.TECHNICAL)
                 .filter(qa -> qa.question().toLowerCase().contains("kubernetes"))
                 .forEach(qa -> assertTrue(qa.suggestedAnswer().contains("isn't explicitly on my resume")));
     }
