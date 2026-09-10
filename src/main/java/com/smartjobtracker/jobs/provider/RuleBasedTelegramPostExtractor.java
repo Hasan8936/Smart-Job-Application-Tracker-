@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * "Label: value" line is present. Company and location are left null far more often than
  * the Gemini path would — a plain keyword scan can't reliably tell a company name from
  * surrounding text, and guessing would violate the no-fabrication policy applied elsewhere
- * in this app (ResumeApplicationPreparationService, InterviewHeuristic).
+ * in this app (InterviewPrepService, InterviewHeuristic).
  */
 @Component
 public class RuleBasedTelegramPostExtractor implements TelegramPostExtractor {

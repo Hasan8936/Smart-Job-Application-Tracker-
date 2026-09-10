@@ -13,8 +13,8 @@ import java.util.List;
 
 /**
  * Generates interview questions + model answers grounded in the job description and the
- * candidate's actual resume facts. Mirrors {@link GeminiApplicationPreparationProvider}'s
- * call shape, but asks for a spread of question/answer pairs across categories instead of
+ * candidate's actual resume facts. Uses the same Gemini call shape as the app's other AI-backed
+ * providers, but asks for a spread of question/answer pairs across categories instead of
  * form-field values.
  */
 @Component
