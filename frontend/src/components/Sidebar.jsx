@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, Sparkles, ClipboardCheck, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, Sparkles, ClipboardCheck, GraduationCap, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
 
@@ -10,6 +10,7 @@ const links = [
   { to: '/resume-match', label: 'Resume matcher', icon: FileSearch },
   { to: '/resume-tailoring', label: 'Resume tailoring', icon: Sparkles },
   { to: '/application-preparation', label: 'Application prep', icon: ClipboardCheck },
+  { to: '/interview-prep', label: 'Interview prep', icon: GraduationCap },
   { to: '/discovery', label: 'Discover jobs', icon: Search },
   { to: '/reminders', label: 'Reminders', icon: BellRing },
 ]

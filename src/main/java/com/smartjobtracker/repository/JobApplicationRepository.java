@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface JobApplicationRepository extends JpaRepository<JobApplication, Long> {
     List<JobApplication> findByUserId(Long userId);
     Optional<JobApplication> findFirstByUserIdAndCompanyNameIgnoreCaseAndRoleTitleIgnoreCase(Long userId, String companyName, String roleTitle);
+    Optional<JobApplication> findByIdAndUserId(Long id, Long userId);
 }
