@@ -1,6 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Briefcase, MessagesSquare, PartyPopper, XCircle, ArrowRight, Bookmark, Sparkles, Search, CheckCircle2 } from 'lucide-react'
+import {
+  Plus, Briefcase, MessagesSquare, PartyPopper, XCircle,
+  ArrowRight, Bookmark, Sparkles, Search, CheckCircle2
+} from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
 import StatCard from '../components/StatCard'
@@ -10,7 +13,7 @@ import ApplicationDrawer from '../components/ApplicationDrawer'
 import ScoreRing from '../components/ScoreRing'
 import TopCompanies from '../components/TopCompanies'
 import { AuthContext } from '../context/AuthContext'
-import { getJob, listJobs, readJobActions } from '../api/jobs'
+import { listJobs, readJobActions } from '../api/jobs'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 
@@ -35,7 +38,11 @@ export default function Dashboard() {
   const [jobActions, setJobActions] = useState(readJobActions())
   const [selectedJob, setSelectedJob] = useState(null)
 
-  useEffect(() => { fetchApps(); fetchJobs() }, [])
+  useEffect(() => {
+    // Fetch applications and jobs in parallel — neither blocks the other
+    fetchApps()
+    fetchJobs()
+  }, [])
 
   async function fetchApps() {
     try {
@@ -52,21 +59,34 @@ export default function Dashboard() {
   async function fetchJobs() {
     try {
       setJobLoading(true)
-      const res = await listJobs({ page: 0, size: 6, sort: 'postedAt,desc' })
-      const resumes = await api.get('/resume/me')
-      const resumeId = resumes.data?.[0]?.id
-      const scored = resumeId ? await Promise.all((res.content || []).map(async (job) => {
-        try {
-          const detail = await getJob(job.id)
-          const match = await api.post('/match/hybrid-score', { resumeId, jobId: job.id })
-          return { ...job, ...detail, matchScore: match.data.overallMatch }
-        } catch { return job }
-      })) : (res.content || [])
-      setJobs(scored.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0)))
+      // Fetch job list and resume in parallel — avoids two sequential round-trips
+      const [res, resumesResp] = await Promise.all([
+        listJobs({ page: 0, size: 6, sort: 'postedAt,desc' }),
+        api.get('/resume/me').catch(() => ({ data: [] }))
+      ])
+      const content = res.content || []
+      // Show jobs immediately without match scores so the page renders fast
+      setJobs(content)
+      setJobLoading(false)
+
+      // Compute match scores in the background — updates the list once ready
+      const resumeId = resumesResp.data?.[0]?.id
+      if (resumeId && content.length > 0) {
+        const scored = await Promise.all(
+          content.map(async (job) => {
+            try {
+              const match = await api.post('/match/hybrid-score', { resumeId, jobId: job.id })
+              return { ...job, matchScore: match.data.overallMatch }
+            } catch { return job }
+          })
+        )
+        setJobs(scored.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0)))
+      }
     } catch (e) {
       console.error(e)
       setJobError('Job recommendations are unavailable right now.')
-    } finally { setJobLoading(false) }
+      setJobLoading(false)
+    }
   }
 
   function updateJobAction(id, action) {
@@ -96,10 +116,15 @@ export default function Dashboard() {
   const offers = applications.filter((a) => a.status === 'OFFER').length
   const rejections = applications.filter((a) => a.status === 'REJECTED').length
   const firstName = (user?.profile?.name || '').split(' ')[0]
-  const savedJobs = Object.values(jobActions).filter((value) => value === 'saved' || value === 'bookmarked').length
-  const appliedJobs = Object.values(jobActions).filter((value) => value === 'applied').length
+
+  // Compare with UPPERCASE values — that's how they're stored
+  const savedJobs = Object.values(jobActions).filter((v) => v === 'SAVED' || v === 'BOOKMARKED').length
+  const appliedJobs = Object.values(jobActions).filter((v) => v === 'APPLIED').length
+
   const scoredJobs = jobs.filter((job) => job.matchScore != null)
-  const averageMatch = scoredJobs.length ? Math.round(scoredJobs.reduce((sum, job) => sum + job.matchScore, 0) / scoredJobs.length) : null
+  const averageMatch = scoredJobs.length
+    ? Math.round(scoredJobs.reduce((sum, job) => sum + job.matchScore, 0) / scoredJobs.length)
+    : null
 
   return (
     <Layout
@@ -114,6 +139,7 @@ export default function Dashboard() {
         </button>
       }
     >
+      {/* ── Application stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total applications" value={total} icon={Briefcase} tone="violet" />
         <StatCard label="Interviews" value={interviews} icon={MessagesSquare} tone="sky" />
@@ -128,7 +154,9 @@ export default function Dashboard() {
           <h2 className="font-display text-[15px] text-ink self-start mb-2">Resume match</h2>
           {averageMatch == null ? (
             <div className="flex-1 flex flex-col items-center justify-center py-4">
-              <p className="text-sm text-muted max-w-[16rem]">Upload a resume to see how well it matches your recommended jobs.</p>
+              <p className="text-sm text-muted max-w-[16rem]">
+                Upload a resume to see how well it matches your recommended jobs.
+              </p>
             </div>
           ) : (
             <ScoreRing value={averageMatch} size={112} />
@@ -141,13 +169,15 @@ export default function Dashboard() {
         <TopCompanies applications={applications} />
       </div>
 
+      {/* ── Job stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total jobs" value={jobs.length || '—'} icon={Search} tone="sky" />
-        <StatCard label="Recommended jobs" value={jobs.filter((job) => (job.matchScore || 0) >= 70).length || '—'} icon={Sparkles} tone="violet" />
+        <StatCard label="Strong matches" value={jobs.filter((j) => (j.matchScore || 0) >= 70).length || '—'} icon={Sparkles} tone="violet" />
         <StatCard label="Saved jobs" value={savedJobs || '—'} icon={Bookmark} tone="amber" />
         <StatCard label="Applied jobs" value={appliedJobs || '—'} icon={CheckCircle2} tone="mint" />
       </div>
 
+      {/* ── Recent applications (appears before jobs in DOM to match heading order) ── */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg text-ink">Recent applications</h2>
         <Link to="/applications" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">
@@ -155,16 +185,10 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div className="flex items-center justify-between mb-3 mt-8">
-        <h2 className="font-display text-lg text-ink">Recommended jobs</h2>
-        <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">Explore all <ArrowRight size={14} /></Link>
-      </div>
-      {jobLoading ? <div className="h-32 rounded-xl2 bg-surface border border-line animate-pulse" /> : jobError ? <div className="text-sm text-status-rejected">{jobError}</div> : jobs.length === 0 ? <div className="bg-surface border border-dashed border-line rounded-xl2 p-8 text-center"><p className="font-display text-ink">No jobs discovered yet</p><Link to="/discovery" className="text-sm text-muted hover:text-ink">Open job discovery</Link></div> : <div><p className="text-xs text-muted mb-3">Top match: {jobs[0]?.title || 'Unavailable'} {jobs[0]?.matchScore != null ? `· ${Math.round(jobs[0].matchScore)}%` : ''}</p><div className="space-y-3">{jobs.slice(0, 3).map((job) => <JobCard key={job.id} job={job} action={jobActions[job.id]} onAction={updateJobAction} onOpen={(id) => setSelectedJob(jobs.find((item) => item.id === id))} />)}</div></div>}
-
       {loading ? (
-        <div className="text-sm text-muted">Loading your applications…</div>
+        <div className="text-sm text-muted mb-8">Loading your applications…</div>
       ) : applications.length === 0 ? (
-        <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center">
+        <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center mb-8">
           <p className="font-display text-ink text-lg mb-1">No applications yet</p>
           <p className="text-sm text-muted mb-4">Add the first role you've applied to — it takes a few seconds.</p>
           <button
@@ -175,9 +199,45 @@ export default function Dashboard() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 mb-8">
           {applications.slice(0, 5).map((a) => (
             <ApplicationCard key={a.id} app={a} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Recommended jobs ── */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-lg text-ink">Recommended jobs</h2>
+        <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">
+          Explore all <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      {jobLoading ? (
+        <div className="h-32 rounded-xl2 bg-surface border border-line animate-pulse" />
+      ) : jobError ? (
+        <div className="text-sm text-status-rejected">{jobError}</div>
+      ) : jobs.length === 0 ? (
+        <div className="bg-surface border border-dashed border-line rounded-xl2 p-8 text-center">
+          <p className="font-display text-ink">No jobs discovered yet</p>
+          <Link to="/discovery" className="text-sm text-muted hover:text-ink">Open job discovery</Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {jobs[0]?.matchScore != null && (
+            <p className="text-xs text-muted mb-3">
+              Top match: {jobs[0].title} · {Math.round(jobs[0].matchScore)}%
+            </p>
+          )}
+          {jobs.slice(0, 3).map((job) => (
+            <JobCard
+              key={job.id}
+              job={job}
+              action={jobActions[job.id]}
+              onAction={updateJobAction}
+              onOpen={(id) => setSelectedJob(jobs.find((item) => item.id === id))}
+            />
           ))}
         </div>
       )}
