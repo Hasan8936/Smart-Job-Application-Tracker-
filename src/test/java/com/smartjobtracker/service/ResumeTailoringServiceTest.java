@@ -86,6 +86,47 @@ class ResumeTailoringServiceTest {
         return new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions, versions, new ObjectMapper(), fallback, mock(ResumeTailoringProvider.class), new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), new com.smartjobtracker.config.AiMatchingConfig());
     }
 
+    @Test
+    void renderPdfPreservesBulletsAndDashesInsteadOfReplacingThemWithQuestionMarks() throws java.io.IOException {
+        // This is the actual reported bug: sanitize() used to treat any Unicode code point above 255 as
+        // unsupported and replace it with '?', which wrongly caught bullet/dash/smart-quote characters that
+        // PDFBox's standard fonts render fine. Render real smart-typography characters and read the PDF's
+        // own text back out with PDFBox's stripper to prove they survive as themselves, not as '?'.
+        String content = "JOHN DOE\njohn@example.com\nExperience\n\u2022 Cut latency 40% \u2013 shipped end\u2011to\u2011end.\n\u2022 Said it was \u201Cgreat\u201D and it\u2019s true.";
+        ResumeVersion version = new ResumeVersion(); version.setId(2L); version.setUserId(3L); version.setContent(content);
+        ResumeVersionRepository versions = mock(ResumeVersionRepository.class); when(versions.findByIdAndUserId(2L, 3L)).thenReturn(Optional.of(version));
+        ResumeTailoringService service = service(mock(ResumeRepository.class), mock(TailoringSessionRepository.class), mock(TailoringSuggestionRepository.class), versions, new RuleBasedResumeTailoringProvider());
+
+        byte[] pdf = service.renderPdf(3L, 2L);
+
+        String extracted;
+        try (org.apache.pdfbox.pdmodel.PDDocument doc = org.apache.pdfbox.pdmodel.PDDocument.load(pdf)) {
+            extracted = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+        }
+        assertTrue(extracted.contains("\u2022"), "bullet should render as itself, not '?': " + extracted);
+        assertTrue(extracted.contains("\u2013"), "en dash should render as itself, not '?': " + extracted);
+        assertTrue(extracted.contains("\u201Cgreat\u201D"), "curly quotes should render as themselves: " + extracted);
+        assertFalse(extracted.contains("? Cut"), "bullet must not degrade to a literal '?': " + extracted);
+    }
+
+    @Test
+    void renderPdfRightAlignsATrailingDateOnAnEntryHeaderLine() throws java.io.IOException {
+        String content = "JOHN DOE\njohn@example.com\nExperience\nSenior Engineer \u2013 Acme Corp Mar 2022 \u2013 Present\nTech Stack: Java, Spring\n\u2022 Did things.";
+        ResumeVersion version = new ResumeVersion(); version.setId(2L); version.setUserId(3L); version.setContent(content);
+        ResumeVersionRepository versions = mock(ResumeVersionRepository.class); when(versions.findByIdAndUserId(2L, 3L)).thenReturn(Optional.of(version));
+        ResumeTailoringService service = service(mock(ResumeRepository.class), mock(TailoringSessionRepository.class), mock(TailoringSuggestionRepository.class), versions, new RuleBasedResumeTailoringProvider());
+
+        byte[] pdf = service.renderPdf(3L, 2L);
+
+        String extracted;
+        try (org.apache.pdfbox.pdmodel.PDDocument doc = org.apache.pdfbox.pdmodel.PDDocument.load(pdf)) {
+            extracted = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+        }
+        assertTrue(extracted.contains("Senior Engineer"), extracted);
+        assertTrue(extracted.contains("Present"), extracted);
+        assertTrue(extracted.contains("Tech Stack"), extracted);
+    }
+
     private Resume resume(String text) { Resume resume = new Resume(); resume.setId(4L); resume.setUserId(3L); resume.setExtractedText(text); return resume; }
     private TailoringSuggestion savedSuggestion() { TailoringSuggestion suggestion = new TailoringSuggestion(); suggestion.setSessionId(8L); suggestion.setCategory("ATS_KEYWORD"); suggestion.setBeforeText("Java"); suggestion.setAfterText("Java"); suggestion.setRationale("Existing evidence"); suggestion.setEvidenceText("Java"); return suggestion; }
 }

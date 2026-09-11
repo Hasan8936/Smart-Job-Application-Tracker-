@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,49 +111,86 @@ public class ResumeTailoringService {
     }
 
     /**
-     * Renders plain resume text into a simple, readable PDF -- no LaTeX toolchain is available
-     * in this deployment, so this is a direct PDFBox layout rather than compiling toLatex()'s
-     * output. Wraps lines to the page width and paginates when content overflows a page.
+     * Renders plain resume text into a structured, readable PDF -- no LaTeX toolchain is
+     * available in this deployment, so this is a direct PDFBox layout rather than compiling
+     * toLatex()'s output. The source is unstructured plain text (one line per resume line, no
+     * markup), so layout is heuristic: the first two non-blank lines are treated as name/contact,
+     * known section-header words (or short ALL-CAPS lines) get a rule under them, "Label: value"
+     * lines get a bold label, a trailing date range right-aligns the line it's on, and lines
+     * immediately followed by "Tech Stack:" are treated as bold entry titles. Wraps to the page
+     * width and paginates when content overflows a page.
      */
     private byte[] renderPdf(String content) {
         float margin = 50f;
-        float fontSize = 10.5f;
-        float leading = fontSize * 1.35f;
-        PDType1Font font = PDType1Font.HELVETICA;
+        float bodySize = 10.5f;
+        float leading = bodySize * 1.32f;
+        PDType1Font regular = PDType1Font.HELVETICA;
         PDType1Font bold = PDType1Font.HELVETICA_BOLD;
+        List<String> rawLines = new ArrayList<>(Arrays.asList(content.split("\\r?\\n")));
         try (PDDocument document = new PDDocument()) {
             PDRectangle pageSize = PDRectangle.LETTER;
             float printableWidth = pageSize.getWidth() - margin * 2;
-            PDPage page = new PDPage(pageSize);
-            document.addPage(page);
-            PDPageContentStream stream = new PDPageContentStream(document, page);
-            float y = pageSize.getHeight() - margin;
-            stream.beginText();
-            stream.setFont(font, fontSize);
-            stream.newLineAtOffset(margin, y);
-            boolean textOpen = true;
-            for (String rawLine : content.split("\\r?\\n")) {
-                boolean heading = !rawLine.isBlank() && rawLine.trim().equals(rawLine.trim().toUpperCase(Locale.ROOT)) && rawLine.trim().length() > 2;
-                PDType1Font lineFont = heading ? bold : font;
-                for (String wrapped : wrap(rawLine, lineFont, fontSize, printableWidth)) {
-                    if (y <= margin) {
-                        stream.endText(); stream.close();
-                        page = new PDPage(pageSize); document.addPage(page);
-                        stream = new PDPageContentStream(document, page);
-                        y = pageSize.getHeight() - margin;
-                        stream.beginText(); stream.setFont(font, fontSize); stream.newLineAtOffset(margin, y);
-                        textOpen = true;
+            Page page = new Page(document, pageSize, margin);
+
+            int i = 0;
+            // First two non-blank lines are the name and the contact line -- true for every
+            // standard resume format and true for both source PDFs this was built against.
+            while (i < rawLines.size() && rawLines.get(i).isBlank()) i++;
+            if (i < rawLines.size()) {
+                page = drawCentered(document, page, pageSize, margin, printableWidth, bold, 17.5f, rawLines.get(i).trim());
+                i++;
+            }
+            while (i < rawLines.size() && rawLines.get(i).isBlank()) i++;
+            if (i < rawLines.size()) {
+                String contact = cleanContactLine(rawLines.get(i));
+                page = drawCentered(document, page, pageSize, margin, printableWidth, regular, 9.5f, contact);
+                i++;
+                page = drawRule(document, page, pageSize, margin, printableWidth, page.y + leading * 0.15f);
+                page.y -= leading * 0.35f;
+            }
+
+            for (; i < rawLines.size(); i++) {
+                String raw = rawLines.get(i);
+                String trimmed = raw.trim();
+                if (trimmed.isEmpty()) { page.y -= leading * 0.45f; continue; }
+
+                Matcher dateMatch = TRAILING_DATE.matcher(trimmed);
+                boolean dated = dateMatch.find();
+                String nextTrimmed = i + 1 < rawLines.size() ? rawLines.get(i + 1).trim() : "";
+                Matcher labelMatch = LABELED_LINE.matcher(trimmed);
+
+                if (isSectionHeading(trimmed)) {
+                    page.y -= leading * 0.25f;
+                    page = ensureRoom(document, page, pageSize, margin, leading);
+                    page = drawRun(document, page, pageSize, margin, bold, 11f, margin, trimmed.toUpperCase(Locale.ROOT));
+                    page = drawRule(document, page, pageSize, margin, printableWidth, page.y + leading * 0.28f);
+                    page.y -= leading * 0.12f;
+                } else if (trimmed.startsWith("\u2022") || trimmed.startsWith("*") || (trimmed.startsWith("-") && trimmed.length() > 2 && trimmed.charAt(1) == ' ')) {
+                    // Checked before the dated-entry regex: an explicit bullet glyph is a stronger, unambiguous
+                    // signal than the trailing-date heuristic, which could otherwise misfire on a bullet whose
+                    // sentence happens to end in a bare year with no trailing punctuation.
+                    String bulletText = trimmed.replaceFirst("^[\u2022*\\-]\\s*", "");
+                    page = drawBullet(document, page, pageSize, margin, printableWidth, regular, bodySize, leading, bulletText);
+                } else if (dated && !dateMatch.group(1).isBlank()) {
+                    String left = trimmed.substring(0, dateMatch.start(1)).trim();
+                    String date = dateMatch.group(1).trim();
+                    page = drawDatedEntry(document, page, pageSize, margin, printableWidth, bold, regular, bodySize, leading, left, date);
+                } else if (labelMatch.matches() && labelMatch.group(1).split("\\s+").length <= 5) {
+                    page = drawLabeled(document, page, pageSize, margin, printableWidth, bold, regular, bodySize, leading, labelMatch.group(1), labelMatch.group(2));
+                } else if (!nextTrimmed.isEmpty() && TECH_STACK_NEXT.matcher(nextTrimmed).lookingAt()) {
+                    for (String wrapped : wrap(trimmed, bold, bodySize, printableWidth)) {
+                        page = ensureRoom(document, page, pageSize, margin, leading);
+                        page = drawRun(document, page, pageSize, margin, bold, bodySize, margin, wrapped);
                     }
-                    if (lineFont != font) stream.setFont(lineFont, fontSize);
-                    try { stream.showText(sanitize(wrapped)); }
-                    catch (IllegalArgumentException undefinedGlyph) { stream.showText(asciiOnly(wrapped)); }
-                    if (lineFont != font) stream.setFont(font, fontSize);
-                    stream.newLineAtOffset(0, -leading);
-                    y -= leading;
+                } else {
+                    for (String wrapped : wrap(trimmed, regular, bodySize, printableWidth)) {
+                        page = ensureRoom(document, page, pageSize, margin, leading);
+                        page = drawRun(document, page, pageSize, margin, regular, bodySize, margin, wrapped);
+                    }
                 }
             }
-            if (textOpen) stream.endText();
-            stream.close();
+
+            page.close();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             document.save(out);
             return out.toByteArray();
@@ -159,6 +198,145 @@ public class ResumeTailoringService {
             throw new IllegalStateException("Could not generate PDF", ex);
         }
     }
+
+    private static final float LEADING_RATIO = 1.32f;
+
+    /** Tracks the live page/stream/cursor a run of draw* helpers thread through; closed and replaced on overflow. */
+    private static final class Page {
+        final PDDocument document; PDPage pdPage; PDPageContentStream stream; float y; final float top;
+        Page(PDDocument document, PDRectangle size, float margin) throws java.io.IOException {
+            this.document = document; this.top = size.getHeight() - margin;
+            this.pdPage = new PDPage(size); document.addPage(pdPage);
+            this.stream = new PDPageContentStream(document, pdPage); this.y = top;
+        }
+        void close() throws java.io.IOException { stream.close(); }
+    }
+
+    private Page ensureRoom(PDDocument document, Page page, PDRectangle size, float margin, float leading) throws java.io.IOException {
+        if (page.y - leading < margin) {
+            page.close();
+            Page next = new Page(document, size, margin);
+            return next;
+        }
+        return page;
+    }
+
+    /** Draws one text run at an absolute (x, current-y) position, then drops y by one leading step. */
+    private Page drawRun(PDDocument document, Page page, PDRectangle size, float margin, PDType1Font font, float fontSize, float x, String text) throws java.io.IOException {
+        page.stream.beginText();
+        page.stream.setFont(font, fontSize);
+        page.stream.newLineAtOffset(x, page.y);
+        try { page.stream.showText(sanitize(text)); }
+        catch (IllegalArgumentException undefinedGlyph) { page.stream.showText(asciiOnly(text)); }
+        page.stream.endText();
+        page.y -= fontSize * LEADING_RATIO;
+        return page;
+    }
+
+    /** Draws two runs (e.g. a bold label + its value) on the same visual line before dropping y. */
+    private Page drawTwoRuns(Page page, PDType1Font font1, float size1, float x1, String text1, PDType1Font font2, float size2, float x2, String text2, float leading) throws java.io.IOException {
+        page.stream.beginText(); page.stream.setFont(font1, size1); page.stream.newLineAtOffset(x1, page.y);
+        try { page.stream.showText(sanitize(text1)); } catch (IllegalArgumentException e) { page.stream.showText(asciiOnly(text1)); }
+        page.stream.endText();
+        if (text2 != null && !text2.isBlank()) {
+            page.stream.beginText(); page.stream.setFont(font2, size2); page.stream.newLineAtOffset(x2, page.y);
+            try { page.stream.showText(sanitize(text2)); } catch (IllegalArgumentException e) { page.stream.showText(asciiOnly(text2)); }
+            page.stream.endText();
+        }
+        page.y -= leading;
+        return page;
+    }
+
+    private Page drawCentered(PDDocument document, Page page, PDRectangle size, float margin, float printableWidth, PDType1Font font, float fontSize, String text) throws java.io.IOException {
+        page = ensureRoom(document, page, size, margin, fontSize * LEADING_RATIO);
+        float width = textWidth(text, font, fontSize);
+        float x = margin + Math.max(0, (printableWidth - width) / 2f);
+        return drawRun(document, page, size, margin, font, fontSize, x, text);
+    }
+
+    private Page drawRule(PDDocument document, Page page, PDRectangle size, float margin, float printableWidth, float y) throws java.io.IOException {
+        page.stream.setStrokingColor(0.62f, 0.62f, 0.62f);
+        page.stream.setLineWidth(0.6f);
+        page.stream.moveTo(margin, y);
+        page.stream.lineTo(margin + printableWidth, y);
+        page.stream.stroke();
+        return page;
+    }
+
+    /** Bold title left-aligned, date right-aligned on the same line; falls back to a second line if they'd collide. */
+    private Page drawDatedEntry(PDDocument document, Page page, PDRectangle size, float margin, float printableWidth, PDType1Font bold, PDType1Font regular, float fontSize, float leading, String left, String date) throws java.io.IOException {
+        page = ensureRoom(document, page, size, margin, leading);
+        float leftWidth = textWidth(left, bold, fontSize);
+        float dateWidth = textWidth(date, regular, fontSize);
+        if (leftWidth + 16f + dateWidth <= printableWidth) {
+            return drawTwoRuns(page, bold, fontSize, margin, left, regular, fontSize, margin + printableWidth - dateWidth, date, leading);
+        }
+        for (String wrapped : wrap(left, bold, fontSize, printableWidth)) {
+            page = ensureRoom(document, page, size, margin, leading);
+            page = drawRun(document, page, size, margin, bold, fontSize, margin, wrapped);
+        }
+        page = ensureRoom(document, page, size, margin, leading);
+        return drawRun(document, page, size, margin, regular, fontSize, margin + printableWidth - dateWidth, date);
+    }
+
+    /** "Label: value" -- bold label, regular value, hanging-indented if the value wraps. */
+    private Page drawLabeled(PDDocument document, Page page, PDRectangle size, float margin, float printableWidth, PDType1Font bold, PDType1Font regular, float fontSize, float leading, String label, String value) throws java.io.IOException {
+        String prefix = label + ": ";
+        float prefixWidth = textWidth(prefix, bold, fontSize);
+        List<String> wrapped = wrap(value, regular, fontSize, Math.max(60f, printableWidth - prefixWidth));
+        boolean first = true;
+        for (String line : wrapped) {
+            page = ensureRoom(document, page, size, margin, leading);
+            if (first) { page = drawTwoRuns(page, bold, fontSize, margin, prefix, regular, fontSize, margin + prefixWidth, line, leading); first = false; }
+            else { page = drawRun(document, page, size, margin, regular, fontSize, margin + prefixWidth, line); }
+        }
+        return page;
+    }
+
+    /** Bullet glyph + hanging-indented wrapped text, so continuation lines align under the text, not the bullet. */
+    private Page drawBullet(PDDocument document, Page page, PDRectangle size, float margin, float printableWidth, PDType1Font regular, float fontSize, float leading, String text) throws java.io.IOException {
+        float indent = 15f;
+        List<String> wrapped = wrap(text, regular, fontSize, printableWidth - indent);
+        boolean first = true;
+        for (String line : wrapped) {
+            page = ensureRoom(document, page, size, margin, leading);
+            if (first) { page = drawTwoRuns(page, regular, fontSize, margin, "\u2022", regular, fontSize, margin + indent, line, leading); first = false; }
+            else { page = drawRun(document, page, size, margin, regular, fontSize, margin + indent, line); }
+        }
+        return page;
+    }
+
+    private static final Set<String> SECTION_KEYWORDS = Set.of(
+            "summary", "objective", "profile", "education", "experience", "work experience", "professional experience",
+            "projects", "technical skills", "skills", "core skills", "certifications", "certification",
+            "additional information", "achievements", "awards", "publications", "leadership", "extracurricular",
+            "activities", "volunteering", "languages", "interests", "references");
+
+    private boolean isSectionHeading(String trimmed) {
+        String stripped = trimmed.replaceAll(":\\s*$", "");
+        if (SECTION_KEYWORDS.contains(stripped.toLowerCase(Locale.ROOT))) return true;
+        return trimmed.equals(trimmed.toUpperCase(Locale.ROOT)) && trimmed.length() > 2 && trimmed.split("\\s+").length <= 5;
+    }
+
+    /** Contact/header lines routinely carry icon-font glyphs (phone/link icons) mis-extracted as stray Latin-1
+     * letters -- real resumes never legitimately need non-ASCII here, so strip anything outside printable ASCII
+     * and turn the resulting whitespace runs (where an icon used to sit) into a clean " | " separator. */
+    private String cleanContactLine(String raw) {
+        StringBuilder ascii = new StringBuilder();
+        for (char c : raw.toCharArray()) if (c >= 32 && c <= 126) ascii.append(c);
+        String[] parts = ascii.toString().trim().split("\\s{2,}|\\s*\\|\\s*");
+        List<String> cleaned = new ArrayList<>();
+        for (String part : parts) { String p = part.trim(); if (!p.isEmpty()) cleaned.add(p); }
+        return cleaned.isEmpty() ? ascii.toString().trim() : String.join("  |  ", cleaned);
+    }
+
+    private static final String MONTH = "(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-zA-Z]*\\.?";
+    private static final String DATEPOINT = "(?:" + MONTH + "\\s+\\d{4}|\\d{4})";
+    private static final Pattern TRAILING_DATE = Pattern.compile(
+            "(" + DATEPOINT + "\\s*[\u2013\u2014\\-]\\s*(?:" + DATEPOINT + "|Present|Current|Now)|" + DATEPOINT + ")\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern LABELED_LINE = Pattern.compile("([A-Za-z][A-Za-z /&+.-]{1,40}):\\s+(.+)");
+    private static final Pattern TECH_STACK_NEXT = Pattern.compile("tech\\s*stack\\s*:", Pattern.CASE_INSENSITIVE);
 
     private List<String> wrap(String line, PDType1Font font, float fontSize, float maxWidth) {
         if (line.isBlank()) return List.of("");
@@ -182,24 +360,46 @@ public class ResumeTailoringService {
         catch (Exception ex) { return text.length() * fontSize * 0.5f; }
     }
 
-    /** PDFBox's standard 14 fonts only support WinAnsiEncoding -- strip anything outside it so showText() doesn't throw. */
     /**
-     * PDFBox's standard 14 fonts only support WinAnsiEncoding, and the excluded range must cover
-     * more than "outside Latin-1": the C1 control block (0x80-0x9F / 128-159) sits inside 0-255
-     * but several of those code points (confirmed live: 0x87) have no glyph and make showText()
-     * throw. Icon-font glyphs mis-extracted from a PDF resume (phone/link icons etc.) land
-     * exactly in this range, so this isn't a hypothetical edge case.
+     * PDFBox's standard 14 fonts use WinAnsiEncoding, which -- despite the name -- covers more than
+     * Latin-1: common "smart" typography (bullet, en/em dash, curly quotes, ellipsis) sits at Unicode
+     * code points above 255 but maps cleanly to WinAnsiEncoding by glyph name, so PDFBox renders it
+     * correctly if it's passed through unchanged. The previous version of this method treated "above
+     * 255" as "unsupported" and replaced all of it with '?', which is what actually produced the
+     * garbled '?' characters in place of bullets and dashes in exported PDFs -- not a missing-glyph
+     * problem, an over-aggressive filter. True control characters and the C1 block (0x80-0x9F / 128-159,
+     * confirmed live: 0x87, from icon glyphs mis-extracted from a resume PDF) still have no glyph and
+     * are replaced; anything else outside WinAnsiEncoding's actual reach also falls back to '?', with
+     * showText()'s IllegalArgumentException as a second safety net at the call site.
      */
+    private static final Set<Character> WINANSI_SMART_PUNCTUATION = Set.of(
+            '\u2018', '\u2019', '\u201C', '\u201D', '\u2013', '\u2014', '\u2022', '\u2026', '\u2020', '\u2021', '\u2122', '\u20AC');
+
     private String sanitize(String text) {
         StringBuilder result = new StringBuilder(text.length());
-        for (char c : text.toCharArray()) result.append(c < 32 || c > 255 || (c >= 128 && c <= 159) ? '?' : c);
+        for (char c : text.toCharArray()) {
+            if (c < 32) result.append('?');
+            else if (c <= 255 && !(c >= 128 && c <= 159)) result.append(c);
+            else if (WINANSI_SMART_PUNCTUATION.contains(c)) result.append(c);
+            else result.append('?');
+        }
         return result.toString();
     }
 
-    /** Strips to plain ASCII -- the guaranteed-safe fallback when even sanitize() misses an undefined glyph. */
+    /** Guaranteed-safe fallback when even sanitize() misses an undefined glyph -- maps smart punctuation to its
+     * plain-ASCII equivalent instead of '?' where possible, since that degrades far more readably. */
     private String asciiOnly(String text) {
         StringBuilder result = new StringBuilder(text.length());
-        for (char c : text.toCharArray()) result.append(c < 32 || c > 126 ? '?' : c);
+        for (char c : text.toCharArray()) {
+            switch (c) {
+                case '\u2018': case '\u2019': result.append('\''); break;
+                case '\u201C': case '\u201D': result.append('"'); break;
+                case '\u2013': case '\u2014': result.append('-'); break;
+                case '\u2022': result.append('-'); break;
+                case '\u2026': result.append("..."); break;
+                default: result.append(c < 32 || c > 126 ? '?' : c);
+            }
+        }
         return result.toString();
     }
 
