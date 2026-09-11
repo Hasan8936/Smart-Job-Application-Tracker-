@@ -1,14 +1,27 @@
 package com.smartjobtracker.dto;
 
 import com.smartjobtracker.model.ApplicationStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
 public class ApplicationRequest {
+    @NotBlank(message = "companyName is required")
+    @Size(max = 255)
     private String companyName;
+
+    @NotBlank(message = "roleTitle is required")
+    @Size(max = 255)
     private String roleTitle;
+
+    @Size(max = 100_000)
     private String jobDescription;
+
+    @NotNull(message = "status is required")
     private ApplicationStatus status;
+
     private LocalDate appliedDate;
 
     public String getCompanyName() { return companyName; }

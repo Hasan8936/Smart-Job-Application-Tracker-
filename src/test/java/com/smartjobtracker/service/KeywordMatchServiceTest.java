@@ -31,7 +31,7 @@ public class KeywordMatchServiceTest {
         resumeRepository.save(r);
 
         String jd = "Looking for a Java Spring Boot developer with SQL and Docker experience";
-        MatchResponse res = keywordMatchService.score(r.getId(), jd);
+        MatchResponse res = keywordMatchService.score(r.getId(), r.getUserId(), jd);
 
         assertThat(res.getMatchScore()).isGreaterThan(0);
         assertThat(res.getMatchedKeywords()).contains("java", "spring boot", "sql", "docker");

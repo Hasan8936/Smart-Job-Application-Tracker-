@@ -40,11 +40,12 @@ public class JobDiscoveryController {
     }
     @GetMapping("/{id}")
     public ResponseEntity<JobDtos.JobDetail> detail(@PathVariable Long id) {
-        return repository.findById(id).map(job -> JobDtos.JobDetail.from(job,
-                skillRepository.findByJobPostingIdOrderByName(id).stream().filter(skill -> "REQUIRED".equals(skill.getRequirement())).map(com.smartjobtracker.model.JobSkill::getName).toList(),
-                skillRepository.findByJobPostingIdOrderByName(id).stream().filter(skill -> "PREFERRED".equals(skill.getRequirement())).map(com.smartjobtracker.model.JobSkill::getName).toList()))
-            .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return repository.findById(id).map(job -> {
+            var skills = skillRepository.findByJobPostingIdOrderByName(id);
+            return JobDtos.JobDetail.from(job,
+                skills.stream().filter(s -> "REQUIRED".equals(s.getRequirement())).map(com.smartjobtracker.model.JobSkill::getName).toList(),
+                skills.stream().filter(s -> "PREFERRED".equals(s.getRequirement())).map(com.smartjobtracker.model.JobSkill::getName).toList());
+        }).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     /**
      * Jobs first synced into our database after {@code since} (defaults to 7 days ago if omitted),

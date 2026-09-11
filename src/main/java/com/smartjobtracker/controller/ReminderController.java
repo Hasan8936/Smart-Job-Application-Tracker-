@@ -55,8 +55,13 @@ public class ReminderController {
     public ResponseEntity<Reminder> create(@RequestBody Reminder r) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
-        // always tie the reminder to the caller — never trust a userId from the request body
-        r.setUserId(uid);
+        r.setId(null);                     // force INSERT — never allow caller to UPDATE an existing row via supplied id
+        r.setUserId(uid);                  // always tie the reminder to the authenticated caller
+        r.setStatus(ReminderStatus.PENDING); // status is scheduler-owned; reset any caller-supplied value
+        r.setAttempts(0);
+        r.setSentAt(null);
+        r.setLastError(null);
+        r.setNextAttemptAt(null);
         if (r.getDedupeKey() == null || r.getDedupeKey().isBlank()) r.setDedupeKey("legacy-" + uid + "-" + UUID.randomUUID());
         Reminder saved = reminderRepository.save(r);
         return ResponseEntity.ok(saved);

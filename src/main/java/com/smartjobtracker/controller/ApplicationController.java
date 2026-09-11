@@ -7,6 +7,7 @@ import com.smartjobtracker.model.JobApplication;
 import com.smartjobtracker.model.User;
 import com.smartjobtracker.repository.UserRepository;
 import com.smartjobtracker.service.JobApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,7 +44,7 @@ public class ApplicationController {
     }
 
     @PostMapping
-    public ResponseEntity<JobApplication> create(@RequestBody ApplicationRequest req) {
+    public ResponseEntity<JobApplication> create(@Valid @RequestBody ApplicationRequest req) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         JobApplication a = new JobApplication();
@@ -65,7 +66,7 @@ public class ApplicationController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<JobApplication> update(@PathVariable Long id, @RequestBody ApplicationRequest req) {
+    public ResponseEntity<JobApplication> update(@PathVariable Long id, @Valid @RequestBody ApplicationRequest req) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         JobApplication update = new JobApplication();

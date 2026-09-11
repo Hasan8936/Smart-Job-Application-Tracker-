@@ -35,8 +35,10 @@ public class KeywordMatchService {
         }
     }
 
-    public MatchResponse score(Long resumeId, String jobDescriptionText) {
-        Optional<Resume> resumeOpt = resumeRepository.findById(resumeId);
+    public MatchResponse score(Long resumeId, Long userId, String jobDescriptionText) {
+        Optional<Resume> resumeOpt = resumeRepository.findByIdAndUserId(resumeId, userId);
+        if (resumeOpt.isEmpty()) throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN, "Resume not found or not owned by caller");
         String resumeText = resumeOpt.map(Resume::getExtractedText).orElse("");
 
         String resumeNormalized = (resumeText == null ? "" : resumeText).toLowerCase();
