@@ -13,4 +13,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends fontconfig font
 WORKDIR /app
 COPY --from=builder /build/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Xmx300m","-jar","/app/app.jar"]
