@@ -13,9 +13,10 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:password}
   jpa:
     hibernate:
-      # Flyway owns the schema (see below) — "validate" catches drift instead of
-      # letting Hibernate silently alter tables behind Flyway's back.
-      ddl-auto: validate
+      # Flyway owns and validates the schema. "none" skips Hibernate's per-entity
+      # metadata scan (24+ DB round-trips at startup) which caused 13-minute hangs
+      # on Render's free-tier PostgreSQL. Schema correctness is enforced by Flyway.
+      ddl-auto: none
     show-sql: false
 
   mail:
