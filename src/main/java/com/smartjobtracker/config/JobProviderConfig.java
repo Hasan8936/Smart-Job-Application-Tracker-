@@ -10,7 +10,7 @@ public class JobProviderConfig {
     private ProviderSettings greenhouse = new ProviderSettings();
     private ProviderSettings lever = new ProviderSettings();
     private ProviderSettings ashby = new ProviderSettings();
-    private ApifySettings apify = new ApifySettings();
+    private JobSpySettings jobspy = new JobSpySettings();
     private TelegramSettings telegram = new TelegramSettings();
     private long minIntervalMs = 500;
     private int maxRetries = 3;
@@ -21,8 +21,8 @@ public class JobProviderConfig {
     public void setLever(ProviderSettings value) { lever = value; }
     public ProviderSettings getAshby() { return ashby; }
     public void setAshby(ProviderSettings value) { ashby = value; }
-    public ApifySettings getApify() { return apify; }
-    public void setApify(ApifySettings value) { apify = value; }
+    public JobSpySettings getJobspy() { return jobspy; }
+    public void setJobspy(JobSpySettings value) { jobspy = value; }
     public TelegramSettings getTelegram() { return telegram; }
     public void setTelegram(TelegramSettings value) { telegram = value; }
     public long getMinIntervalMs() { return minIntervalMs; }
@@ -42,13 +42,23 @@ public class JobProviderConfig {
         public void setSites(List<String> value) { sites = value; }
     }
 
-    public static class ApifySettings extends ProviderSettings {
-        private String token;
-        private List<String> actors = new ArrayList<>();
-        public String getToken() { return token; }
-        public void setToken(String value) { token = value; }
-        public List<String> getActors() { return actors; }
-        public void setActors(List<String> value) { actors = value; }
+    public static class JobSpySettings {
+        private boolean enabled;
+        private String serviceUrl;
+        private List<String> siteNames = List.of("linkedin", "indeed", "glassdoor", "google");
+        private int resultsWanted = 20;
+        private int hoursOld = 168;
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean value) { enabled = value; }
+        public String getServiceUrl() { return serviceUrl; }
+        public void setServiceUrl(String value) { serviceUrl = value; }
+        public List<String> getSiteNames() { return siteNames; }
+        public void setSiteNames(List<String> value) { siteNames = value; }
+        public int getResultsWanted() { return resultsWanted; }
+        public void setResultsWanted(int value) { resultsWanted = value; }
+        public int getHoursOld() { return hoursOld; }
+        public void setHoursOld(int value) { hoursOld = value; }
     }
 
     public static class TelegramSettings {

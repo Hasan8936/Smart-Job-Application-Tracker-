@@ -73,6 +73,8 @@ app:
     api-version: ${WHATSAPP_API_VERSION:v20.0}
     max-retries: ${WHATSAPP_MAX_RETRIES:5}
     poll-interval-ms: ${WHATSAPP_POLL_INTERVAL_MS:60000}
+  google-calendar:
+    redirect-uri: ${GOOGLE_CALENDAR_REDIRECT_URI:http://localhost:8080/api/google-calendar/callback}
   job-providers:
     min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
     max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}
@@ -85,10 +87,12 @@ app:
     ashby:
       enabled: ${ASHBY_ENABLED:false}
       boards: ${ASHBY_BOARDS:}
-    apify:
-      enabled: ${APIFY_ENABLED:false}
-      token: ${APIFY_TOKEN:}
-      actors: ${APIFY_ACTORS:}
+    jobspy:
+      enabled: ${JOBSPY_ENABLED:false}
+      service-url: ${JOBSPY_SERVICE_URL:}
+      site-names: ${JOBSPY_SITE_NAMES:linkedin,indeed,glassdoor,google}
+      results-wanted: ${JOBSPY_RESULTS_WANTED:20}
+      hours-old: ${JOBSPY_HOURS_OLD:168}
     telegram:
       enabled: ${TELEGRAM_ENABLED:false}
       channels: ${TELEGRAM_CHANNELS:}

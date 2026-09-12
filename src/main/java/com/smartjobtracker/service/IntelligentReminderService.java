@@ -19,12 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class IntelligentReminderService {
@@ -36,33 +36,37 @@ public class IntelligentReminderService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final NotificationService notificationService;
+    private final GoogleCalendarService googleCalendarService;
 
     public IntelligentReminderService(ReminderRepository reminderRepository, UserRepository userRepository,
                                       EmailService emailService, ObjectMapper objectMapper) {
-        this(reminderRepository, userRepository, emailService, objectMapper, Clock.systemUTC(), null);
+        this(reminderRepository, userRepository, emailService, objectMapper, Clock.systemUTC(), null, null);
     }
 
     @Autowired
     public IntelligentReminderService(ReminderRepository reminderRepository, UserRepository userRepository,
                                       EmailService emailService, ObjectMapper objectMapper,
-                                      NotificationService notificationService) {
-        this(reminderRepository, userRepository, emailService, objectMapper, Clock.systemUTC(), notificationService);
+                                      NotificationService notificationService,
+                                      GoogleCalendarService googleCalendarService) {
+        this(reminderRepository, userRepository, emailService, objectMapper, Clock.systemUTC(),
+            notificationService, googleCalendarService);
     }
 
     IntelligentReminderService(ReminderRepository reminderRepository, UserRepository userRepository,
                                EmailService emailService, ObjectMapper objectMapper, Clock clock) {
-        this(reminderRepository, userRepository, emailService, objectMapper, clock, null);
+        this(reminderRepository, userRepository, emailService, objectMapper, clock, null, null);
     }
 
     IntelligentReminderService(ReminderRepository reminderRepository, UserRepository userRepository,
                                EmailService emailService, ObjectMapper objectMapper, Clock clock,
-                               NotificationService notificationService) {
+                               NotificationService notificationService, GoogleCalendarService googleCalendarService) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.notificationService = notificationService;
+        this.googleCalendarService = googleCalendarService;
     }
 
     @Transactional
@@ -93,6 +97,21 @@ public class IntelligentReminderService {
             reminder.setMessage(request.getMessage() == null || request.getMessage().isBlank()
                     ? defaultMessage(request.getType(), offset) : request.getMessage());
             result.add(reminderRepository.save(reminder));
+        }
+        // Create one Google Calendar event at the actual event time with popup+email
+        // reminders at every configured offset. Only fires when new rows were created
+        // (avoids duplicate Calendar events on duplicate schedule calls).
+        if (!result.isEmpty() && googleCalendarService != null) {
+            try {
+                String summary = typeLabel(request.getType()) + " Reminder";
+                List<Integer> offsetMinutes = offsets.stream()
+                    .filter(o -> o != null && o >= 0)
+                    .map(o -> o * 60)
+                    .collect(Collectors.toList());
+                googleCalendarService.createEvent(userId, summary, request.getMessage(), eventAt, zone.getId(), offsetMinutes);
+            } catch (Exception e) {
+                log.warn("Could not create Google Calendar event for user {}: {}", userId, e.getMessage());
+            }
         }
         return result;
     }
@@ -189,5 +208,15 @@ public class IntelligentReminderService {
     private String defaultMessage(ReminderType type, int offset) {
         return offset == 0 ? type.name().toLowerCase(Locale.ROOT) + " reminder" :
                 type.name().toLowerCase(Locale.ROOT) + " in " + offset + " hours";
+    }
+
+    private String typeLabel(ReminderType type) {
+        return switch (type) {
+            case INTERVIEW -> "Interview";
+            case ASSESSMENT -> "Assessment";
+            case DEADLINE -> "Deadline";
+            case FOLLOW_UP -> "Follow-up";
+            case CUSTOM -> "Custom";
+        };
     }
 }

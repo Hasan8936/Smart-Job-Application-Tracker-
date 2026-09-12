@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Plus, Trash2, BellRing, Settings2 } from 'lucide-react'
+import { Plus, Trash2, BellRing, Settings2, Calendar, CheckCircle2, XCircle } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
+import { getCalendarStatus, getCalendarConnectUrl, disconnectCalendar } from '../api/calendar'
 
 const TYPE_LABEL = { INTERVIEW: 'Interview', ASSESSMENT: 'Assessment', DEADLINE: 'Deadline', FOLLOW_UP: 'Follow up' }
 
@@ -23,12 +24,45 @@ export default function Reminders() {
   const [deliveries, setDeliveries] = useState([])
   const [reminderError, setReminderError] = useState('')
   const [whatsappError, setWhatsappError] = useState('')
+  const [calendarStatus, setCalendarStatus] = useState(null)
+  const [calendarBusy, setCalendarBusy] = useState(false)
+  const [calendarMsg, setCalendarMsg] = useState('')
 
   function errorMessage(e, fallback) {
     return e?.response?.data?.error || fallback
   }
 
-  useEffect(() => { fetchReminders(); fetchPreferences(); fetchWhatsapp(); fetchDeliveries() }, [])
+  useEffect(() => {
+    fetchReminders(); fetchPreferences(); fetchWhatsapp(); fetchDeliveries(); fetchCalendarStatus()
+    // Handle redirect back from Google OAuth
+    const params = new URLSearchParams(window.location.search)
+    const cal = params.get('calendar')
+    if (cal === 'connected') { setCalendarMsg('Google Calendar connected! New reminders will create calendar events.'); fetchCalendarStatus() }
+    else if (cal === 'error') setCalendarMsg('Could not connect Google Calendar. Please try again.')
+    if (cal) window.history.replaceState({}, '', window.location.pathname)
+  }, [])
+
+  async function fetchCalendarStatus() {
+    try { const res = await getCalendarStatus(); setCalendarStatus(res.data) } catch (e) { console.error(e) }
+  }
+
+  async function connectCalendar() {
+    setCalendarBusy(true); setCalendarMsg('')
+    try {
+      const res = await getCalendarConnectUrl()
+      window.location.href = res.data.url
+    } catch (e) {
+      setCalendarMsg(e?.response?.data?.error || 'Could not start Google Calendar connection.')
+      setCalendarBusy(false)
+    }
+  }
+
+  async function handleDisconnect() {
+    setCalendarBusy(true); setCalendarMsg('')
+    try { await disconnectCalendar(); setCalendarMsg('Google Calendar disconnected.'); fetchCalendarStatus() }
+    catch (e) { setCalendarMsg('Could not disconnect.') }
+    finally { setCalendarBusy(false) }
+  }
 
   async function fetchReminders() {
     try {
@@ -229,6 +263,57 @@ export default function Reminders() {
         </div>
         {deliveries.length > 0 && <div className="mt-5 space-y-2"><h3 className="text-xs font-medium text-muted">Delivery history</h3>{deliveries.slice(0, 10).map((delivery) => <div key={delivery.id} className="flex items-center justify-between gap-3 border-t border-line pt-2 text-sm"><span className="truncate text-ink">{delivery.message}</span><span className="shrink-0 text-xs text-muted">{delivery.status === 'DELIVERED' || delivery.status === 'READ' ? delivery.status : `Not confirmed: ${delivery.status}`}</span></div>)}</div>}
       </section>}
+
+      {calendarStatus && (
+        <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar size={16} />
+            <h2 className="font-display text-[15px] text-ink">Google Calendar</h2>
+          </div>
+
+          {!calendarStatus.configured ? (
+            <p className="text-sm text-muted">
+              Google Calendar integration is not configured on this server.
+              Set <code className="bg-paper px-1 py-0.5 rounded text-xs">GOOGLE_CLIENT_ID</code> and{' '}
+              <code className="bg-paper px-1 py-0.5 rounded text-xs">GOOGLE_CLIENT_SECRET</code> to enable it.
+            </p>
+          ) : calendarStatus.connected ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 text-sm text-status-offer">
+                <CheckCircle2 size={15} />Connected — new reminders will add events to your Google Calendar
+              </span>
+              <button
+                type="button"
+                disabled={calendarBusy}
+                onClick={handleDisconnect}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-xs font-medium text-muted hover:text-status-rejected hover:border-status-rejected/40 transition-colors disabled:opacity-50"
+              >
+                <XCircle size={13} />Disconnect
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-muted">
+                Connect your Google Calendar to automatically create calendar events with popup and email alerts whenever you schedule a reminder here.
+              </p>
+              <button
+                type="button"
+                disabled={calendarBusy}
+                onClick={connectCalendar}
+                className="inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50"
+              >
+                <Calendar size={15} />{calendarBusy ? 'Redirecting…' : 'Connect Google Calendar'}
+              </button>
+            </div>
+          )}
+
+          {calendarMsg && (
+            <p className={`mt-2 text-sm ${calendarMsg.includes('not') || calendarMsg.includes('Could') ? 'text-status-rejected' : 'text-status-offer'}`}>
+              {calendarMsg}
+            </p>
+          )}
+        </section>
+      )}
     </Layout>
   )
 }
