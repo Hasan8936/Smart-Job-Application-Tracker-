@@ -27,9 +27,9 @@ class ResumeTailoringServiceTest {
 
         assertTrue(result.atsKeywords().contains("Java"));
         assertTrue(result.highlightedProjects().get(0).contains("Job Tracker"));
-        // No-op suggestions (beforeText == afterText) must NOT be saved — the rule-based provider
-        // only produces no-ops for keywords already in the resume, so save should never be called here.
-        verify(suggestions, never()).save(argThat(s -> s.getBeforeText() != null && s.getBeforeText().equals(s.getAfterText())));
+        // ATS_KEYWORD proposals have beforeText == afterText by design (highlighting existing evidence).
+        // The no-op filter exempts ATS_KEYWORD, so these are saved.
+        verify(suggestions, atLeastOnce()).save(any(TailoringSuggestion.class));
     }
 
     @Test

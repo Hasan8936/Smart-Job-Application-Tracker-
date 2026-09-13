@@ -409,7 +409,9 @@ public class ResumeTailoringService {
         int count = 0;
         for (ResumeTailoringProvider.Proposal p : proposals) {
             if (!grounded(p, source)) continue;
-            if (p.beforeText().equals(p.afterText())) continue;
+            // ATS_KEYWORD proposals intentionally have beforeText == afterText: they highlight
+            // existing evidence rather than propose a rewrite, so don't drop them here.
+            if (!"ATS_KEYWORD".equals(p.category()) && p.beforeText().equals(p.afterText())) continue;
             TailoringSuggestion s = new TailoringSuggestion();
             s.setSessionId(sessionId); s.setCategory(p.category()); s.setBeforeText(p.beforeText());
             s.setAfterText(p.afterText()); s.setRationale(p.rationale()); s.setEvidenceText(p.evidenceText());
