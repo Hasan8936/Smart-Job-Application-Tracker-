@@ -15,7 +15,6 @@ import {
 const BLANK = { q: '', location: '', employmentType: '', provider: '', postedAfter: '', postedBefore: '' }
 
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
-const PROVIDERS = ['greenhouse', 'lever', 'ashby']
 const SORT_OPTIONS = [
   { value: 'postedAt,desc', label: 'Newest first' },
   { value: 'postedAt,asc', label: 'Oldest first' },
@@ -37,7 +36,7 @@ const DATE_PRESETS = [
 ]
 
 function activeFilterCount(filters) {
-  return [filters.location, filters.employmentType, filters.provider, filters.postedAfter, filters.postedBefore]
+  return [filters.location, filters.employmentType, filters.postedAfter, filters.postedBefore]
     .filter(Boolean).length
 }
 
@@ -45,7 +44,6 @@ function activeFilterChips(filters, setFilters) {
   const chips = []
   if (filters.location) chips.push({ label: `📍 ${filters.location}`, clear: () => setFilters(f => ({ ...f, location: '' })) })
   if (filters.employmentType) chips.push({ label: filters.employmentType, clear: () => setFilters(f => ({ ...f, employmentType: '' })) })
-  if (filters.provider) chips.push({ label: filters.provider.charAt(0).toUpperCase() + filters.provider.slice(1), clear: () => setFilters(f => ({ ...f, provider: '' })) })
   if (filters.postedAfter || filters.postedBefore) {
     const preset = DATE_PRESETS.find(p => p.after === filters.postedAfter && p.before === filters.postedBefore)
     chips.push({ label: preset ? preset.label : 'Custom date', clear: () => setFilters(f => ({ ...f, postedAfter: '', postedBefore: '' })) })
@@ -233,28 +231,15 @@ export default function Discovery() {
               </div>
             </div>
 
-            {/* Location + Provider row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">Location</p>
-                <input
-                  placeholder="e.g. Remote, New York"
-                  value={draft.location}
-                  onChange={e => setDraft({ ...draft, location: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">Source</p>
-                <select
-                  value={draft.provider}
-                  onChange={e => setDraft({ ...draft, provider: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="">All sources</option>
-                  {PROVIDERS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                </select>
-              </div>
+            {/* Location */}
+            <div>
+              <p className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">Location</p>
+              <input
+                placeholder="e.g. Remote, New York"
+                value={draft.location}
+                onChange={e => setDraft({ ...draft, location: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+              />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">

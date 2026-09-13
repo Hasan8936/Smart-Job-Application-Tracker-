@@ -41,11 +41,6 @@ export default function JobCard({ job, action, onAction, onOpen }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted">
             <span className="inline-flex items-center gap-1"><MapPin size={12} />{job.location || 'Location unavailable'}</span>
             {job.employmentType && <span className="capitalize">{job.employmentType}</span>}
-            {job.provider && (
-              <span className="px-1.5 py-0.5 rounded bg-paper border border-line uppercase tracking-wide text-[10px]">
-                {job.provider}
-              </span>
-            )}
           </div>
         </div>
 

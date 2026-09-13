@@ -1,6 +1,10 @@
 server:
   port: 8080
   forward-headers-strategy: framework
+  tomcat:
+    threads:
+      max: 40
+      min-spare: 5
   compression:
     enabled: true
     mime-types: application/json,application/javascript,text/html,text/css,text/plain,text/xml
@@ -18,6 +22,12 @@ spring:
       # on Render's free-tier PostgreSQL. Schema correctness is enforced by Flyway.
       ddl-auto: none
     show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
 
   mail:
     # Defaults target Gmail SMTP. In production set MAIL_USERNAME + MAIL_PASSWORD — for Gmail,

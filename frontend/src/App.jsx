@@ -1,23 +1,33 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Applications from './pages/Applications'
-import ResumeMatch from './pages/ResumeMatch'
-import Reminders from './pages/Reminders'
-import Profile from './pages/Profile'
-import CandidateProfile from './pages/CandidateProfile'
 import ProtectedRoute from './components/ProtectedRoute'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import OAuth2Callback from './pages/OAuth2Callback'
-import Discovery from './pages/Discovery'
-import ResumeTailoring from './pages/ResumeTailoring'
-import InterviewPrep from './pages/InterviewPrep'
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Applications = lazy(() => import('./pages/Applications'))
+const ResumeMatch = lazy(() => import('./pages/ResumeMatch'))
+const Reminders = lazy(() => import('./pages/Reminders'))
+const Profile = lazy(() => import('./pages/Profile'))
+const CandidateProfile = lazy(() => import('./pages/CandidateProfile'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const OAuth2Callback = lazy(() => import('./pages/OAuth2Callback'))
+const Discovery = lazy(() => import('./pages/Discovery'))
+const ResumeTailoring = lazy(() => import('./pages/ResumeTailoring'))
+const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
+
+function PageSpinner() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
+    <Suspense fallback={<PageSpinner />}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -34,5 +44,6 @@ export default function App() {
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     </Routes>
+    </Suspense>
   )
 }

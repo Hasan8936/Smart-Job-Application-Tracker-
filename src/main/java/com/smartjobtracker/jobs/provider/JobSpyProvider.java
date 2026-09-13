@@ -83,7 +83,7 @@ public class JobSpyProvider implements JobProvider {
             return new JobBatch(jobs, null);
         } catch (Exception e) {
             log.error("JobSpy search failed: {}", e.getMessage(), e);
-            return new JobBatch(List.of(), null);
+            throw new RuntimeException("JobSpy search failed: " + e.getMessage(), e);
         }
     }
 
