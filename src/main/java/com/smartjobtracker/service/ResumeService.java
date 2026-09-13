@@ -78,4 +78,12 @@ public class ResumeService {
     public List<Resume> listByUser(Long userId) {
         return resumeRepository.findByUserId(userId);
     }
+
+    public Resume saveFromContent(Long userId, String fileName, String text) {
+        Resume r = new Resume();
+        r.setUserId(userId);
+        r.setFileName(fileName);
+        r.setExtractedText(text == null ? "" : text);
+        return resumeRepository.save(r);
+    }
 }

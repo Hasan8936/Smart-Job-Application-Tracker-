@@ -111,6 +111,11 @@ public class ResumeTailoringService {
         return renderPdf(version.getContent() == null ? "" : version.getContent());
     }
 
+    /** Renders arbitrary plain-text resume content to PDF bytes; used by ResumeBuilderService. */
+    public byte[] renderContent(String content) {
+        return renderPdf(content == null ? "" : content);
+    }
+
     /**
      * Renders plain resume text into a structured, readable PDF -- no LaTeX toolchain is
      * available in this deployment, so this is a direct PDFBox layout rather than compiling
