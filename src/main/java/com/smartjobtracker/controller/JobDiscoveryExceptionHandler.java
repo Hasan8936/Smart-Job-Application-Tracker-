@@ -26,4 +26,13 @@ public class JobDiscoveryExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(Map.of("error", ex.getMessage() == null ? "bad request" : ex.getMessage()));
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
+        org.slf4j.LoggerFactory.getLogger(JobDiscoveryExceptionHandler.class)
+                .error("Unexpected error in job discovery", ex);
+        String msg = ex.getMessage();
+        return ResponseEntity.internalServerError()
+                .body(Map.of("error", msg != null ? msg : "Job discovery failed unexpectedly"));
+    }
 }

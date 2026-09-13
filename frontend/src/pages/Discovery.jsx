@@ -83,12 +83,19 @@ export default function Discovery() {
     finally { markJobsVisitedNow() }
   }
 
+  const SOFTWARE_ROLES = [
+    'software engineer', 'software developer', 'backend developer', 'frontend developer',
+    'full stack developer', 'data engineer', 'machine learning engineer', 'devops engineer',
+    'data scientist', 'site reliability engineer', 'mobile developer',
+  ]
+
   async function syncSources() {
     try {
       setSyncing(true); setError('')
       setSyncMessage('Searching job boards — this can take up to 60 seconds…')
       const body = {}
       if (filters.q) body.keywords = filters.q
+      else body.roles = SOFTWARE_ROLES
       if (filters.location) body.locations = [filters.location]
       const result = await discoverJobs(body)
       const errs = result.providerErrors && Object.keys(result.providerErrors).length > 0

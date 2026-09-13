@@ -11,8 +11,6 @@ import com.smartjobtracker.repository.JobSkillRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -27,7 +25,6 @@ public class JobSyncService {
                           JobSkillRepository skillRepository, JobSkillExtractor skillExtractor) {
         this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor;
     }
-    @Transactional
     public SyncResult sync(JobQuery query) {
         if (providers.stream().noneMatch(JobProvider::isEnabled)) {
             throw new IllegalStateException(
