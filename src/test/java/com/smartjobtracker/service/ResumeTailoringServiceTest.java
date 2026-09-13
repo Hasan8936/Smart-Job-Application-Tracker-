@@ -27,7 +27,9 @@ class ResumeTailoringServiceTest {
 
         assertTrue(result.atsKeywords().contains("Java"));
         assertTrue(result.highlightedProjects().get(0).contains("Job Tracker"));
-        verify(suggestions, atLeastOnce()).save(any(TailoringSuggestion.class));
+        // No-op suggestions (beforeText == afterText) must NOT be saved — the rule-based provider
+        // only produces no-ops for keywords already in the resume, so save should never be called here.
+        verify(suggestions, never()).save(argThat(s -> s.getBeforeText() != null && s.getBeforeText().equals(s.getAfterText())));
     }
 
     @Test
@@ -200,8 +202,15 @@ class ResumeTailoringServiceTest {
             new ResumeTailoringProvider.Proposal("IMPACT", "text not in resume at all",
                 "rewrite", "rationale", "text not in resume at all")
         );
-        // Rule-based fallback will find at least the keyword lines and produce proposals
-        ResumeTailoringProvider fallbackProvider = new RuleBasedResumeTailoringProvider();
+        // Fallback produces a real (non-no-op) suggestion — beforeText exists in the resume and afterText differs.
+        // This verifies the H2 path: Gemini failed grounding → fallback consulted → real suggestion saved.
+        ResumeTailoringProvider fallbackProvider = (rt, jd, kw) -> List.of(
+            new ResumeTailoringProvider.Proposal("IMPACT",
+                "Built REST APIs",
+                "Designed and shipped REST APIs",
+                "Stronger action verb",
+                "Built REST APIs")
+        );
 
         Resume resume = resume(resumeText);
         ResumeRepository resumes = mock(ResumeRepository.class); when(resumes.findById(4L)).thenReturn(Optional.of(resume));
