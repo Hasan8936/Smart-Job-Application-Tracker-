@@ -77,12 +77,6 @@ export default function Profile() {
             <span className="text-muted">Signed in</span>
             <span className="text-ink font-medium">{user ? 'Yes' : 'No'}</span>
           </div>
-          <div className="py-2">
-            <span className="text-muted block mb-1.5">Session token</span>
-            <code className="block text-xs text-ink bg-paper border border-line rounded-lg px-3 py-2 break-all font-mono">
-              {user?.token}
-            </code>
-          </div>
         </div>
 
         <section className="border-t border-line pt-5 mb-6">

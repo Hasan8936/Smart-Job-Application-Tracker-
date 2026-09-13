@@ -1,6 +1,8 @@
 package com.smartjobtracker.controller;
 
+import com.smartjobtracker.dto.ReminderCreateRequest;
 import com.smartjobtracker.dto.ReminderPreferencesDto;
+import com.smartjobtracker.dto.ReminderResponseDto;
 import com.smartjobtracker.dto.ReminderScheduleRequest;
 import com.smartjobtracker.model.Reminder;
 import com.smartjobtracker.model.ReminderStatus;
@@ -43,28 +45,28 @@ public class ReminderController {
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<List<Reminder>> upcoming() {
+    public ResponseEntity<List<ReminderResponseDto>> upcoming() {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
-        // this user's still-pending reminders, soonest first
         List<Reminder> list = reminderRepository.findByUserIdAndStatusOrderByRemindAtAsc(uid, ReminderStatus.PENDING);
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(list.stream().map(ReminderResponseDto::from).collect(java.util.stream.Collectors.toList()));
     }
 
     @PostMapping
-    public ResponseEntity<Reminder> create(@RequestBody Reminder r) {
+    public ResponseEntity<ReminderResponseDto> create(@Valid @RequestBody ReminderCreateRequest req) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
-        r.setId(null);                     // force INSERT — never allow caller to UPDATE an existing row via supplied id
-        r.setUserId(uid);                  // always tie the reminder to the authenticated caller
-        r.setStatus(ReminderStatus.PENDING); // status is scheduler-owned; reset any caller-supplied value
+        Reminder r = new Reminder();
+        r.setApplicationId(req.getApplicationId());
+        r.setRemindAt(req.getRemindAt());
+        r.setType(req.getType());
+        r.setMessage(req.getMessage());
+        r.setUserId(uid);
+        r.setStatus(ReminderStatus.PENDING);
         r.setAttempts(0);
-        r.setSentAt(null);
-        r.setLastError(null);
-        r.setNextAttemptAt(null);
-        if (r.getDedupeKey() == null || r.getDedupeKey().isBlank()) r.setDedupeKey("legacy-" + uid + "-" + UUID.randomUUID());
+        r.setDedupeKey("legacy-" + uid + "-" + UUID.randomUUID());
         Reminder saved = reminderRepository.save(r);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(ReminderResponseDto.from(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -82,10 +84,11 @@ public class ReminderController {
     }
 
     @PostMapping("/schedule")
-    public ResponseEntity<List<Reminder>> schedule(@Valid @RequestBody ReminderScheduleRequest request) {
+    public ResponseEntity<List<ReminderResponseDto>> schedule(@Valid @RequestBody ReminderScheduleRequest request) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
-        return ResponseEntity.ok(intelligentReminderService.schedule(uid, request));
+        return ResponseEntity.ok(intelligentReminderService.schedule(uid, request).stream()
+                .map(ReminderResponseDto::from).collect(java.util.stream.Collectors.toList()));
     }
 
     @GetMapping("/preferences")
