@@ -5,6 +5,7 @@ import {
   ChevronLeft, CheckCircle, AlertCircle, Sparkles, X, Loader2,
   Briefcase, GraduationCap, Wrench, User, ArrowRight
 } from 'lucide-react'
+import Layout from '../components/Layout'
 import { getPrefill, exportResume } from '../api/resumeBuilder'
 
 // ─── Role suggestions ────────────────────────────────────────────────────────
@@ -709,8 +710,8 @@ export default function ResumeBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-base" ref={topRef}>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <Layout>
+      <div className="max-w-2xl mx-auto px-4 py-8" ref={topRef}>
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-accent/10 text-accent text-xs font-semibold px-3 py-1 rounded-full mb-3">
@@ -746,6 +747,6 @@ export default function ResumeBuilder() {
           )}
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }
