@@ -88,15 +88,16 @@ public class RuleBasedInterviewPrepProvider implements InterviewPrepProvider {
         int perCategory = Math.max(1, (count + 4) / 5);
 
         List<QuestionAnswer> out = new ArrayList<>();
-        addUnique(out, InterviewQuestionCategory.BEHAVIORAL, perCategory, BEHAVIORAL_QUESTIONS,
+        addUnique(out, InterviewQuestionCategory.BEHAVIORAL, perCategory, BEHAVIORAL_QUESTIONS, null,
                 i -> behavioralAnswer(facts, i), i -> "");
         addUnique(out, InterviewQuestionCategory.TECHNICAL, perCategory, null,
+                i -> technicalQuestion(skills, facts, i),
                 i -> technicalAnswer(skills, facts, i), i -> technicalEvidence(skills, facts, i));
         addRoleSpecific(out, perCategory, jdResponsibilities, facts);
-        addUnique(out, InterviewQuestionCategory.SITUATIONAL, perCategory, SITUATIONAL_QUESTIONS,
+        addUnique(out, InterviewQuestionCategory.SITUATIONAL, perCategory, SITUATIONAL_QUESTIONS, null,
                 i -> situationalAnswer(facts, i), i -> "");
         int companyCount = Math.max(perCategory, count - out.size());
-        addUnique(out, InterviewQuestionCategory.COMPANY_AND_MOTIVATION, companyCount, COMPANY_MOTIVATION_QUESTIONS,
+        addUnique(out, InterviewQuestionCategory.COMPANY_AND_MOTIVATION, companyCount, COMPANY_MOTIVATION_QUESTIONS, null,
                 i -> companyAnswer(facts, i), i -> "");
 
         if (out.size() > count) return new ArrayList<>(out.subList(0, count));
@@ -112,13 +113,14 @@ public class RuleBasedInterviewPrepProvider implements InterviewPrepProvider {
     }
 
     private interface AnswerFn { String apply(int i); }
+    private interface QuestionFn { String apply(int i); }
 
     private void addUnique(List<QuestionAnswer> out, InterviewQuestionCategory cat,
-                            int max, List<String> pool, AnswerFn answer, AnswerFn evidence) {
+                            int max, List<String> pool, QuestionFn questionFn, AnswerFn answer, AnswerFn evidence) {
         int added = 0;
         for (int i = 0; added < max; i++) {
             if (pool != null && i >= pool.size()) break;
-            String q = pool != null ? pool.get(i) : technicalQuestion(null, null, i);
+            String q = pool != null ? pool.get(i) : questionFn.apply(i);
             out.add(new QuestionAnswer(cat, q, answer.apply(i), evidence.apply(i)));
             added++;
         }
