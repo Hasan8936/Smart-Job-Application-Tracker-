@@ -85,8 +85,12 @@ export default function Discovery() {
 
   async function syncSources() {
     try {
-      setSyncing(true); setError(''); setSyncMessage('')
-      const result = await discoverJobs()
+      setSyncing(true); setError('')
+      setSyncMessage('Searching job boards — this can take up to 60 seconds…')
+      const body = {}
+      if (filters.q) body.keywords = filters.q
+      if (filters.location) body.locations = [filters.location]
+      const result = await discoverJobs(body)
       const errs = result.providerErrors && Object.keys(result.providerErrors).length > 0
         ? ` (${Object.entries(result.providerErrors).map(([p, m]) => `${p}: ${m}`).join('; ')})`
         : ''
@@ -98,7 +102,7 @@ export default function Discovery() {
         setNewJobsCount(r.totalElements || 0)
       } catch { /* non-critical */ }
     } catch (e) {
-      setError(e.response?.data?.error || 'Could not sync job sources.')
+      setError(e.response?.data?.error || 'Could not sync job sources. The service may be starting up — try again in 30 seconds.')
     } finally { setSyncing(false) }
   }
 

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.smartjobtracker.config.JobProviderConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -19,7 +20,7 @@ public class JobSpyProvider implements JobProvider {
     private final ProviderHttpClient http;
     private final ObjectMapper mapper;
 
-    public JobSpyProvider(JobProviderConfig config, RestClient.Builder builder, ObjectMapper mapper) {
+    public JobSpyProvider(JobProviderConfig config, @Qualifier("jobSpyRestClientBuilder") RestClient.Builder builder, ObjectMapper mapper) {
         this.config = config.getJobspy();
         this.mapper = mapper;
         this.http = new ProviderHttpClient(builder, config.getMinIntervalMs(), config.getMaxRetries());
