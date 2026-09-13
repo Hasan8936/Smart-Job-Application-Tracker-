@@ -161,7 +161,7 @@ class ResumeTailoringServiceTest {
 
         // The proposal must have been saved (not silently dropped by allWordsFromSource)
         verify(suggestions, atLeastOnce()).save(argThat(s ->
-            s instanceof TailoringSuggestion ts && "Developed and deployed REST APIs in Java using Spring Boot".equals(ts.getAfterText())
+            "Developed and deployed REST APIs in Java using Spring Boot".equals(s.getAfterText())
         ));
     }
 
