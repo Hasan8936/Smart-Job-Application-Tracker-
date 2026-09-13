@@ -710,17 +710,8 @@ export default function ResumeBuilder() {
   }
 
   return (
-    <Layout>
-      <div className="max-w-2xl mx-auto px-4 py-8" ref={topRef}>
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent text-xs font-semibold px-3 py-1 rounded-full mb-3">
-            <Sparkles size={12} /> Resume Builder
-          </div>
-          <h1 className="text-2xl font-bold text-ink">Build your resume</h1>
-          <p className="text-sm text-ink-soft mt-1">Simple, guided, and export-ready in minutes.</p>
-        </div>
-
+    <Layout title="Resume Builder" subtitle="Simple, guided, and export-ready in minutes.">
+      <div className="max-w-2xl mx-auto" ref={topRef}>
         <StepBar current={step} />
 
         <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm">
