@@ -187,7 +187,7 @@ public class RuleBasedInterviewPrepProvider implements InterviewPrepProvider {
             return "You have direct " + skill + " experience" + (context.isEmpty() ? "" : " (" + context + ")") + ". Structure your answer: (1) the project or role where you used it, (2) a specific problem you solved — go deep on the 'how', (3) the result (performance, reliability, or business impact). If you have metrics, use them.";
         }
         String closest = closestSkill(facts, skill);
-        return skill + " isn't on your resume — address it directly. Acknowledge the gap, then bridge to the closest skill you do have"
+        return skill + " isn't explicitly on my resume — address this directly. Acknowledge the gap, then bridge to the closest skill you do have"
                 + (closest.isEmpty() ? "" : " (" + closest + ")") + ". Explain your approach to picking up new stacks: a mini-project, reading the docs, or pairing with someone who knows it. Interviewers respect honesty and a clear ramp plan.";
     }
 
