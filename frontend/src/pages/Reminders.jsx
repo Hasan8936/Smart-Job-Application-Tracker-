@@ -204,7 +204,20 @@ export default function Reminders() {
 
         <section className="lg:col-span-2">
           {loading ? (
-            <div className="text-sm text-muted">Loading reminders…</div>
+            <div className="space-y-3 animate-pulse">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bg-surface border border-line rounded-xl2 p-4 flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 w-20 bg-paper rounded-full" />
+                      <div className="h-3 w-28 bg-paper rounded" />
+                    </div>
+                    <div className="h-3 w-48 bg-paper rounded" />
+                  </div>
+                  <div className="h-8 w-8 rounded-full bg-paper shrink-0" />
+                </div>
+              ))}
+            </div>
           ) : reminders.length === 0 ? (
             <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center">
               <BellRing className="mx-auto text-muted mb-2" size={22} />

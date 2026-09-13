@@ -157,7 +157,30 @@ export default function ResumeMatch() {
 
         <section className="bg-surface border border-line rounded-xl2 shadow-card p-5">
           <h2 className="font-display text-[15px] text-ink mb-4">Result</h2>
-          {deepMatchResult ? (
+          {(matching || deepMatching) ? (
+            <div className="space-y-5 animate-pulse">
+              <div className="flex justify-center">
+                <div className="h-28 w-28 rounded-full bg-paper" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-lg border border-line bg-paper h-16" />
+                ))}
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-28 bg-paper rounded" />
+                <div className="flex flex-wrap gap-1.5">
+                  {[0, 1, 2].map((i) => <div key={i} className="h-6 w-20 bg-paper rounded-full" />)}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-36 bg-paper rounded" />
+                <div className="flex flex-wrap gap-1.5">
+                  {[0, 1].map((i) => <div key={i} className="h-6 w-20 bg-paper rounded-full" />)}
+                </div>
+              </div>
+            </div>
+          ) : deepMatchResult ? (
             <DeepMatchResults result={deepMatchResult} />
           ) : !matchResult ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-10">

@@ -186,7 +186,18 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted mb-8">Loading your applications…</div>
+        <div className="space-y-3 mb-8 animate-pulse">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="bg-surface border border-line rounded-xl2 shadow-card p-4">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="h-4 w-40 bg-paper rounded" />
+                <div className="h-5 w-20 bg-paper rounded-full" />
+              </div>
+              <div className="h-3 w-56 bg-paper rounded mb-1.5" />
+              <div className="h-3 w-32 bg-paper rounded" />
+            </div>
+          ))}
+        </div>
       ) : applications.length === 0 ? (
         <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center mb-8">
           <p className="font-display text-ink text-lg mb-1">No applications yet</p>
@@ -215,7 +226,20 @@ export default function Dashboard() {
       </div>
 
       {jobLoading ? (
-        <div className="h-32 rounded-xl2 bg-surface border border-line animate-pulse" />
+        <div className="space-y-3 animate-pulse">
+          {[0, 1].map((i) => (
+            <div key={i} className="bg-surface border border-line rounded-xl2 shadow-card p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-lg bg-paper shrink-0" />
+                <div className="flex-1 space-y-2 pt-0.5">
+                  <div className="h-4 w-48 bg-paper rounded" />
+                  <div className="h-3 w-32 bg-paper rounded" />
+                  <div className="h-3 w-24 bg-paper rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : jobError ? (
         <div className="text-sm text-status-rejected">{jobError}</div>
       ) : jobs.length === 0 ? (

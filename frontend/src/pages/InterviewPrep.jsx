@@ -137,7 +137,29 @@ export default function InterviewPrep() {
       </section>
 
       <section className="lg:col-span-2 space-y-4">
-        {!session ? (
+        {busy ? (
+          <div className="space-y-4 animate-pulse">
+            <div className="bg-surface border border-line rounded-xl2 p-5">
+              <div className="h-4 w-48 bg-paper rounded mb-2" />
+              <div className="h-3 w-32 bg-paper rounded" />
+            </div>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="space-y-3">
+                <div className="h-3 w-24 bg-paper rounded" />
+                {[0, 1].map((j) => (
+                  <div key={j} className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+                    <div className="h-4 w-4/5 bg-paper rounded mb-3" />
+                    <div className="border border-line rounded-lg p-3 space-y-2">
+                      <div className="h-2 w-20 bg-paper rounded" />
+                      <div className="h-3 w-full bg-paper rounded" />
+                      <div className="h-3 w-3/4 bg-paper rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : !session ? (
           <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center text-sm text-muted">50 behavioral, technical, role-specific, situational, and motivation questions with model answers will appear here.</div>
         ) : <>
           <div className="bg-surface border border-line rounded-xl2 p-5 flex items-center justify-between gap-3">

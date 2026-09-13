@@ -137,7 +137,17 @@ export default function CandidateProfile() {
         {notice && <p className="text-sm text-status-offer">{notice}</p>}
 
         {loading ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <div className="grid sm:grid-cols-2 gap-5 animate-pulse">
+            {[
+              { rows: 3 }, { rows: 3 }, { rows: 3 }, { rows: 3 },
+              { rows: 5, wide: true }, { rows: 4, wide: true }, { rows: 5, wide: true },
+            ].map((f, i) => (
+              <div key={i} className={`bg-surface border border-line rounded-xl2 shadow-card p-4 ${f.wide ? 'sm:col-span-2' : ''}`}>
+                <div className="h-4 w-36 bg-paper rounded mb-3" />
+                <div className={`bg-paper rounded-lg ${f.rows === 3 ? 'h-20' : f.rows === 4 ? 'h-28' : 'h-36'}`} />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-5">
             {FIELDS.map((f) => (
