@@ -8,7 +8,7 @@ import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 import {
   discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
-  listJobDocuments, listJobs, listNewJobs, markJobApplied,
+  getSyncProgress, listJobDocuments, listJobs, listNewJobs, markJobApplied,
   markJobsVisitedNow, readJobActions, setJobState, updateJobDocument
 } from '../api/jobs'
 
@@ -96,18 +96,44 @@ export default function Discovery() {
   ]
 
   async function syncSources() {
+    let pollTimer = null
     try {
       setSyncing(true); setError('')
-      setSyncMessage('Searching job boards — this can take up to 60 seconds…')
+      setSyncMessage('Connecting to job boards…')
       const body = {}
       if (filters.q) body.keywords = filters.q
       else body.roles = FRESHER_ROLES
       body.locations = filters.location ? [filters.location] : ['India']
-      const result = await discoverJobs(body)
-      const errs = result.providerErrors && Object.keys(result.providerErrors).length > 0
-        ? ` (${Object.entries(result.providerErrors).map(([p, m]) => `${p}: ${m}`).join('; ')})`
-        : ''
-      setSyncMessage(`Synced ${result.synchronizedJobs} job${result.synchronizedJobs === 1 ? '' : 's'}.${errs}`)
+
+      const { syncId } = await discoverJobs(body)
+
+      await new Promise((resolve, reject) => {
+        const TIMEOUT_MS = 120_000
+        const start = Date.now()
+        pollTimer = setInterval(async () => {
+          try {
+            if (Date.now() - start > TIMEOUT_MS) {
+              clearInterval(pollTimer)
+              reject(new Error('Sync timed out — try again'))
+              return
+            }
+            const progress = await getSyncProgress(syncId)
+            if (progress.currentProvider) {
+              const label = progress.currentProvider.replace(/-/g, ' ')
+              setSyncMessage(`Scanning ${label} — ${progress.totalSaved} job${progress.totalSaved === 1 ? '' : 's'} found so far…`)
+            }
+            if (progress.done) {
+              clearInterval(pollTimer)
+              const errs = progress.errors && Object.keys(progress.errors).length > 0
+                ? ` (${Object.entries(progress.errors).map(([p, m]) => `${p}: ${m}`).join('; ')})`
+                : ''
+              setSyncMessage(`Synced ${progress.totalSaved} job${progress.totalSaved === 1 ? '' : 's'}.${errs}`)
+              resolve()
+            }
+          } catch (e) { clearInterval(pollTimer); reject(e) }
+        }, 1500)
+      })
+
       setPage(0)
       await loadJobs()
       try {
@@ -115,7 +141,8 @@ export default function Discovery() {
         setNewJobsCount(r.totalElements || 0)
       } catch { /* non-critical */ }
     } catch (e) {
-      setError(e.response?.data?.error || 'Could not sync job sources. The service may be starting up — try again in 30 seconds.')
+      if (pollTimer) clearInterval(pollTimer)
+      setError(e.response?.data?.error || e.message || 'Could not sync job sources. The service may be starting up — try again in 30 seconds.')
     } finally { setSyncing(false) }
   }
 

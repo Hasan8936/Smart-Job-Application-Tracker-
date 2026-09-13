@@ -19,6 +19,11 @@ export async function listJobs(params = {}) {
 
 export async function discoverJobs(request = {}) {
     const response = await api.post('/jobs/discover', request)
+    return response.data  // {syncId}
+}
+
+export async function getSyncProgress(syncId) {
+    const response = await api.get(`/jobs/discover/progress/${syncId}`)
     return response.data
 }
 

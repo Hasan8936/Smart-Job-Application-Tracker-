@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import CookieBanner from './components/CookieBanner'
 
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
@@ -16,6 +17,7 @@ const OAuth2Callback = lazy(() => import('./pages/OAuth2Callback'))
 const Discovery = lazy(() => import('./pages/Discovery'))
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
+const Privacy = lazy(() => import('./pages/Privacy'))
 
 function PageSpinner() {
   return (
@@ -28,6 +30,7 @@ function PageSpinner() {
 export default function App() {
   return (
     <Suspense fallback={<PageSpinner />}>
+    <CookieBanner />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -43,6 +46,7 @@ export default function App() {
       <Route path="/discovery" element={<ProtectedRoute><Discovery /></ProtectedRoute>} />
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/privacy" element={<Privacy />} />
     </Routes>
     </Suspense>
   )

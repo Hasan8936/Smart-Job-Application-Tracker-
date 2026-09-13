@@ -2,6 +2,8 @@ package com.smartjobtracker.controller;
 
 import com.smartjobtracker.dto.JobDtos;
 import com.smartjobtracker.jobs.discovery.JobSyncService;
+import com.smartjobtracker.jobs.discovery.SyncProgressStore;
+import com.smartjobtracker.jobs.discovery.SyncRunner;
 import com.smartjobtracker.jobs.provider.JobProvider.JobQuery;
 import com.smartjobtracker.model.JobPosting;
 import com.smartjobtracker.repository.JobPostingRepository;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.time.OffsetDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,13 +23,37 @@ import org.springframework.data.domain.Sort;
 @RestController
 @RequestMapping("/api/jobs")
 public class JobDiscoveryController {
-    private final JobSyncService syncService; private final JobPostingRepository repository; private final JobSkillRepository skillRepository;
-    public JobDiscoveryController(JobSyncService syncService, JobPostingRepository repository, JobSkillRepository skillRepository) { this.syncService = syncService; this.repository = repository; this.skillRepository = skillRepository; }
+    private final JobSyncService syncService;
+    private final SyncRunner syncRunner;
+    private final SyncProgressStore progressStore;
+    private final JobPostingRepository repository;
+    private final JobSkillRepository skillRepository;
+
+    public JobDiscoveryController(JobSyncService syncService, SyncRunner syncRunner,
+                                   SyncProgressStore progressStore,
+                                   JobPostingRepository repository, JobSkillRepository skillRepository) {
+        this.syncService = syncService; this.syncRunner = syncRunner; this.progressStore = progressStore;
+        this.repository = repository; this.skillRepository = skillRepository;
+    }
+
+    /** Starts an async job sync and returns a syncId immediately. Poll /discover/progress/{syncId} for status. */
     @PostMapping("/discover")
-    public JobDtos.DiscoverResponse discover(@Valid @RequestBody(required = false) JobDtos.DiscoverRequest request) {
+    public ResponseEntity<JobDtos.AsyncDiscoverResponse> discover(
+            @Valid @RequestBody(required = false) JobDtos.DiscoverRequest request) {
         JobDtos.DiscoverRequest value = request == null ? new JobDtos.DiscoverRequest(null, List.of(), List.of()) : request;
-        JobSyncService.SyncResult result = syncService.sync(new JobQuery(value.keywords(), value.roles(), value.locations()));
-        return new JobDtos.DiscoverResponse(result.saved(), result.providerErrors());
+        String syncId = UUID.randomUUID().toString();
+        progressStore.init(syncId);
+        syncRunner.runAsync(syncId, new JobQuery(value.keywords(), value.roles(), value.locations()));
+        return ResponseEntity.accepted().body(new JobDtos.AsyncDiscoverResponse(syncId));
+    }
+
+    /** Returns the live progress of a sync started by POST /discover. */
+    @GetMapping("/discover/progress/{syncId}")
+    public ResponseEntity<JobDtos.SyncProgressDto> syncProgress(@PathVariable String syncId) {
+        SyncProgressStore.SyncProgress p = progressStore.get(syncId);
+        if (p == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(new JobDtos.SyncProgressDto(
+                p.status(), p.currentProvider(), p.providerJobs(), p.totalSaved(), p.done(), p.errors()));
     }
     @GetMapping
     public Page<JobDtos.JobSummary> list(@RequestParam(required = false) String q,

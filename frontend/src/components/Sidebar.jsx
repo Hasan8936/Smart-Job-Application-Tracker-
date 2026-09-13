@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, FileEdit, GraduationCap, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
@@ -125,6 +125,14 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
             'Log out'
           )}
         </button>
+        {!isCollapsed && (
+          <Link
+            to="/privacy"
+            className="block text-center text-[10px] text-muted hover:text-ink mt-2 px-3"
+          >
+            Privacy &amp; Data Policy
+          </Link>
+        )}
       </div>
     </aside>
   )

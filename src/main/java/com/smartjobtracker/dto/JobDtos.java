@@ -10,6 +10,8 @@ public final class JobDtos {
                                    @Size(max = 20) java.util.List<@Size(max = 100) String> roles,
                                    @Size(max = 20) java.util.List<@Size(max = 100) String> locations) {}
     public record DiscoverResponse(int synchronizedJobs, java.util.Map<String, String> providerErrors) {}
+    public record AsyncDiscoverResponse(String syncId) {}
+    public record SyncProgressDto(String status, String currentProvider, int providerJobs, int totalSaved, boolean done, java.util.Map<String, String> errors) {}
     public record JobSummary(Long id, String provider, String company, String title, String location,
                              String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl) {
         public static JobSummary from(JobPosting p) { return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(), p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl()); }

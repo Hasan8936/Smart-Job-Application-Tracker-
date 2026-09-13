@@ -20,12 +20,19 @@ public class JobSyncService {
     private final List<JobProvider> providers; private final JobNormalizer normalizer; private final JobDeduplicator deduplicator;
     private final JobPostingRepository postingRepository; private final JobProviderSyncRepository syncRepository; private final JobSkillRepository skillRepository;
     private final JobSkillExtractor skillExtractor;
+    private final SyncProgressStore progressStore;
     public JobSyncService(List<JobProvider> providers, JobNormalizer normalizer, JobDeduplicator deduplicator,
                           JobPostingRepository postingRepository, JobProviderSyncRepository syncRepository,
-                          JobSkillRepository skillRepository, JobSkillExtractor skillExtractor) {
-        this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor;
+                          JobSkillRepository skillRepository, JobSkillExtractor skillExtractor,
+                          SyncProgressStore progressStore) {
+        this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor; this.progressStore = progressStore;
     }
+    /** Synchronous sync — used by scheduled jobs and tests. No progress tracking. */
     public SyncResult sync(JobQuery query) {
+        return sync(null, query);
+    }
+    /** Sync with optional progress tracking via syncId (null = no tracking). */
+    public SyncResult sync(String syncId, JobQuery query) {
         if (providers.stream().noneMatch(JobProvider::isEnabled)) {
             throw new IllegalStateException(
                     "No job source is enabled. Set GREENHOUSE_ENABLED, LEVER_ENABLED, ASHBY_ENABLED, APIFY_ENABLED, "
@@ -38,14 +45,16 @@ public class JobSyncService {
             String queryKey = key(query);
             try {
                 JobProvider.JobBatch batch = provider.search(query, syncRepository.findByProviderAndQueryKey(provider.id(), queryKey).map(JobProviderSync::getCursor).orElse(null));
+                int providerSaved = 0;
                 for (JobPosting candidate : deduplicator.deduplicate(batch.jobs().stream()
                     .filter(job -> hasRequiredFields(job))
                     .map(provider::normalize).map(normalizer::normalize).toList())) {
                     JobPosting stored = upsert(candidate);
                     skillRepository.deleteByJobPostingId(stored.getId());
                     skillRepository.saveAll(skillExtractor.extract(stored.getId(), stored.getDescription()));
-                    saved++;
+                    saved++; providerSaved++;
                 }
+                if (syncId != null) progressStore.update(syncId, provider.id(), providerSaved, saved);
                 JobProviderSync sync = syncRepository.findByProviderAndQueryKey(provider.id(), queryKey).orElseGet(JobProviderSync::new);
                 sync.setProvider(provider.id()); sync.setQueryKey(queryKey); sync.setCursor(batch.nextCursor()); sync.setStatus("SUCCESS"); sync.setLastSyncedAt(OffsetDateTime.now()); syncRepository.save(sync);
             } catch (RuntimeException ex) {

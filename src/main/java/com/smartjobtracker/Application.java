@@ -3,6 +3,7 @@ package com.smartjobtracker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import com.smartjobtracker.config.JobProviderConfig;
 import com.smartjobtracker.config.AiMatchingConfig;
@@ -11,6 +12,7 @@ import com.smartjobtracker.config.MetaWhatsAppConfig;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 @EnableConfigurationProperties({JobProviderConfig.class, AiMatchingConfig.class, GmailConfig.class, MetaWhatsAppConfig.class})
 public class Application {
     public static void main(String[] args) {
