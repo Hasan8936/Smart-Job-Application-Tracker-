@@ -51,7 +51,13 @@ public class EmailService {
         message.setTo(toEmail);
         message.setSubject(subject);
         message.setText(body);
-        mailSender.send(message);
-        log.info("Reminder email sent to {}", toEmail);
+        try {
+            mailSender.send(message);
+            log.info("Reminder email sent to {}", toEmail);
+        } catch (MailException ex) {
+            log.error("Failed to send reminder email to {} — check MAIL_* env vars. Cause: {}",
+                    toEmail, ex.getMessage(), ex);
+            throw ex;
+        }
     }
 }

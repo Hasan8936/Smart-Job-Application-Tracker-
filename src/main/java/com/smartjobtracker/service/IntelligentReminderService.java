@@ -82,7 +82,7 @@ public class IntelligentReminderService {
         List<Reminder> result = new ArrayList<>();
         for (Integer offset : offsets) {
             if (offset == null || offset < 0) continue;
-            String key = userId + ":" + eventKey + ":" + request.getType() + ":" + offset;
+            String key = userId + ":" + eventKey + ":" + request.getType() + ":" + offset + ":" + eventAt.toEpochSecond();
             if (reminderRepository.findByDedupeKey(key).isPresent()) continue;
             Reminder reminder = new Reminder();
             reminder.setUserId(userId);
