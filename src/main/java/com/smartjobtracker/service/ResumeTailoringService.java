@@ -18,7 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class ResumeTailoringService {
@@ -73,12 +72,14 @@ public class ResumeTailoringService {
         ResumeProfileExtractor.ExtractedProfile profile = extractor.extract(resumeText);
         TailoringSession session = new TailoringSession(); session.setUserId(userId); session.setSourceResumeId(resume.getId()); session.setJobDescription(request.jobDescription());
         session = sessions.save(session);
+        boolean geminiWasPrimary = "gemini".equalsIgnoreCase(aiConfig.getProvider());
         List<ResumeTailoringProvider.Proposal> proposals;
-        try { proposals = "gemini".equalsIgnoreCase(aiConfig.getProvider()) ? gemini.suggest(resumeText, providerJobDescription, atsKeywords) : fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
-        catch (RuntimeException ex) { proposals = fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
-        for (ResumeTailoringProvider.Proposal proposal : proposals) {
-            if (!grounded(proposal, resumeText)) continue;
-            TailoringSuggestion suggestion = new TailoringSuggestion(); suggestion.setSessionId(session.getId()); suggestion.setCategory(proposal.category()); suggestion.setBeforeText(proposal.beforeText()); suggestion.setAfterText(proposal.afterText()); suggestion.setRationale(proposal.rationale()); suggestion.setEvidenceText(proposal.evidenceText()); suggestions.save(suggestion);
+        try { proposals = geminiWasPrimary ? gemini.suggest(resumeText, providerJobDescription, atsKeywords) : fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
+        catch (RuntimeException ex) { proposals = fallback.suggest(resumeText, providerJobDescription, atsKeywords); geminiWasPrimary = false; }
+        int saved = saveGrounded(session.getId(), proposals, resumeText);
+        // H2: Gemini responded but every proposal failed the grounding check — use rule-based fallback
+        if (saved == 0 && geminiWasPrimary) {
+            saveGrounded(session.getId(), fallback.suggest(resumeText, providerJobDescription, atsKeywords), resumeText);
         }
         return analysis(session, profile, atsKeywords);
     }
@@ -403,10 +404,26 @@ public class ResumeTailoringService {
         return result.toString();
     }
 
-    private boolean grounded(ResumeTailoringProvider.Proposal proposal, String source) {
-        return nonBlank(proposal.beforeText()) && source.contains(proposal.beforeText()) && source.contains(proposal.evidenceText()) && nonBlank(proposal.afterText()) && allWordsFromSource(proposal.afterText(), source);
+    /** Saves proposals that pass grounding and returns the count saved. */
+    private int saveGrounded(Long sessionId, List<ResumeTailoringProvider.Proposal> proposals, String source) {
+        int count = 0;
+        for (ResumeTailoringProvider.Proposal p : proposals) {
+            if (!grounded(p, source)) continue;
+            TailoringSuggestion s = new TailoringSuggestion();
+            s.setSessionId(sessionId); s.setCategory(p.category()); s.setBeforeText(p.beforeText());
+            s.setAfterText(p.afterText()); s.setRationale(p.rationale()); s.setEvidenceText(p.evidenceText());
+            suggestions.save(s);
+            count++;
+        }
+        return count;
     }
-    private boolean allWordsFromSource(String candidate, String source) { Set<String> words = Arrays.stream(source.toLowerCase().split("[^a-z0-9+#.]+" )).filter(word -> !word.isBlank()).collect(Collectors.toSet()); return Arrays.stream(candidate.toLowerCase().split("[^a-z0-9+#.]+" )).filter(word -> !word.isBlank()).allMatch(words::contains); }
+
+    /** A proposal is grounded when its edit target and evidence are literal source excerpts. */
+    private boolean grounded(ResumeTailoringProvider.Proposal proposal, String source) {
+        return nonBlank(proposal.beforeText()) && source.contains(proposal.beforeText())
+            && nonBlank(proposal.evidenceText()) && source.contains(proposal.evidenceText())
+            && nonBlank(proposal.afterText());
+    }
     private ResumeTailoringDtos.Analysis analysis(TailoringSession session, ResumeProfileExtractor.ExtractedProfile profile, List<String> keywords) { return new ResumeTailoringDtos.Analysis(session.getId(), session.getSourceResumeId(), keywords, profile.getSkills(), profile.getProjects(), suggestions.findBySessionIdOrderByIdAsc(session.getId()).stream().map(this::toSuggestion).toList(), session.getCreatedAt()); }
     private ResumeTailoringDtos.Suggestion toSuggestion(TailoringSuggestion value) { return new ResumeTailoringDtos.Suggestion(value.getId(), value.getCategory(), value.getBeforeText(), value.getAfterText(), value.getRationale(), value.getEvidenceText(), value.getDecision()); }
     private ResumeTailoringDtos.Version toVersion(ResumeVersion value) { return new ResumeTailoringDtos.Version(value.getId(), value.getSourceResumeId(), value.getTailoringSessionId(), value.getJobDescription(), value.getContent(), fromJson(value.getAcceptedSuggestionIds()), toLatex(value.getContent()), value.getCreatedAt()); }

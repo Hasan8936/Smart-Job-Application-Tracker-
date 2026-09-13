@@ -127,6 +127,99 @@ class ResumeTailoringServiceTest {
         assertTrue(extracted.contains("Tech Stack"), extracted);
     }
 
+    @Test
+    void groundedFilterAcceptsProposalWhereAfterTextUsesWordsNotInSource() {
+        // H1: Gemini-style proposal with a synonym in afterText must now pass grounding.
+        // Before the fix, allWordsFromSource would reject "Developed" because it isn't a
+        // token in a source that only contains "Built". The real anti-fabrication guard is
+        // that beforeText and evidenceText must be literal source excerpts.
+        String resumeText = "SKILLS\nJava, Git\nEXPERIENCE\nBuilt REST APIs in Java using Spring Boot";
+        String jd = "Looking for a developer with Java experience";
+
+        // Provider returns a proposal whose afterText rewords "Built" as "Developed" —
+        // a valid rewrite that would have been blocked by allWordsFromSource.
+        ResumeTailoringProvider geminiLike = (rt, jdesc, kw) -> List.of(
+            new ResumeTailoringProvider.Proposal("IMPACT",
+                "Built REST APIs in Java using Spring Boot",
+                "Developed and deployed REST APIs in Java using Spring Boot",
+                "Stronger action verb",
+                "Built REST APIs in Java using Spring Boot")
+        );
+
+        Resume resume = resume(resumeText);
+        ResumeRepository resumes = mock(ResumeRepository.class); when(resumes.findById(4L)).thenReturn(Optional.of(resume));
+        TailoringSessionRepository sessions = mock(TailoringSessionRepository.class); when(sessions.save(any())).thenAnswer(inv -> { TailoringSession v = inv.getArgument(0); v.setId(8L); return v; });
+        TailoringSuggestionRepository suggestions = mock(TailoringSuggestionRepository.class); when(suggestions.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(suggestions.findBySessionIdOrderByIdAsc(8L)).thenReturn(List.of());
+
+        var config = new com.smartjobtracker.config.AiMatchingConfig(); config.setProvider("gemini"); config.setApiKey("fake");
+        ResumeTailoringService service = new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions,
+                mock(ResumeVersionRepository.class), new ObjectMapper(), new RuleBasedResumeTailoringProvider(), geminiLike,
+                new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), config);
+
+        service.analyze(3L, new ResumeTailoringDtos.AnalyzeRequest(4L, jd, null));
+
+        // The proposal must have been saved (not silently dropped by allWordsFromSource)
+        verify(suggestions, atLeastOnce()).save(argThat(s ->
+            s instanceof TailoringSuggestion ts && "Developed and deployed REST APIs in Java using Spring Boot".equals(ts.getAfterText())
+        ));
+    }
+
+    @Test
+    void groundedFilterRejectsProposalWhereBeforeTextIsNotInSource() {
+        // A proposal whose beforeText doesn't appear verbatim in the resume must still be rejected.
+        String resumeText = "SKILLS\nJava, Git";
+        ResumeTailoringProvider badProvider = (rt, jd, kw) -> List.of(
+            new ResumeTailoringProvider.Proposal("IMPACT", "Led a team of 10 engineers",
+                "Led a team of 10 engineers at scale", "fabricated", "Led a team")
+        );
+
+        Resume resume = resume(resumeText);
+        ResumeRepository resumes = mock(ResumeRepository.class); when(resumes.findById(4L)).thenReturn(Optional.of(resume));
+        TailoringSessionRepository sessions = mock(TailoringSessionRepository.class); when(sessions.save(any())).thenAnswer(inv -> { TailoringSession v = inv.getArgument(0); v.setId(8L); return v; });
+        TailoringSuggestionRepository suggestions = mock(TailoringSuggestionRepository.class);
+        when(suggestions.findBySessionIdOrderByIdAsc(8L)).thenReturn(List.of());
+
+        ResumeTailoringService service = new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions,
+                mock(ResumeVersionRepository.class), new ObjectMapper(), badProvider, mock(ResumeTailoringProvider.class),
+                new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), new com.smartjobtracker.config.AiMatchingConfig());
+
+        service.analyze(3L, new ResumeTailoringDtos.AnalyzeRequest(4L, "Java engineer", null));
+
+        verify(suggestions, never()).save(any(TailoringSuggestion.class));
+    }
+
+    @Test
+    void analyzeRunsFallbackWhenGeminiProposalsAllFailGrounding() {
+        // H2: When Gemini is the primary provider but all its proposals fail grounding (because
+        // their beforeText isn't in the source), the service must fall back to the rule-based
+        // provider rather than silently returning zero suggestions.
+        String resumeText = "SKILLS\nJava, Spring Boot, Git\nEXPERIENCE\nBuilt REST APIs";
+
+        ResumeTailoringProvider alwaysInvalid = (rt, jd, kw) -> List.of(
+            new ResumeTailoringProvider.Proposal("IMPACT", "text not in resume at all",
+                "rewrite", "rationale", "text not in resume at all")
+        );
+        // Rule-based fallback will find at least the keyword lines and produce proposals
+        ResumeTailoringProvider fallbackProvider = new RuleBasedResumeTailoringProvider();
+
+        Resume resume = resume(resumeText);
+        ResumeRepository resumes = mock(ResumeRepository.class); when(resumes.findById(4L)).thenReturn(Optional.of(resume));
+        TailoringSessionRepository sessions = mock(TailoringSessionRepository.class); when(sessions.save(any())).thenAnswer(inv -> { TailoringSession v = inv.getArgument(0); v.setId(8L); return v; });
+        TailoringSuggestionRepository suggestions = mock(TailoringSuggestionRepository.class); when(suggestions.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(suggestions.findBySessionIdOrderByIdAsc(8L)).thenReturn(List.of());
+
+        var config = new com.smartjobtracker.config.AiMatchingConfig(); config.setProvider("gemini"); config.setApiKey("fake");
+        ResumeTailoringService service = new ResumeTailoringService(resumes, new ResumeProfileExtractor(), sessions, suggestions,
+                mock(ResumeVersionRepository.class), new ObjectMapper(), fallbackProvider, alwaysInvalid,
+                new com.smartjobtracker.jobs.discovery.JobSkillExtractor(), config);
+
+        service.analyze(3L, new ResumeTailoringDtos.AnalyzeRequest(4L, "Java and Spring Boot required", null));
+
+        // Fallback must have been consulted, producing at least one saved suggestion
+        verify(suggestions, atLeastOnce()).save(any(TailoringSuggestion.class));
+    }
+
     private Resume resume(String text) { Resume resume = new Resume(); resume.setId(4L); resume.setUserId(3L); resume.setExtractedText(text); return resume; }
     private TailoringSuggestion savedSuggestion() { TailoringSuggestion suggestion = new TailoringSuggestion(); suggestion.setSessionId(8L); suggestion.setCategory("ATS_KEYWORD"); suggestion.setBeforeText("Java"); suggestion.setAfterText("Java"); suggestion.setRationale("Existing evidence"); suggestion.setEvidenceText("Java"); return suggestion; }
 }

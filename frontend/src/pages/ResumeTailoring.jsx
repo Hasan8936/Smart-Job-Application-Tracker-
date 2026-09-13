@@ -11,6 +11,7 @@ export default function ResumeTailoring() {
   const [analysis, setAnalysis] = useState(null)
   const [versions, setVersions] = useState([])
   const [busy, setBusy] = useState(false)
+  const [versionsLoading, setVersionsLoading] = useState(true)
   const [error, setError] = useState('')
   const [previewUrl, setPreviewUrl] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -33,11 +34,12 @@ export default function ResumeTailoring() {
 
   async function loadVersions() {
     try {
+      setVersionsLoading(true)
       const result = await getResumeVersions()
       const list = result.data
       setVersions(list)
       if (list.length > 0) await showPreview(list[0].id)
-    } catch (e) { console.error(e) }
+    } catch (e) { console.error(e) } finally { setVersionsLoading(false) }
   }
 
   async function showPreview(versionId) {
@@ -62,7 +64,7 @@ export default function ResumeTailoring() {
       const saved = JSON.parse(localStorage.getItem('deepMatchAnalysis') || 'null')
       const deepMatchAnalysisId = saved && Number(saved.resumeId) === Number(resumeId) && saved.jobDescription === jobDescription ? saved.id : null
       setAnalysis((await analyzeTailoring({ resumeId: Number(resumeId), jobDescription, deepMatchAnalysisId })).data)
-    } catch (e) { setError('Could not analyze this resume.'); console.error(e) } finally { setBusy(false) }
+    } catch (e) { setError(e.response?.data?.error || 'Could not analyze this resume.'); console.error(e) } finally { setBusy(false) }
   }
 
   async function decide(id, decision) {
@@ -171,8 +173,35 @@ export default function ResumeTailoring() {
             )}
           </div>
 
+          {/* Skeleton suggestions while analyzing */}
+          {busy && (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bg-surface border border-line rounded-xl2 shadow-card p-5 animate-pulse">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="h-3 w-20 bg-paper rounded" />
+                    <div className="h-3 w-12 bg-paper rounded" />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="border border-line rounded-lg p-3 space-y-2">
+                      <div className="h-2 w-10 bg-paper rounded" />
+                      <div className="h-3 w-full bg-paper rounded" />
+                      <div className="h-3 w-4/5 bg-paper rounded" />
+                    </div>
+                    <div className="border border-line rounded-lg p-3 space-y-2">
+                      <div className="h-2 w-10 bg-paper rounded" />
+                      <div className="h-3 w-full bg-paper rounded" />
+                      <div className="h-3 w-3/4 bg-paper rounded" />
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 w-3/4 bg-paper rounded" />
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Suggestions */}
-          {analysis && (
+          {!busy && analysis && (
             <>
               <div className="space-y-3">
                 {analysis.suggestions.length === 0
@@ -218,7 +247,19 @@ export default function ResumeTailoring() {
               <History size={16} />
               <h2 className="font-display text-[15px] text-ink">Version history</h2>
             </div>
-            {versions.length === 0
+            {versionsLoading ? (
+              <div className="space-y-1 animate-pulse">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="border-t border-line pt-3 pb-2 px-2">
+                    <div className="flex justify-between gap-3">
+                      <div className="h-3 w-20 bg-paper rounded" />
+                      <div className="h-3 w-28 bg-paper rounded" />
+                    </div>
+                    <div className="mt-1.5 h-2 w-48 bg-paper rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : versions.length === 0
               ? <p className="text-sm text-muted">No tailored versions yet.</p>
               : (
                 <div className="space-y-1">
