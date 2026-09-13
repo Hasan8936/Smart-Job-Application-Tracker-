@@ -2,6 +2,8 @@ package com.smartjobtracker.jobs.provider;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -10,6 +12,7 @@ import java.util.List;
 
 @Component
 public class GreenhouseClient {
+    private static final Logger log = LoggerFactory.getLogger(GreenhouseClient.class);
     private final ProviderHttpClient http;
     private final ObjectMapper mapper;
     public GreenhouseClient(RestClient.Builder builder, ObjectMapper mapper,
@@ -19,8 +22,12 @@ public class GreenhouseClient {
     public List<JobProvider.ProviderJob> search(List<String> boards, JobProvider.JobQuery query) {
         List<JobProvider.ProviderJob> jobs = new ArrayList<>();
         for (String board : safe(boards)) {
-            JsonNode root = http.get("https://boards-api.greenhouse.io/v1/boards/" + enc(board) + "/jobs?content=true");
-            for (JsonNode node : root.path("jobs")) jobs.add(parse(node, board));
+            try {
+                JsonNode root = http.get("https://boards-api.greenhouse.io/v1/boards/" + enc(board) + "/jobs?content=true");
+                for (JsonNode node : root.path("jobs")) jobs.add(parse(node, board));
+            } catch (ProviderHttpClient.ProviderUnavailableException e) {
+                log.warn("Greenhouse board '{}' unavailable ({}), skipping", board, e.getMessage());
+            }
         }
         return jobs;
     }
