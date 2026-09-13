@@ -83,10 +83,16 @@ export default function Discovery() {
     finally { markJobsVisitedNow() }
   }
 
-  const SOFTWARE_ROLES = [
-    'software engineer', 'software developer', 'backend developer', 'frontend developer',
-    'full stack developer', 'data engineer', 'machine learning engineer', 'devops engineer',
-    'data scientist', 'site reliability engineer', 'mobile developer',
+  const FRESHER_ROLES = [
+    'fresher software engineer', 'junior software engineer', 'entry level software developer',
+    'software trainee', 'graduate software engineer', 'junior frontend developer',
+    'junior backend developer', 'junior full stack developer', 'junior data analyst',
+    'software engineer intern', 'junior devops engineer', 'machine learning engineer fresher',
+  ]
+
+  const INDIA_CITIES = [
+    'Bangalore', 'Hyderabad', 'Delhi', 'Noida', 'Gurgaon', 'Chennai', 'Pune', 'Mumbai',
+    'Chandigarh', 'Lucknow',
   ]
 
   async function syncSources() {
@@ -95,8 +101,8 @@ export default function Discovery() {
       setSyncMessage('Searching job boards — this can take up to 60 seconds…')
       const body = {}
       if (filters.q) body.keywords = filters.q
-      else body.roles = SOFTWARE_ROLES
-      if (filters.location) body.locations = [filters.location]
+      else body.roles = FRESHER_ROLES
+      body.locations = filters.location ? [filters.location] : ['India']
       const result = await discoverJobs(body)
       const errs = result.providerErrors && Object.keys(result.providerErrors).length > 0
         ? ` (${Object.entries(result.providerErrors).map(([p, m]) => `${p}: ${m}`).join('; ')})`
@@ -246,11 +252,23 @@ export default function Discovery() {
             <div>
               <p className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">Location</p>
               <input
-                placeholder="e.g. Remote, New York"
+                placeholder="e.g. Bangalore, Hyderabad (default: India)"
                 value={draft.location}
                 onChange={e => setDraft({ ...draft, location: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {INDIA_CITIES.map(city => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => setDraft({ ...draft, location: city })}
+                    className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${draft.location === city ? 'bg-accent text-white border-accent' : 'border-line text-muted hover:border-accent hover:text-accent'}`}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">
