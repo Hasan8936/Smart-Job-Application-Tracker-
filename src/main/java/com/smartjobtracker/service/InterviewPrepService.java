@@ -3,6 +3,8 @@ package com.smartjobtracker.service;
 import com.smartjobtracker.dto.InterviewPrepDtos;
 import com.smartjobtracker.model.*;
 import com.smartjobtracker.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,7 @@ import java.util.Objects;
 
 @Service
 public class InterviewPrepService {
+    private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
     private static final int DEFAULT_COUNT = 50;
     private static final int MAX_COUNT = 80;
 
@@ -65,9 +68,11 @@ public class InterviewPrepService {
         InterviewPrepProvider.FactProfile facts = facts(resume);
 
         List<InterviewPrepProvider.QuestionAnswer> generated;
+        boolean hasGeminiKey = aiConfig.getApiKey() != null && !aiConfig.getApiKey().isBlank();
         try {
-            generated = ("gemini".equalsIgnoreCase(aiConfig.getProvider()) ? geminiProvider : ruleBasedProvider).generate(jobDescription, facts, count);
+            generated = (hasGeminiKey ? geminiProvider : ruleBasedProvider).generate(jobDescription, facts, count);
         } catch (RuntimeException ex) {
+            log.warn("Gemini interview prep failed ({}), falling back to rule-based", ex.getMessage());
             generated = ruleBasedProvider.generate(jobDescription, facts, count);
         }
 

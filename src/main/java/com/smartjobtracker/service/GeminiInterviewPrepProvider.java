@@ -31,28 +31,35 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
 
     @Override
     public List<QuestionAnswer> generate(String jobDescription, FactProfile facts, int count) {
-        if (!"gemini".equalsIgnoreCase(config.getProvider()) || config.getApiKey() == null || config.getApiKey().isBlank()) {
-            throw new IllegalStateException("Gemini interview preparation is not configured");
+        if (config.getApiKey() == null || config.getApiKey().isBlank()) {
+            throw new IllegalStateException("Gemini API key not set — add AI_MATCHING_API_KEY to your environment");
         }
-        String prompt = "You are helping a candidate prepare for a real job interview. Return JSON only as "
-                + "{questions:[{category,question,suggestedAnswer,sourceEvidence}]}. "
-                + "Produce exactly " + count + " items spread across these categories: BEHAVIORAL, TECHNICAL, "
-                + "ROLE_SPECIFIC, SITUATIONAL, COMPANY_AND_MOTIVATION. "
-                + "Base TECHNICAL and ROLE_SPECIFIC questions on the concrete skills, tools, and responsibilities named in "
-                + "JOB_DESCRIPTION, cross-referenced with what the candidate's resume actually shows. "
-                + "Every suggestedAnswer must be written in first person as a model answer this candidate could give, using only "
-                + "specifics that appear in RESUME_FACTS (real project/experience names, skills, education) -- do not invent metrics, "
-                + "employers, or projects the resume does not mention. If a technical question cannot be grounded in the resume, "
-                + "still ask it (interviewers ask JD-driven questions regardless), but keep the answer to a general, honest approach "
-                + "rather than fabricating personal experience with it. sourceEvidence must quote or closely paraphrase the resume "
-                + "text the answer draws on, or be empty string if the answer is a general approach with no resume grounding. "
-                + "Never fabricate facts about the candidate.\n"
-                + "JOB_DESCRIPTION:\n" + safe(jobDescription) + "\nRESUME_FACTS:\n" + facts;
+        String prompt = "You are an expert interview coach helping a job seeker prepare for a real interview.\n"
+                + "Return ONLY a valid JSON object (no markdown, no code fences) in this exact shape:\n"
+                + "{\"questions\":[{\"category\":\"BEHAVIORAL\",\"question\":\"...\",\"suggestedAnswer\":\"...\",\"sourceEvidence\":\"...\"}]}\n\n"
+                + "Rules:\n"
+                + "1. Generate EXACTLY " + count + " questions, split approximately evenly across all five categories:\n"
+                + "   BEHAVIORAL, TECHNICAL, ROLE_SPECIFIC, SITUATIONAL, COMPANY_AND_MOTIVATION\n"
+                + "2. TECHNICAL and ROLE_SPECIFIC questions MUST be grounded in specific skills, tools, frameworks, "
+                + "and responsibilities mentioned in the JOB_DESCRIPTION below.\n"
+                + "3. Every suggestedAnswer MUST be written in first person (\"I...\"), using only facts that appear "
+                + "in RESUME_FACTS. Never invent employers, project names, metrics, or skills not in the resume.\n"
+                + "4. If a TECHNICAL question asks about something NOT in the resume, still include the question "
+                + "(interviewers will ask it) but write the answer as an honest general approach.\n"
+                + "5. sourceEvidence: quote or closely paraphrase the resume text the answer draws from. "
+                + "Use empty string \"\" if the answer is a general approach.\n"
+                + "6. Make questions specific, challenging, and realistic — avoid generic questions like "
+                + "\"Tell me about yourself\" unless they are particularly relevant.\n"
+                + "7. BEHAVIORAL questions should follow the STAR format (Situation, Task, Action, Result).\n"
+                + "8. SITUATIONAL questions should present a concrete scenario the candidate might face in this role.\n\n"
+                + "JOB_DESCRIPTION:\n" + safe(jobDescription) + "\n\nRESUME_FACTS:\n" + facts;
         ObjectNode body = mapper.createObjectNode();
         body.set("contents", mapper.createArrayNode().add(mapper.createObjectNode().set("parts",
                 mapper.createArrayNode().add(mapper.createObjectNode().put("text", prompt)))));
-        body.set("generationConfig", mapper.createObjectNode().put("responseMimeType", "application/json"));
-        JsonNode root = client.post().uri(config.getEndpoint() + "/" + config.getModel() + ":generateContent?key=" + config.getApiKey())
+        body.set("generationConfig", mapper.createObjectNode()
+                .put("responseMimeType", "application/json")
+                .put("temperature", 0.7));
+        JsonNode root = client.post().uri(config.getEndpoint() + "/" + config.getInterviewModel() + ":generateContent?key=" + config.getApiKey())
                 .contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(JsonNode.class);
         String raw = root == null ? null : root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
         if (raw == null) throw new IllegalStateException("Gemini returned no interview questions");

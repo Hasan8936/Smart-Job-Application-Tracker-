@@ -21,7 +21,7 @@ export default function Privacy() {
           <h1 className="text-3xl font-bold text-ink mb-2">Privacy &amp; Data Policy</h1>
           <p className="text-sm text-muted">Last updated: {LAST_UPDATED}</p>
           <p className="mt-4 text-ink-soft leading-relaxed">
-            Career Zenith ("we", "us", "our") is committed to protecting your personal data.
+            Smart Job Tracker ("we", "us", "our") is committed to protecting your personal data.
             This policy explains what we collect, why, and how we keep it safe—in plain language.
           </p>
         </header>
@@ -169,7 +169,7 @@ export default function Privacy() {
         <Section id="contact" title="7. Contact &amp; Data Requests">
           <p>
             For data requests, privacy questions, or to report a concern, email us at{' '}
-            <a href="mailto:privacy@careerzenith.app" className="text-accent hover:underline">privacy@careerzenith.app</a>.
+            <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">hasanryan052@gmail.com</a>.
             We aim to respond within 5 business days.
           </p>
           <p>

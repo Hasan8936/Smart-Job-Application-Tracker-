@@ -61,6 +61,7 @@ app:
     provider: ${AI_MATCHING_PROVIDER:fallback}
     api-key: ${AI_MATCHING_API_KEY:}
     model: ${AI_MATCHING_MODEL:gemini-embedding-001}
+    interview-model: ${AI_INTERVIEW_MODEL:gemini-2.0-flash}
     endpoint: ${AI_MATCHING_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
   gmail:
     enabled: ${GMAIL_ENABLED:false}
