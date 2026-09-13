@@ -414,12 +414,181 @@ public class ResumeTailoringService {
     private List<Long> fromJson(String value) { try { return mapper.readValue(value, IDS); } catch (Exception ex) { return List.of(); } }
     private List<String> fromJsonStrings(String value) { try { return mapper.readValue(value, new TypeReference<List<String>>() {}); } catch (Exception ex) { return List.of(); } }
     private String toLatex(String content) {
-        StringBuilder latex = new StringBuilder("\\documentclass[10pt]{article}\n\\usepackage[margin=0.5in]{geometry}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\pagestyle{empty}\n\\setlist[itemize]{leftmargin=*,itemsep=0.8pt,topsep=2pt}\n\\setlength{\\parindent}{0pt}\n\\begin{document}\n");
-        for (String line : content.split("\\r?\\n")) {
-            String escaped = line.replace("\\", "\\textbackslash{}").replace("&", "\\&").replace("%", "\\%").replace("#", "\\#").replace("{", "\\{").replace("}", "\\}");
-            latex.append(escaped.isBlank() ? "\\par" : escaped).append("\\\\\n");
+        StringBuilder sb = new StringBuilder();
+        // Preamble matching the user's Overleaf template (lato, fontawesome5, Jake's Resume macros)
+        sb.append("\\documentclass[letterpaper,11pt]{article}\n\n")
+          .append("\\usepackage{latexsym}\n\\usepackage[empty]{fullpage}\n\\usepackage{titlesec}\n")
+          .append("\\usepackage{marvosym}\n\\usepackage[usenames,dvipsnames]{color}\n\\usepackage{verbatim}\n")
+          .append("\\usepackage{enumitem}\n\\usepackage[hidelinks]{hyperref}\n\\usepackage{fancyhdr}\n")
+          .append("\\usepackage[english]{babel}\n\\usepackage{tabularx}\n\\usepackage{fontawesome5}\n")
+          .append("\\usepackage[default]{lato}\n\\usepackage[T1]{fontenc}\n\n")
+          .append("\\pagestyle{fancy}\n\\fancyhf{}\\fancyfoot{}\n")
+          .append("\\renewcommand{\\headrulewidth}{0pt}\n\\renewcommand{\\footrulewidth}{0pt}\n\n")
+          .append("\\addtolength{\\oddsidemargin}{-0.5in}\n\\addtolength{\\evensidemargin}{-0.5in}\n")
+          .append("\\addtolength{\\textwidth}{1in}\n\\addtolength{\\topmargin}{-.5in}\n")
+          .append("\\addtolength{\\textheight}{1.0in}\n\n")
+          .append("\\urlstyle{same}\n\\raggedbottom\\raggedright\n\\setlength{\\tabcolsep}{0in}\n\n")
+          .append("\\titleformat{\\section}{\\vspace{-4pt}\\scshape\\raggedright\\large}{}{0em}{}[\\color{black}\\titlerule \\vspace{-5pt}]\n\n")
+          .append("\\newcommand{\\resumeItem}[1]{\\item\\small{#1 \\vspace{-2pt}}}\n")
+          .append("\\newcommand{\\resumeSubheading}[4]{\n")
+          .append("  \\vspace{-2pt}\\item\n")
+          .append("    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}\n")
+          .append("      \\textbf{#1} & #2 \\\\\n")
+          .append("      \\textit{\\small#3} & \\textit{\\small #4} \\\\\n")
+          .append("    \\end{tabular*}\\vspace{-7pt}\n}\n")
+          .append("\\newcommand{\\resumeProjectHeading}[2]{\n")
+          .append("    \\item\n")
+          .append("    \\begin{tabular*}{0.97\\textwidth}{l@{\\extracolsep{\\fill}}r}\n")
+          .append("      \\small#1 & #2 \\\\\n")
+          .append("    \\end{tabular*}\\vspace{-7pt}\n}\n")
+          .append("\\newcommand{\\resumeSubItem}[1]{\\resumeItem{#1}\\vspace{-4pt}}\n")
+          .append("\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}\n")
+          .append("\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}\n")
+          .append("\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}\n")
+          .append("\\newcommand{\\resumeItemListStart}{\\begin{itemize}}\n")
+          .append("\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-5pt}}\n\n")
+          .append("\\begin{document}\n\n");
+
+        String[] lines = content.split("\\r?\\n");
+        int i = 0;
+
+        // Header block: name + contact line
+        while (i < lines.length && lines[i].isBlank()) i++;
+        sb.append("\\begin{center}\n");
+        if (i < lines.length) {
+            sb.append("  \\textbf{\\Huge \\scshape ").append(escapeLatex(lines[i].trim())).append("} \\\\ \\vspace{1pt}\n");
+            i++;
         }
-        return latex.append("\\end{document}\n").toString();
+        while (i < lines.length && lines[i].isBlank()) i++;
+        if (i < lines.length && !isSectionHeading(lines[i].trim())) {
+            sb.append("  \\small ").append(formatLatexContact(lines[i].trim())).append("\n");
+            i++;
+        }
+        sb.append("\\end{center}\n\n");
+
+        // Section body
+        boolean inSubList = false;
+        boolean inItemList = false;
+
+        while (i < lines.length) {
+            String trimmed = lines[i].trim();
+            if (trimmed.isEmpty()) { i++; continue; }
+
+            if (isSectionHeading(trimmed)) {
+                if (inItemList) { sb.append("    \\resumeItemListEnd\n"); inItemList = false; }
+                if (inSubList)  { sb.append("\\resumeSubHeadingListEnd\n\n"); inSubList = false; }
+                sb.append("\\section{").append(escapeLatex(toTitleCase(trimmed))).append("}\n");
+                sb.append("\\resumeSubHeadingListStart\n");
+                inSubList = true;
+            } else if (trimmed.startsWith("\u2022") || trimmed.startsWith("* ") || (trimmed.startsWith("- ") && trimmed.length() > 2)) {
+                if (!inItemList) { sb.append("    \\resumeItemListStart\n"); inItemList = true; }
+                String bullet = trimmed.replaceFirst("^[\u2022*\\-]\\s+", "");
+                sb.append("      \\resumeItem{").append(escapeLatex(bullet)).append("}\n");
+            } else {
+                Matcher dm = TRAILING_DATE.matcher(trimmed);
+                if (dm.find() && !dm.group(1).isBlank()) {
+                    if (inItemList) { sb.append("    \\resumeItemListEnd\n"); inItemList = false; }
+                    String left = trimmed.substring(0, dm.start(1)).trim();
+                    String date = dm.group(1).trim();
+                    // Look ahead for a subtitle line (role/degree below the org+date line)
+                    int j = i + 1;
+                    while (j < lines.length && lines[j].isBlank()) j++;
+                    String subtitle = "";
+                    if (j < lines.length) {
+                        String next = lines[j].trim();
+                        Matcher nm = TRAILING_DATE.matcher(next);
+                        if (!isSectionHeading(next) && !next.startsWith("\u2022") && !next.startsWith("* ")
+                                && !(next.startsWith("- ") && next.length() > 2) && !nm.find()) {
+                            subtitle = next;
+                            i = j;
+                        }
+                    }
+                    sb.append("  \\resumeSubheading{").append(escapeLatex(left)).append("}{").append(escapeLatex(date))
+                      .append("}{").append(escapeLatex(subtitle)).append("}{}\n");
+                } else {
+                    Matcher lm = LABELED_LINE.matcher(trimmed);
+                    if (lm.matches() && lm.group(1).split("\\s+").length <= 5) {
+                        if (inItemList) { sb.append("    \\resumeItemListEnd\n"); inItemList = false; }
+                        sb.append("  \\resumeItem{\\textbf{").append(escapeLatex(lm.group(1)))
+                          .append(":} ").append(escapeLatex(lm.group(2))).append("}\n");
+                    } else {
+                        if (!inItemList) { sb.append("    \\resumeItemListStart\n"); inItemList = true; }
+                        sb.append("      \\resumeItem{").append(escapeLatex(trimmed)).append("}\n");
+                    }
+                }
+            }
+            i++;
+        }
+
+        if (inItemList) sb.append("    \\resumeItemListEnd\n");
+        if (inSubList)  sb.append("\\resumeSubHeadingListEnd\n\n");
+
+        sb.append("\\end{document}\n");
+        return sb.toString();
     }
+
+    private String formatLatexContact(String contact) {
+        String[] parts = contact.split("\\s*\\|\\s*|\\s{2,}");
+        List<String> items = new ArrayList<>();
+        for (String part : parts) {
+            String p = part.trim();
+            if (p.isEmpty()) continue;
+            if (p.contains("@") && p.contains(".")) {
+                items.add("\\href{mailto:" + p + "}{\\faEnvelope\\ " + escapeLatex(p) + "}");
+            } else if (p.matches("\\+?[\\d][\\d()\\-+. ]{5,}")) {
+                items.add("\\faPhone\\ " + escapeLatex(p));
+            } else if (p.toLowerCase(Locale.ROOT).contains("linkedin")) {
+                items.add("\\href{https://linkedin.com/}{\\faLinkedin\\ " + escapeLatex(p) + "}");
+            } else if (p.toLowerCase(Locale.ROOT).contains("github")) {
+                items.add("\\href{https://github.com/}{\\faGithub\\ " + escapeLatex(p) + "}");
+            } else if (p.startsWith("http") || p.startsWith("www.")) {
+                items.add("\\href{" + p + "}{\\faLink\\ " + escapeLatex(p) + "}");
+            } else {
+                items.add(escapeLatex(p));
+            }
+        }
+        return String.join(" $|$ ", items);
+    }
+
+    private String escapeLatex(String text) {
+        if (text == null) return "";
+        StringBuilder r = new StringBuilder(text.length() + 16);
+        for (char c : text.toCharArray()) {
+            switch (c) {
+                case '\\' -> r.append("\\textbackslash{}");
+                case '&'  -> r.append("\\&");
+                case '%'  -> r.append("\\%");
+                case '#'  -> r.append("\\#");
+                case '{'  -> r.append("\\{");
+                case '}'  -> r.append("\\}");
+                case '~'  -> r.append("\\textasciitilde{}");
+                case '^'  -> r.append("\\textasciicircum{}");
+                case '$'  -> r.append("\\$");
+                case '_'  -> r.append("\\_");
+                case '<'  -> r.append("\\textless{}");
+                case '>'  -> r.append("\\textgreater{}");
+                case '\u2022' -> r.append("$\\bullet$");
+                case '\u2013' -> r.append("--");
+                case '\u2014' -> r.append("---");
+                case '\u2018' -> r.append("`");
+                case '\u2019' -> r.append("'");
+                case '\u201C' -> r.append("``");
+                case '\u201D' -> r.append("''");
+                default -> r.append(c);
+            }
+        }
+        return r.toString();
+    }
+
+    private String toTitleCase(String text) {
+        if (text == null || text.isBlank()) return text;
+        String[] words = text.toLowerCase(Locale.ROOT).split("\\s+");
+        StringBuilder r = new StringBuilder();
+        for (String w : words) {
+            if (!w.isEmpty()) { if (r.length() > 0) r.append(' '); r.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)); }
+        }
+        return r.toString();
+    }
+
     private boolean nonBlank(String value) { return value != null && !value.isBlank(); }
 }

@@ -1,6 +1,6 @@
 package com.smartjobtracker.config;
 
-import org.springframework.boot.web.client.RestClientBuilderCustomizer;
+import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -11,7 +11,7 @@ import java.time.Duration;
 public class HttpClientConfig {
 
     @Bean
-    public RestClientBuilderCustomizer timeoutCustomizer() {
+    public RestClientCustomizer timeoutCustomizer() {
         return builder -> {
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
             factory.setConnectTimeout(Duration.ofSeconds(5));
