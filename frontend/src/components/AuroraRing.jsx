@@ -141,7 +141,7 @@ void main(){
 }`
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function AuroraRing({ height = '100vh', className = '' }) {
+export default function AuroraRing({ height = '100vh', className = '', hideCards = false }) {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
 
@@ -390,7 +390,7 @@ export default function AuroraRing({ height = '100vh', className = '' }) {
     <div ref={containerRef} className={`aurora-ring ${className}`} style={{ height }} aria-hidden="true">
       <canvas ref={canvasRef} className="aurora-three-canvas" />
 
-      <div className="notif-layer">
+      {!hideCards && <div className="notif-layer">
         {/* Job Match */}
         <div className="notif n1" data-delay="600">
           <div className="notif-row">
@@ -472,7 +472,7 @@ export default function AuroraRing({ height = '100vh', className = '' }) {
           </div>
           <div className="nextra">Loom · System design + coding · 90 min</div>
         </div>
-      </div>
+      </div>}
 
       <div className="aurora-vignette" />
     </div>
