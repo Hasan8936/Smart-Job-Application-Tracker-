@@ -397,6 +397,28 @@
   font-size: 20px; line-height: 1;
 }
 
+/* ── Mobile hamburger button (base: hidden; revealed at ≤600px) ─ */
+.lp-mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px; height: 40px;
+  padding: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.lp-ham-line {
+  display: block;
+  width: 18px; height: 2px;
+  background: rgba(196,181,253,0.82);
+  border-radius: 2px;
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .lp-grid-3 { grid-template-columns: repeat(2,1fr); }
@@ -407,8 +429,63 @@
 @media (max-width: 600px) {
   .lp-grid-3, .lp-grid-4, .lp-step-grid { grid-template-columns: 1fr; }
   .lp-nav { display: none; }
+  .lp-nav-cta { display: none; }
+  .lp-mobile-menu-btn { display: flex; }
   .lp-n3 { display: none; }
   .lp-cta-card { padding: 40px 24px; }
+  .lp-section { padding: 60px 0; }
+  .lp-section-inner { padding: 0 16px; }
+}
+
+/* ── Mobile nav overlay ──────────────────────────────────────── */
+.lp-mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(4,1,16,0.97);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+.lp-mobile-menu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+.lp-mobile-menu-logo { width: 160px; height: 36px; }
+.lp-mobile-menu-close {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 10px;
+  color: rgba(196,181,253,0.8);
+  font-size: 18px;
+  cursor: pointer;
+}
+.lp-mobile-nav {
+  display: flex;
+  flex-direction: column;
+}
+.lp-mobile-nav a {
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(240,236,255,0.92);
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(139,92,246,0.14);
+  transition: color .15s;
+  letter-spacing: -0.01em;
+}
+.lp-mobile-nav a:hover { color: var(--v); }
+.lp-mobile-menu-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-bottom: 24px;
 }
 @media (prefers-reduced-motion: reduce) {
   .lp-n1.lp-in, .lp-n2.lp-in, .lp-n3.lp-in { animation: none; }

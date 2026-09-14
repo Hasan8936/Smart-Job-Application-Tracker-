@@ -24,18 +24,18 @@ export default function Layout({ title, subtitle, actions, children }) {
 
       {/* mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-ink/50" onClick={() => setMobileOpen(false)} />
-          <div className="relative h-full">
+        <div className="fixed inset-0 z-40 md:hidden flex">
+          <div className="flex flex-col h-full relative">
             <Sidebar variant="mobile" onNavigate={() => setMobileOpen(false)} />
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 h-11 w-11 rounded-full bg-surface border border-line text-ink shadow-pop flex items-center justify-center"
+              className="absolute top-4 right-[-52px] h-11 w-11 rounded-full bg-surface border border-line text-ink shadow-pop flex items-center justify-center"
               aria-label="Close menu"
             >
               <X size={20} />
             </button>
           </div>
+          <div className="flex-1" onClick={() => setMobileOpen(false)} />
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
 import BrandLogo from '../components/BrandLogo'
@@ -243,6 +243,7 @@ export default function LandingPage() {
   const n1Ref = useRef(null)
   const n2Ref = useRef(null)
   const n3Ref = useRef(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Redirect authenticated users
   useEffect(() => {
@@ -275,8 +276,43 @@ export default function LandingPage() {
             <Link to="/login" className="lp-sign-in">Sign in</Link>
             <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">Get started free</Link>
           </div>
+          {/* Mobile hamburger — only visible ≤600px */}
+          <button
+            className="lp-mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <span className="lp-ham-line" />
+            <span className="lp-ham-line" />
+            <span className="lp-ham-line" />
+          </button>
         </div>
       </header>
+
+      {/* ── Mobile nav overlay ── */}
+      {mobileMenuOpen && (
+        <div className="lp-mobile-menu" role="dialog" aria-modal="true">
+          <div className="lp-mobile-menu-top">
+            <BrandLogo className="lp-mobile-menu-logo" variant="void" />
+            <button
+              className="lp-mobile-menu-close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          </div>
+          <nav className="lp-mobile-nav">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it works</a>
+            <a href="#stats" onClick={() => setMobileMenuOpen(false)}>Why us</a>
+          </nav>
+          <div className="lp-mobile-menu-cta">
+            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-ghost lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Sign in</Link>
+            <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-primary lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Get started free</Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero ── */}
       <section className="lp-hero">

@@ -27,12 +27,13 @@ body {
 }
 
 .btn-gradient {
-  background-image: linear-gradient(90deg, #f43fa6, #c026d3);
+  background-image: linear-gradient(135deg, #7c3aed, #a78bfa);
   color: #fff;
-  transition: filter 0.15s ease, transform 0.15s ease;
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-gradient:hover:not(:disabled) {
-  filter: brightness(1.06);
+  filter: brightness(1.07);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.38);
 }
 .btn-gradient:active:not(:disabled) {
   transform: translateY(1px);
@@ -52,7 +53,7 @@ body {
 }
 
 .accent-bar-gradient {
-  background-image: linear-gradient(180deg, #22d3ee, #a855f7, #ec4899);
+  background-image: linear-gradient(180deg, #a78bfa, #7c3aed, #5b21b6);
 }
 
 .hero-orb {
