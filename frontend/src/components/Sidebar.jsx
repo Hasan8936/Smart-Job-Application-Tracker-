@@ -68,7 +68,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
       }
     >
       <div className={`relative flex items-center h-16 border-b border-line shrink-0 ${isCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
-        <BrandLogo markOnly={isCollapsed} className={isCollapsed ? 'w-8 h-8' : 'w-40 h-auto'} />
+        <BrandLogo markOnly={isCollapsed} variant="sidebar" className={isCollapsed ? 'w-8 h-8' : 'w-40 h-auto'} />
         {!isMobile && (
           <button
             onClick={onToggleCollapse}

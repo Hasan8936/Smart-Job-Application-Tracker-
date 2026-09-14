@@ -265,7 +265,7 @@ export default function LandingPage() {
       {/* ── Header ── */}
       <header className="lp-header">
         <div className="lp-header-inner">
-          <BrandLogo className="lp-brand-logo" />
+          <BrandLogo className="lp-brand-logo" variant="void" />
           <nav className="lp-nav">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
@@ -445,7 +445,7 @@ export default function LandingPage() {
           <div className="lp-foot-top">
             {/* Brand + tagline */}
             <div className="lp-foot-brand">
-              <BrandLogo className="lp-foot-logo" />
+              <BrandLogo className="lp-foot-logo" variant="void" />
               <p className="lp-foot-tagline">
                 An AI-powered pipeline for job applications — discovery, tracking, and interview reminders in one board.
               </p>

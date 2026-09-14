@@ -32,7 +32,7 @@ export default function AuthLayout({ heading, copy, children, id }) {
 
           {/* Brand — top overlay */}
           <div className="relative z-10 flex items-center gap-2.5 p-11 pb-0">
-            <BrandLogo markOnly className="w-7 h-7" />
+            <BrandLogo markOnly variant="void" className="w-7 h-7" />
             <span className="text-white/48 text-sm font-semibold tracking-wide">Smart Job Tracker</span>
           </div>
 
