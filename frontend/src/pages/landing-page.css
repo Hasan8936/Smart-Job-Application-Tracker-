@@ -348,17 +348,52 @@
 }
 .lp-trust-item { display: flex; align-items: center; gap: 5px; }
 
-/* ── Footer ──────────────────────────────────────────────────── */
-.lp-footer { border-top: 1px solid rgba(139,92,246,.1); padding-block: 32px; }
-.lp-footer-inner {
-  max-width: 1140px; margin: 0 auto; padding-inline: 24px;
-  display: flex; flex-wrap: wrap; align-items: center;
-  justify-content: space-between; gap: 16px;
+/* ── Footer v2 ───────────────────────────────────────────────── */
+.lp-footer-v2 {
+  border-top: 1px solid rgba(139,92,246,.1);
+  padding-block: 56px 32px;
 }
-.lp-foot-links { display: flex; flex-wrap: wrap; gap: 20px; }
-.lp-foot-links a { font-size: 13px; color: rgba(196,181,253,.45); transition: color .15s; }
-.lp-foot-links a:hover { color: var(--v); }
-.lp-foot-copy { font-size: 12px; color: rgba(196,181,253,.28); }
+.lp-foot-top {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 48px;
+  margin-bottom: 40px;
+}
+.lp-foot-tagline {
+  font-size: 13px; line-height: 1.7;
+  color: rgba(196,181,253,.45);
+  max-width: 28ch;
+}
+.lp-foot-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.lp-foot-col { display: flex; flex-direction: column; gap: 10px; }
+.lp-foot-col-head {
+  font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: rgba(196,181,253,.4);
+  margin-bottom: 2px;
+}
+.lp-foot-col a {
+  font-size: 13px; color: rgba(196,181,253,.55); transition: color .15s;
+  text-decoration: none;
+}
+.lp-foot-col a:hover { color: var(--v); }
+.lp-foot-bottom {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px;
+  padding-top: 24px; border-top: 1px solid rgba(139,92,246,.08);
+  font-size: 11px; color: rgba(196,181,253,.28);
+}
+
+@media (max-width: 720px) {
+  .lp-foot-top { grid-template-columns: 1fr; gap: 28px; }
+  .lp-foot-cols { grid-template-columns: repeat(2, 1fr); }
+  .lp-foot-tagline { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .lp-foot-cols { grid-template-columns: 1fr; }
+}
 
 /* ── Material Symbols ────────────────────────────────────────── */
 .lp-ms {

@@ -444,20 +444,52 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="lp-footer">
-        <div className="lp-footer-inner">
-          <div className="lp-logo">
-            <div className="lp-logo-mark" style={{ width: 26, height: 26 }}>
-              <svg viewBox="0 0 20 20" style={{ width: 13, height: 13, fill: '#fff' }}><path d="M10 2L3 7v6l7 5 7-5V7z"/></svg>
+      <footer className="lp-footer-v2">
+        <div className="lp-wrap">
+          <div className="lp-foot-top">
+            {/* Brand + tagline */}
+            <div className="lp-foot-brand">
+              <div className="lp-logo" style={{ marginBottom: 12 }}>
+                <div className="lp-logo-mark" style={{ width: 30, height: 30, borderRadius: 8 }}>
+                  <svg viewBox="0 0 20 20" style={{ width: 15, height: 15, fill: '#fff' }}>
+                    <path d="M7 10l2 2 4-4M17 10a7 7 0 11-14 0 7 7 0 0114 0z" strokeWidth="0"/>
+                    <path fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M7 10l2 2 4-4"/>
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="#fff" strokeWidth="1.4"/>
+                  </svg>
+                </div>
+                <span className="lp-logo-name lp-calistoga" style={{ fontSize: 15 }}>Smart Job Tracker</span>
+              </div>
+              <p className="lp-foot-tagline">
+                An AI-powered pipeline for job applications — discovery, tracking, and interview reminders in one board.
+              </p>
             </div>
-            <span className="lp-logo-name lp-calistoga" style={{ fontSize: 14 }}>Smart Job Tracker</span>
+
+            {/* Link columns */}
+            <div className="lp-foot-cols">
+              <div className="lp-foot-col">
+                <div className="lp-foot-col-head">Product</div>
+                <Link to="/discovery">Job Discovery</Link>
+                <a href="#how-it-works">How it works</a>
+                <Link to="/applications">Application Board</Link>
+              </div>
+              <div className="lp-foot-col">
+                <div className="lp-foot-col-head">Project</div>
+                <a href="https://github.com/Hasan8936/Smart-Job-Application-Tracker-" target="_blank" rel="noreferrer">GitHub repository</a>
+                <Link to="/privacy">Privacy Policy</Link>
+              </div>
+              <div className="lp-foot-col">
+                <div className="lp-foot-col-head">Account</div>
+                <Link to="/login">Log in</Link>
+                <Link to="/register">Sign up</Link>
+              </div>
+            </div>
           </div>
-          <div className="lp-foot-links">
-            <Link to="/privacy">Privacy Policy</Link>
-            <Link to="/login">Sign In</Link>
-            <Link to="/register">Register</Link>
+
+          {/* Bottom bar */}
+          <div className="lp-foot-bottom">
+            <span>Built with Spring Boot, Postgres, and Gemini AI.</span>
+            <span>Independent project — not affiliated with Greenhouse, Lever or Ashby.</span>
           </div>
-          <span className="lp-foot-copy">© 2026 Smart Job Tracker. All rights reserved.</span>
         </div>
       </footer>
     </div>

@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import AuthLayout from '../components/AuthLayout'
-import WavyHero from '../components/WavyHero'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api').replace(/\/api\/?$/, '')
 
@@ -56,7 +55,6 @@ export default function Login() {
 
   return (
     <>
-    <WavyHero scrollTargetId="login" />
     <AuthLayout id="login" heading="Welcome back" copy="Sign in to continue managing your applications.">
       <form onSubmit={submit} className="space-y-4">
         <div>
