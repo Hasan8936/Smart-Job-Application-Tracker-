@@ -15,7 +15,7 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background-color: #fafafa;
   color: #181925;
   overflow-x: hidden;
@@ -111,6 +111,64 @@ input, select, textarea {
 :focus-visible {
   outline: 2px solid #a855f7;
   outline-offset: 2px;
+}
+
+/* ── Orb dark-auth scope ─────────────────────────────────── */
+.auth-dark input,
+.auth-dark select,
+.auth-dark textarea {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.13) !important;
+  color: #ffffff !important;
+}
+.auth-dark input:focus,
+.auth-dark select:focus,
+.auth-dark textarea:focus {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(99, 102, 241, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  outline: none !important;
+}
+.auth-dark input::placeholder { color: rgba(255, 255, 255, 0.28) !important; }
+.auth-dark .bg-paper          { background-color: rgba(255, 255, 255, 0.07) !important; }
+.auth-dark .focus\:bg-surface:focus { background-color: rgba(255, 255, 255, 0.10) !important; }
+.auth-dark .border-line       { border-color: rgba(255, 255, 255, 0.13) !important; }
+.auth-dark .bg-line            { background-color: rgba(255, 255, 255, 0.09) !important; }
+.auth-dark .text-muted         { color: rgba(255, 255, 255, 0.42) !important; }
+.auth-dark .text-ink           { color: #ffffff !important; }
+.auth-dark .text-ink-soft      { color: rgba(255, 255, 255, 0.62) !important; }
+.auth-dark .hover\:text-ink:hover { color: #ffffff !important; }
+.auth-dark .text-status-rejected  { color: #f87171 !important; }
+.auth-dark .hover\:bg-paper:hover { background-color: rgba(255, 255, 255, 0.09) !important; }
+.auth-dark .text-accent        { color: #a5b4fc !important; }
+.auth-dark .hover\:text-accent-dark:hover { color: #c7d2fe !important; }
+.auth-dark .accent-accent      { accent-color: #818cf8 !important; }
+
+/* Iridescent ring (left-panel graphic + CSS-only version) */
+.orb-ring-static {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #3b82f6, #06b6d4, #10b981, #a3e635,
+    #facc15, #f97316, #ef4444,
+    #ec4899, #a855f7, #6366f1, #3b82f6
+  );
+  -webkit-mask: radial-gradient(circle at center, transparent 56px, white 58px);
+  mask:         radial-gradient(circle at center, transparent 56px, white 58px);
+  animation: orb-spin 12s linear infinite;
+  filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.7))
+          drop-shadow(0 0 40px rgba(59, 130, 246, 0.35));
+}
+
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.orb-text-gradient {
+  background-image: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

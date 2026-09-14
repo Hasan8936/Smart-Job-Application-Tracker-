@@ -49,7 +49,7 @@ export default function BrandLogo({ className = '', variant = 'light', markOnly 
       <text
         x="110"
         y="66"
-        fontFamily="'DM Sans', 'Inter', sans-serif"
+        fontFamily="'Outfit', 'Plus Jakarta Sans', sans-serif"
         fontWeight="700"
         fontSize="38"
         letterSpacing="-1"

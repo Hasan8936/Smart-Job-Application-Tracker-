@@ -51,8 +51,8 @@ module.exports = {
                 },
             },
             fontFamily: {
-                display: ['"DM Sans"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                sans: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                display: ['"Outfit"', '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                 mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
             },
             letterSpacing: {
