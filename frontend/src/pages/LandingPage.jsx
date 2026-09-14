@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
+import BrandLogo from '../components/BrandLogo'
 import './landing-page.css'
 
 /* ── Three.js Globe Component ───────────────────────────────── */
@@ -264,12 +265,7 @@ export default function LandingPage() {
       {/* ── Header ── */}
       <header className="lp-header">
         <div className="lp-header-inner">
-          <div className="lp-logo">
-            <div className="lp-logo-mark">
-              <svg viewBox="0 0 20 20"><path d="M10 2L3 7v6l7 5 7-5V7z"/></svg>
-            </div>
-            <span className="lp-logo-name lp-calistoga">Smart Job Tracker</span>
-          </div>
+          <BrandLogo className="lp-brand-logo" />
           <nav className="lp-nav">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
@@ -449,16 +445,7 @@ export default function LandingPage() {
           <div className="lp-foot-top">
             {/* Brand + tagline */}
             <div className="lp-foot-brand">
-              <div className="lp-logo" style={{ marginBottom: 12 }}>
-                <div className="lp-logo-mark" style={{ width: 30, height: 30, borderRadius: 8 }}>
-                  <svg viewBox="0 0 20 20" style={{ width: 15, height: 15, fill: '#fff' }}>
-                    <path d="M7 10l2 2 4-4M17 10a7 7 0 11-14 0 7 7 0 0114 0z" strokeWidth="0"/>
-                    <path fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M7 10l2 2 4-4"/>
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="#fff" strokeWidth="1.4"/>
-                  </svg>
-                </div>
-                <span className="lp-logo-name lp-calistoga" style={{ fontSize: 15 }}>Smart Job Tracker</span>
-              </div>
+              <BrandLogo className="lp-foot-logo" />
               <p className="lp-foot-tagline">
                 An AI-powered pipeline for job applications — discovery, tracking, and interview reminders in one board.
               </p>

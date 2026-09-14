@@ -61,15 +61,10 @@
   height: 100%; display: flex; align-items: center;
   justify-content: space-between; gap: 24px;
 }
-.lp-logo { display: flex; align-items: center; gap: 10px; }
-.lp-logo-mark {
-  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-  background: linear-gradient(135deg,#7c3aed,#a78bfa);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 14px rgba(124,58,237,.4);
-}
-.lp-logo-mark svg { width: 16px; height: 16px; fill: #fff; }
-.lp-logo-name { font-weight: 700; font-size: 16px; letter-spacing: -.01em; color: var(--t0); }
+/* Header logo — compact horizontal lockup */
+.lp-brand-logo { width: 200px; height: 46px; flex-shrink: 0; }
+/* Footer logo */
+.lp-foot-logo { width: 220px; height: 50px; margin-bottom: 12px; display: block; }
 .lp-nav { display: flex; align-items: center; gap: 28px; }
 .lp-nav a { font-size: 14px; font-weight: 500; color: var(--t1); transition: color .15s; }
 .lp-nav a:hover { color: var(--v); }
