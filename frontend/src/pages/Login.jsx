@@ -45,7 +45,7 @@ export default function Login() {
     try {
       setLoading(true)
       await auth.login(email, password, remember)
-      const dest = location.state?.from?.pathname || '/'
+      const dest = location.state?.from?.pathname || '/dashboard'
       nav(dest)
     } catch (err) {
       setError('That email and password combination didn\'t work.')

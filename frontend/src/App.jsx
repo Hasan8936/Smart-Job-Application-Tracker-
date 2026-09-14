@@ -18,6 +18,7 @@ const Discovery = lazy(() => import('./pages/Discovery'))
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
 const Privacy = lazy(() => import('./pages/Privacy'))
+const LandingPage = lazy(() => import('./pages/LandingPage'))
 
 function PageSpinner() {
   return (
@@ -37,7 +38,8 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth2/callback" element={<OAuth2Callback />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
       <Route path="/resume-match" element={<ProtectedRoute><ResumeMatch /></ProtectedRoute>} />
       <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />

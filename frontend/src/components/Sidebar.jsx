@@ -5,7 +5,7 @@ import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
 
 const links = [
-  { to: '/', label: 'Dashboard', icon: LayoutGrid, end: true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid, end: true },
   { to: '/applications', label: 'Applications', icon: ListChecks },
   { to: '/resume-match', label: 'Resume matcher', icon: FileSearch },
   { to: '/resume-builder', label: 'Resume builder', icon: FileEdit },

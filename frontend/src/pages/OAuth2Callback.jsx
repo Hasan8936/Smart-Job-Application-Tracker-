@@ -14,7 +14,7 @@ export default function OAuth2Callback() {
     if (handled.current) return
     handled.current = true
     if (!token) return navigate('/login?error=google-login-failed', { replace: true })
-    auth.loginWithToken(token).then(() => navigate('/', { replace: true })).catch((err) => {
+    auth.loginWithToken(token).then(() => navigate('/dashboard', { replace: true })).catch((err) => {
       const detail = err?.response?.status
         ? `google-login-failed-${err.response.status}`
         : (err?.message ? `google-login-failed-network` : 'google-login-failed')
