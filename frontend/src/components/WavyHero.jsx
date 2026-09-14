@@ -6,7 +6,7 @@ export default function WavyHero({ scrollTargetId }) {
   return (
     <section
       className="relative min-h-screen overflow-hidden flex flex-col"
-      style={{ background: '#000000' }}
+      style={{ background: 'radial-gradient(ellipse 70% 70% at 50% 50%, #1c0842 0%, #0e0330 35%, #060118 65%, #040110 100%)' }}
     >
       {/* Full-bleed ring fills the viewport */}
       <div className="absolute inset-0">
