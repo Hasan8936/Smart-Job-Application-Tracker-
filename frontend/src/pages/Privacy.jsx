@@ -95,7 +95,7 @@ export default function Privacy() {
 
         <Section id="soc2" title="4. SOC 2 Alignment">
           <p>
-            Career Zenith is designed to align with SOC 2 Trust Service Criteria. We are not currently SOC 2 certified,
+            Smart Job Tracker is designed to align with SOC 2 Trust Service Criteria. We are not currently SOC 2 certified,
             but the architecture and controls are built to meet those standards:
           </p>
           <div className="space-y-4 mt-2">
@@ -116,7 +116,7 @@ export default function Privacy() {
 
         <Section id="cookies" title="5. Cookie Policy">
           <p>
-            Career Zenith uses a small number of browser storage mechanisms to make the app work:
+            Smart Job Tracker uses a small number of browser storage mechanisms to make the app work:
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse mt-2">
