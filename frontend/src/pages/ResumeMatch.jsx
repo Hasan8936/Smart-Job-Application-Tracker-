@@ -191,7 +191,7 @@ export default function ResumeMatch() {
           ) : (
             <div>
               <div className="flex justify-center mb-6">
-                <ScoreRing value={matchResult.matchScore} />
+                <ScoreRing value={matchResult.overallMatch} />
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4 mb-5">
