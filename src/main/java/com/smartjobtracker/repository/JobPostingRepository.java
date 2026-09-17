@@ -24,6 +24,15 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
                             @Param("postedAfter") OffsetDateTime postedAfter, @Param("postedBefore") OffsetDateTime postedBefore,
                             Pageable pageable);
 
+    /** Jobs with no salary data that were synced recently enough to be worth estimating. */
+    @Query("select j from JobPosting j where j.salaryMin is null and j.salaryMax is null and j.createdAt > :since")
+    List<JobPosting> findRecentWithoutSalary(@Param("since") OffsetDateTime since);
+
+    /** Delete job postings older than {@code cutoff} that no user has saved, bookmarked, or applied to. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("delete from JobPosting j where j.createdAt < :cutoff and j.id not in (select s.jobPostingId from SavedJob s)")
+    int deleteStaleJobs(@Param("cutoff") OffsetDateTime cutoff);
+
     @Query("select j from JobPosting j where j.createdAt > :since " +
             "and (:q is null or lower(j.title) like lower(concat('%', cast(:q as string), '%')) or lower(j.company) like lower(concat('%', cast(:q as string), '%'))) " +
             "and (:location is null or lower(j.location) like lower(concat('%', cast(:location as string), '%'))) " +

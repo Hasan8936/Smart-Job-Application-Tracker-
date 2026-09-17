@@ -438,7 +438,7 @@ public class ResumeTailoringService {
     private String toJson(List<Long> values) { try { return mapper.writeValueAsString(values); } catch (Exception ex) { throw new IllegalStateException(ex); } }
     private List<Long> fromJson(String value) { try { return mapper.readValue(value, IDS); } catch (Exception ex) { return List.of(); } }
     private List<String> fromJsonStrings(String value) { try { return mapper.readValue(value, new TypeReference<List<String>>() {}); } catch (Exception ex) { return List.of(); } }
-    private String toLatex(String content) {
+    public String toLatex(String content) {
         StringBuilder sb = new StringBuilder();
         // Preamble matching the user's Overleaf template (lato, fontawesome5, Jake's Resume macros)
         sb.append("\\documentclass[letterpaper,11pt]{article}\n\n")

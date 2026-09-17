@@ -85,3 +85,13 @@ export async function updateJobDocument(id, content) {
     const response = await api.put(`/jobs/documents/${id}`, { content })
     return response.data
 }
+
+export async function autoApply(jobId) {
+    const response = await api.post(`/jobs/${jobId}/auto-apply`)
+    return response.data
+}
+
+export async function getAutoApplyStatus(taskId) {
+    const response = await api.get(`/jobs/auto-apply/${taskId}/status`)
+    return response.data
+}

@@ -52,6 +52,12 @@ public class CandidateProfile {
     @Column(name = "preferred_roles", columnDefinition = "text")
     private String preferredRoles;
 
+    @Column(name = "phone", length = 50)
+    private String phone;
+
+    @Column(name = "linkedin_url", length = 500)
+    private String linkedinUrl;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -78,6 +84,10 @@ public class CandidateProfile {
     public void setExperience(String experience) { this.experience = experience; }
     public String getPreferredRoles() { return preferredRoles; }
     public void setPreferredRoles(String preferredRoles) { this.preferredRoles = preferredRoles; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getLinkedinUrl() { return linkedinUrl; }
+    public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

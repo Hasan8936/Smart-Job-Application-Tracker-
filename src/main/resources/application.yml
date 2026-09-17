@@ -107,6 +107,9 @@ app:
     telegram:
       enabled: ${TELEGRAM_ENABLED:false}
       channels: ${TELEGRAM_CHANNELS:}
+    skyvern:
+      api-url: ${SKYVERN_API_URL:}
+      api-key: ${SKYVERN_API_KEY:}
 
 management:
   endpoints:

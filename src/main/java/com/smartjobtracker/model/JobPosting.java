@@ -20,6 +20,7 @@ public class JobPosting {
     @Column(name = "logo_url", length = 2000) private String logoUrl;
     @Column(name = "salary_min") private Integer salaryMin; @Column(name = "salary_max") private Integer salaryMax;
     @Column(name = "salary_currency") private String salaryCurrency;
+    @Column(name = "salary_estimated") private Boolean salaryEstimated = false;
     @Column(name = "raw_json", columnDefinition = "text") private String rawJson;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
@@ -28,6 +29,6 @@ public class JobPosting {
     public String getCompany(){return company;} public void setCompany(String v){company=v;} public String getTitle(){return title;} public void setTitle(String v){title=v;} public String getLocation(){return location;} public void setLocation(String v){location=v;}
     public String getEmploymentType(){return employmentType;} public void setEmploymentType(String v){employmentType=v;} public String getWorkMode(){return workMode;} public void setWorkMode(String v){workMode=v;} public String getApplyUrl(){return applyUrl;} public void setApplyUrl(String v){applyUrl=v;}
     public OffsetDateTime getPostedAt(){return postedAt;} public void setPostedAt(OffsetDateTime v){postedAt=v;} public String getDescription(){return description;} public void setDescription(String v){description=v;} public String getLogoUrl(){return logoUrl;} public void setLogoUrl(String v){logoUrl=v;}
-    public Integer getSalaryMin(){return salaryMin;} public void setSalaryMin(Integer v){salaryMin=v;} public Integer getSalaryMax(){return salaryMax;} public void setSalaryMax(Integer v){salaryMax=v;} public String getSalaryCurrency(){return salaryCurrency;} public void setSalaryCurrency(String v){salaryCurrency=v;} public String getRawJson(){return rawJson;} public void setRawJson(String v){rawJson=v;}
+    public Integer getSalaryMin(){return salaryMin;} public void setSalaryMin(Integer v){salaryMin=v;} public Integer getSalaryMax(){return salaryMax;} public void setSalaryMax(Integer v){salaryMax=v;} public String getSalaryCurrency(){return salaryCurrency;} public void setSalaryCurrency(String v){salaryCurrency=v;} public Boolean getSalaryEstimated(){return salaryEstimated;} public void setSalaryEstimated(Boolean v){salaryEstimated=v;} public String getRawJson(){return rawJson;} public void setRawJson(String v){rawJson=v;}
     public OffsetDateTime getCreatedAt(){return createdAt;} public void setCreatedAt(OffsetDateTime v){createdAt=v;} public OffsetDateTime getUpdatedAt(){return updatedAt;} public void setUpdatedAt(OffsetDateTime v){updatedAt=v;}
 }

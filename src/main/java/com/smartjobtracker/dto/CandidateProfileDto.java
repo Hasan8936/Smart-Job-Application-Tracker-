@@ -42,6 +42,12 @@ public class CandidateProfileDto {
     @Size(max = 100, message = "too many preferred roles")
     private List<@Size(max = 200, message = "value too long") String> preferredRoles = new ArrayList<>();
 
+    @Size(max = 50, message = "phone too long")
+    private String phone;
+
+    @Size(max = 500, message = "LinkedIn URL too long")
+    private String linkedinUrl;
+
     public Long getSourceResumeId() { return sourceResumeId; }
     public void setSourceResumeId(Long sourceResumeId) { this.sourceResumeId = sourceResumeId; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
@@ -60,4 +66,8 @@ public class CandidateProfileDto {
     public void setExperience(List<String> experience) { this.experience = experience; }
     public List<String> getPreferredRoles() { return preferredRoles; }
     public void setPreferredRoles(List<String> preferredRoles) { this.preferredRoles = preferredRoles; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getLinkedinUrl() { return linkedinUrl; }
+    public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
 }

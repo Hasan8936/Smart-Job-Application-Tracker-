@@ -112,6 +112,8 @@ public class CandidateProfileService {
         profile.setEducation(toJson(clean(dto.getEducation())));
         profile.setExperience(toJson(clean(dto.getExperience())));
         profile.setPreferredRoles(toJson(clean(dto.getPreferredRoles())));
+        if (dto.getPhone() != null) profile.setPhone(dto.getPhone().trim().isEmpty() ? null : dto.getPhone().trim());
+        if (dto.getLinkedinUrl() != null) profile.setLinkedinUrl(dto.getLinkedinUrl().trim().isEmpty() ? null : dto.getLinkedinUrl().trim());
         profile.setUpdatedAt(now);
 
         CandidateProfile saved = profileRepository.save(profile);
@@ -150,6 +152,8 @@ public class CandidateProfileService {
         dto.setEducation(fromJson(p.getEducation()));
         dto.setExperience(fromJson(p.getExperience()));
         dto.setPreferredRoles(fromJson(p.getPreferredRoles()));
+        dto.setPhone(p.getPhone());
+        dto.setLinkedinUrl(p.getLinkedinUrl());
         return dto;
     }
 

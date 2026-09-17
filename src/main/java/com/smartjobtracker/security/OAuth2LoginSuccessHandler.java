@@ -2,6 +2,8 @@ package com.smartjobtracker.security;
 
 import com.smartjobtracker.model.User;
 import com.smartjobtracker.repository.UserRepository;
+import com.smartjobtracker.service.GmailService;
+import com.smartjobtracker.service.GoogleCalendarService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,11 +12,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 @Component
@@ -25,13 +34,25 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final String frontendUrl;
+    private final OAuth2AuthorizedClientService authorizedClientService;
+    private final GmailService gmailService;
+    private final GoogleCalendarService calendarService;
 
-    public OAuth2LoginSuccessHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
-                                     @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
+    public OAuth2LoginSuccessHandler(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl,
+            org.springframework.beans.factory.ObjectProvider<OAuth2AuthorizedClientService> authorizedClientService,
+            org.springframework.beans.factory.ObjectProvider<GmailService> gmailService,
+            org.springframework.beans.factory.ObjectProvider<GoogleCalendarService> calendarService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.frontendUrl = frontendUrl;
+        this.authorizedClientService = authorizedClientService.getIfAvailable();
+        this.gmailService = gmailService.getIfAvailable();
+        this.calendarService = calendarService.getIfAvailable();
     }
 
     @Override
@@ -54,17 +75,56 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 created.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
                 return userRepository.save(created);
             });
+
+            // Store Gmail + Calendar tokens obtained during this sign-in authorization.
+            // Wrapped in its own try-catch so a token storage failure never blocks sign-in.
+            tryStoreTokens(user, email, authentication);
+
             String token = jwtUtil.generateToken(user.getEmail());
             getRedirectStrategy().sendRedirect(request, response,
                     frontendUrl + "/oauth2/callback?token=" + token);
         } catch (Exception ex) {
-            // Anything unexpected here (DB save failure, JWT signing failure, etc.) must never
-            // surface as an unhandled exception — that would either crash the request with a
-            // generic 500 on this backend's own domain (confusing, and invisible to the
-            // frontend) or, worse, fail silently. Log it loudly so it's visible in Render logs,
-            // and send the user back to a frontend page that can show a real error.
             log.error("Google OAuth2 login succeeded at the provider but failed while finishing sign-in", ex);
             getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/login?error=google-login-failed-server");
+        }
+    }
+
+    private void tryStoreTokens(User user, String email, Authentication authentication) {
+        if (authorizedClientService == null || !(authentication instanceof OAuth2AuthenticationToken oauthToken)) return;
+        try {
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    oauthToken.getAuthorizedClientRegistrationId(), oauthToken.getName());
+            if (client == null) return;
+
+            OAuth2AccessToken accessToken = client.getAccessToken();
+            OAuth2RefreshToken refreshToken = client.getRefreshToken();
+            if (accessToken == null) return;
+
+            String at = accessToken.getTokenValue();
+            String rt = refreshToken != null ? refreshToken.getTokenValue() : null;
+            Instant expiresAt = accessToken.getExpiresAt();
+            long expiresIn = (expiresAt != null)
+                    ? Math.max(Duration.between(Instant.now(), expiresAt).getSeconds(), 60)
+                    : 3600;
+
+            if (gmailService != null) {
+                try {
+                    gmailService.storeOAuthTokens(user.getId(), email, at, rt, expiresIn);
+                    log.debug("Stored Gmail tokens for user {}", user.getId());
+                } catch (Exception ex) {
+                    log.warn("Failed to store Gmail tokens for user {}: {}", user.getId(), ex.getMessage());
+                }
+            }
+            if (calendarService != null) {
+                try {
+                    calendarService.storeOAuthTokens(user.getId(), at, rt, expiresIn);
+                    log.debug("Stored Calendar tokens for user {}", user.getId());
+                } catch (Exception ex) {
+                    log.warn("Failed to store Calendar tokens for user {}: {}", user.getId(), ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Could not load OAuth2 authorized client for token storage: {}", ex.getMessage());
         }
     }
 }

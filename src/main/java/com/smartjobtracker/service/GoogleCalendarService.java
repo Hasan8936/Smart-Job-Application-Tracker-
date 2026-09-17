@@ -179,11 +179,19 @@ public class GoogleCalendarService {
     }
 
     private void storeTokens(Long userId, JsonNode json) {
+        storeOAuthTokens(userId, json.path("access_token").asText(),
+            json.has("refresh_token") ? json.path("refresh_token").asText() : null,
+            json.path("expires_in").asLong(3600));
+    }
+
+    /** Stores Google Calendar OAuth2 tokens obtained from the Google sign-in flow. */
+    @Transactional
+    public void storeOAuthTokens(Long userId, String accessToken, String refreshToken, long expiresInSeconds) {
         GoogleCalendarToken token = tokenRepository.findByUserId(userId).orElseGet(GoogleCalendarToken::new);
         token.setUserId(userId);
-        token.setAccessToken(json.path("access_token").asText());
-        if (json.has("refresh_token")) token.setRefreshToken(json.path("refresh_token").asText());
-        token.setTokenExpiry(OffsetDateTime.now().plusSeconds(json.path("expires_in").asInt(3600)));
+        token.setAccessToken(accessToken);
+        if (refreshToken != null) token.setRefreshToken(refreshToken);
+        token.setTokenExpiry(OffsetDateTime.now().plusSeconds(expiresInSeconds));
         token.setUpdatedAt(OffsetDateTime.now());
         tokenRepository.save(token);
     }

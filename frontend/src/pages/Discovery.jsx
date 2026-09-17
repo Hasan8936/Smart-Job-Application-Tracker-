@@ -7,7 +7,7 @@ import Layout from '../components/Layout'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 import {
-  discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
+  autoApply, discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
   getSyncProgress, listJobDocuments, listJobs, listNewJobs, markJobApplied,
   markJobsVisitedNow, readJobActions, setJobState, updateJobDocument
 } from '../api/jobs'
@@ -180,6 +180,19 @@ export default function Discovery() {
       if (value === 'APPLIED') await markJobApplied(id); else await setJobState(id, value)
       setActions(current => ({ ...current, [id]: value }))
     } catch { setError('Could not update this job action.') }
+  }
+
+  async function handleAutoApply(id) {
+    try {
+      const data = await autoApply(id)
+      if (data.status === 'PENDING') {
+        setError(null)
+        // optimistically mark applied
+        setActions(current => ({ ...current, [id]: 'APPLIED' }))
+      }
+    } catch (e) {
+      setError(e.response?.data?.error || 'Auto-apply failed. Make sure Skyvern is configured.')
+    }
   }
 
   async function generate(type) {
@@ -412,7 +425,7 @@ export default function Discovery() {
       ) : (
         <div className="space-y-3">
           {jobs.content.map(job => (
-            <JobCard key={job.id} job={job} action={actions[job.id]} onAction={action} onOpen={openDetails} />
+            <JobCard key={job.id} job={job} action={actions[job.id]} onAction={action} onOpen={openDetails} onAutoApply={handleAutoApply} />
           ))}
         </div>
       )}

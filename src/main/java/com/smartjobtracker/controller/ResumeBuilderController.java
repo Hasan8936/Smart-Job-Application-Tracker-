@@ -3,6 +3,7 @@ package com.smartjobtracker.controller;
 import com.smartjobtracker.dto.ResumeBuilderDto;
 import com.smartjobtracker.model.User;
 import com.smartjobtracker.repository.UserRepository;
+import com.smartjobtracker.service.GeminiApiException;
 import com.smartjobtracker.service.ResumeBuilderService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -11,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/resume/build")
 public class ResumeBuilderController {
@@ -18,7 +21,8 @@ public class ResumeBuilderController {
     private final ResumeBuilderService builderService;
     private final UserRepository userRepository;
 
-    public ResumeBuilderController(ResumeBuilderService builderService, UserRepository userRepository) {
+    public ResumeBuilderController(ResumeBuilderService builderService,
+                                   UserRepository userRepository) {
         this.builderService = builderService;
         this.userRepository = userRepository;
     }
@@ -54,7 +58,7 @@ public class ResumeBuilderController {
                 .body(pdf);
     }
 
-    /** Renders a PDF preview without saving (called on Step 3 to show preview). */
+    /** Renders a PDF preview without saving. */
     @PostMapping("/preview")
     public ResponseEntity<byte[]> preview(@RequestBody ResumeBuilderDto dto) {
         Long uid = currentUserId();
@@ -64,5 +68,43 @@ public class ResumeBuilderController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"preview.pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
+    }
+
+    /** Parses an existing saved resume into builder form fields for the import feature. */
+    @PostMapping("/import")
+    public ResponseEntity<?> importResume(@RequestParam Long resumeId) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        try {
+            return ResponseEntity.ok(builderService.importFromResume(uid, resumeId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** Calls Gemini to improve bullets, suggest ATS keywords, and score the resume. */
+    @PostMapping("/ai-enhance")
+    public ResponseEntity<?> aiEnhance(@RequestBody ResumeBuilderDto dto) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        try {
+            return ResponseEntity.ok(builderService.aiEnhance(uid, dto));
+        } catch (GeminiApiException e) {
+            return ResponseEntity.status(e.getStatus()).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** Returns a LaTeX (.tex) source file for the resume, ready to upload to Overleaf. */
+    @PostMapping("/export-latex")
+    public ResponseEntity<byte[]> exportLatex(@RequestBody ResumeBuilderDto dto) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).build();
+        byte[] latex = builderService.exportLatex(dto);
+        String role = dto.getTargetRole() == null || dto.getTargetRole().isBlank()
+                ? "resume" : dto.getTargetRole().toLowerCase().replace(" ", "-");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + role + "-resume.tex\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(latex);
     }
 }

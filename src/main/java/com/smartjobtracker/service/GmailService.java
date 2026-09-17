@@ -71,6 +71,25 @@ public class GmailService {
         connection.setConnectedAt(OffsetDateTime.now()); connection.setUpdatedAt(OffsetDateTime.now()); connections.save(connection);
     }
 
+    /** Stores Gmail OAuth2 tokens obtained from the Google sign-in flow (no code exchange needed).
+     *  Silently skips if the Gmail cipher is not configured. */
+    @Transactional
+    public void storeOAuthTokens(Long userId, String googleEmail, String accessToken, String refreshToken, long expiresInSeconds) {
+        if (!config.isUsable()) return;
+        GmailConnection connection = connections.findByUserId(userId).orElseGet(GmailConnection::new);
+        connection.setUserId(userId);
+        if (googleEmail != null) connection.setGoogleEmail(googleEmail);
+        connection.setEncryptedAccessToken(cipher.encrypt(accessToken));
+        if (refreshToken != null) connection.setEncryptedRefreshToken(cipher.encrypt(refreshToken));
+        connection.setAccessTokenExpiresAt(OffsetDateTime.now().plusSeconds(Math.max(expiresInSeconds - 60, 60)));
+        if (connection.getConnectedAt() == null) connection.setConnectedAt(OffsetDateTime.now());
+        connection.setUpdatedAt(OffsetDateTime.now());
+        connection.setOauthState(null);
+        connection.setStateExpiresAt(null);
+        connection.setStatus("CONNECTED");
+        connections.save(connection);
+    }
+
     @Transactional(readOnly=true)
     public Map<String,Object> status(Long userId) {
         String configurationError = config.configurationError();

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Bookmark, Check, ExternalLink, MapPin, Star } from 'lucide-react'
+import { Bookmark, Bot, Check, ExternalLink, MapPin, Star } from 'lucide-react'
 
 function matchColor(score) {
   if (score == null) return 'text-muted'
@@ -8,11 +8,35 @@ function matchColor(score) {
   return 'text-muted'
 }
 
-export default function JobCard({ job, action, onAction, onOpen }) {
+function formatSalary(job) {
+  if (!job.salaryMin && !job.salaryMax) return null
+  const currency = job.salaryCurrency || ''
+  const min = job.salaryMin ? job.salaryMin.toLocaleString() : null
+  const max = job.salaryMax ? job.salaryMax.toLocaleString() : null
+  const range = min && max ? `${min} – ${max}` : min || max
+  const label = job.salaryEstimated ? ' (Est.)' : ''
+  return `${currency} ${range}${label}`.trim()
+}
+
+export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) {
   const [logoFailed, setLogoFailed] = useState(false)
+  const [applying, setApplying] = useState(false)
   const isSaved = action === 'SAVED'
   const isBookmarked = action === 'BOOKMARKED'
   const isApplied = action === 'APPLIED'
+
+  const salaryDisplay = formatSalary(job)
+
+  async function handleAutoApply(e) {
+    e.stopPropagation()
+    if (applying || !onAutoApply) return
+    setApplying(true)
+    try {
+      await onAutoApply(job.id)
+    } finally {
+      setApplying(false)
+    }
+  }
 
   return (
     <article className="bg-surface border border-line rounded-xl2 p-4 sm:p-5 shadow-card hover:border-ink/25 transition-colors">
@@ -41,6 +65,11 @@ export default function JobCard({ job, action, onAction, onOpen }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted">
             <span className="inline-flex items-center gap-1"><MapPin size={12} />{job.location || 'Location unavailable'}</span>
             {job.employmentType && <span className="capitalize">{job.employmentType}</span>}
+            {salaryDisplay && (
+              <span className={job.salaryEstimated ? 'text-amber-500' : 'text-ink-soft'}>
+                {salaryDisplay}
+              </span>
+            )}
           </div>
         </div>
 
@@ -56,6 +85,11 @@ export default function JobCard({ job, action, onAction, onOpen }) {
           <div className="text-[11px] text-muted">match</div>
         </div>
       </div>
+
+      {/* Description snippet */}
+      {job.descriptionSnippet && (
+        <p className="mt-2 text-xs text-muted line-clamp-2 leading-5">{job.descriptionSnippet}</p>
+      )}
 
       {/* Skills row */}
       {job.skills && job.skills.length > 0 && (
@@ -98,6 +132,16 @@ export default function JobCard({ job, action, onAction, onOpen }) {
           >
             <Check size={13} /> {isApplied ? 'Applied' : 'Mark applied'}
           </button>
+          {onAutoApply && (
+            <button
+              title="Auto Apply with Skyvern"
+              onClick={handleAutoApply}
+              disabled={applying}
+              className="h-9 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 border border-violet-400 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50"
+            >
+              <Bot size={13} /> {applying ? 'Submitting…' : 'Auto Apply'}
+            </button>
+          )}
           <a
             href={job.applyUrl}
             target="_blank"

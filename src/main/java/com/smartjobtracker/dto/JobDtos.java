@@ -13,16 +13,28 @@ public final class JobDtos {
     public record AsyncDiscoverResponse(String syncId) {}
     public record SyncProgressDto(String status, String currentProvider, int providerJobs, int totalSaved, boolean done, java.util.Map<String, String> errors) {}
     public record JobSummary(Long id, String provider, String company, String title, String location,
-                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl) {
-        public static JobSummary from(JobPosting p) { return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(), p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl()); }
+                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl,
+                             Integer salaryMin, Integer salaryMax, String salaryCurrency, Boolean salaryEstimated,
+                             String descriptionSnippet) {
+        public static JobSummary from(JobPosting p) {
+            String raw = p.getDescription();
+            String snippet = raw == null ? null : (raw.length() > 180 ? raw.substring(0, 180) + "…" : raw);
+            return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(),
+                p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl(),
+                p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(),
+                Boolean.TRUE.equals(p.getSalaryEstimated()), snippet);
+        }
     }
     public record JobDetail(Long id, String provider, String company, String title, String location,
                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt,
                             String description, String logoUrl, Integer salaryMin, Integer salaryMax,
-                            String salaryCurrency, java.util.List<String> requiredSkills,
-                            java.util.List<String> preferredSkills) {
+                            String salaryCurrency, Boolean salaryEstimated,
+                            java.util.List<String> requiredSkills, java.util.List<String> preferredSkills) {
         public static JobDetail from(JobPosting p, java.util.List<String> requiredSkills, java.util.List<String> preferredSkills) {
-            return new JobDetail(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(), p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getDescription(), p.getLogoUrl(), p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(), requiredSkills, preferredSkills);
+            return new JobDetail(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(),
+                p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getDescription(),
+                p.getLogoUrl(), p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(),
+                Boolean.TRUE.equals(p.getSalaryEstimated()), requiredSkills, preferredSkills);
         }
     }
 }

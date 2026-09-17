@@ -11,6 +11,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+
+import java.util.Map;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -74,7 +77,14 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (clientRegistrationRepository != null) {
-            http.oauth2Login(oauth -> oauth.successHandler(oauth2LoginSuccessHandler).failureHandler(oauth2LoginFailureHandler));
+            DefaultOAuth2AuthorizationRequestResolver resolver =
+                new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
+            resolver.setAuthorizationRequestCustomizer(customizer ->
+                customizer.additionalParameters(Map.of("access_type", "offline", "prompt", "consent")));
+            http.oauth2Login(oauth -> oauth
+                .authorizationEndpoint(ep -> ep.authorizationRequestResolver(resolver))
+                .successHandler(oauth2LoginSuccessHandler)
+                .failureHandler(oauth2LoginFailureHandler));
         }
 
         return http.build();
