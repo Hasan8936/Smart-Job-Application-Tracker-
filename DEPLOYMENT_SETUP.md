@@ -121,3 +121,68 @@ After Render finishes redeploying with the new vars:
 - **`redirect_uri_mismatch`** → the Google Console redirect URI doesn't exactly match `https://smart-job-tracker-api-iflm.onrender.com/login/oauth2/code/google`.
 - **Google login works but lands on the wrong site / localhost** → `FRONTEND_URL` on Render is unset or wrong.
 - **Reset email "sent" locally but nothing arrives** → App Password wrong, or 2-Step Verification is off on that Gmail account.
+
+---
+
+## 6. Skyvern — Auto Apply setup
+
+Auto Apply uses [Skyvern](https://github.com/Skyvern-AI/skyvern) to fill and submit job application forms automatically using a real browser.
+
+### Option A — Run Skyvern locally (for testing)
+
+Requirements: Docker Desktop running.
+
+```bash
+# Clone and start Skyvern
+git clone https://github.com/Skyvern-AI/skyvern.git
+cd skyvern
+docker compose up -d
+```
+
+Skyvern starts at `http://localhost:8000`. Get your API key from the Skyvern UI at `http://localhost:8080`.
+
+Then set these in your **local** `.env` or IDE run config:
+
+```
+SKYVERN_API_URL=http://localhost:8000
+SKYVERN_API_KEY=<your-key-from-skyvern-ui>
+```
+
+### Option B — Run Skyvern on a VPS / cloud server (for production)
+
+Deploy Skyvern on any Linux server (Ubuntu 22.04 recommended, min 4 GB RAM):
+
+```bash
+git clone https://github.com/Skyvern-AI/skyvern.git
+cd skyvern
+# Edit .env to set your database password, then:
+docker compose -f docker-compose.yml up -d
+```
+
+Then on **Render**, add these two environment variables to your backend service:
+
+| Key | Value | Notes |
+| --- | --- | --- |
+| `SKYVERN_API_URL` | `http://<your-server-ip>:8000` | No trailing slash. Must be reachable from Render. |
+| `SKYVERN_API_KEY` | *(from Skyvern UI)* | Find it at `http://<your-server-ip>:8080` under Settings → API Keys. |
+
+### User-side requirements
+
+Before a user can use Auto Apply, they must:
+
+1. Go to **Candidate Profile** → fill in **Phone number** and **LinkedIn URL** → click **Save changes**.
+2. Make sure their profile has skills and experience filled in (Skyvern passes the full profile to the job form).
+
+### How it works
+
+1. User clicks **Auto Apply** on a job card or job details panel.
+2. Backend `POST /api/jobs/{id}/auto-apply` sends a task to Skyvern with: the job's apply URL, the user's name, email, phone, and LinkedIn URL.
+3. Skyvern opens a real Chrome browser, navigates to the job page, and fills in the form fields.
+4. The frontend polls the task status via `GET /api/jobs/auto-apply/{taskId}/status` and shows: PENDING → RUNNING → COMPLETED / FAILED.
+
+### Troubleshooting
+
+- **"Auto Apply is not configured"** banner on Discovery page → `SKYVERN_API_URL` or `SKYVERN_API_KEY` is missing on the backend.
+- **503 from /auto-apply endpoint** → same as above.
+- **Task stays PENDING** → Skyvern is not running or is unreachable from the backend server.
+- **Task FAILED** → check the Skyvern UI (`http://<server>:8080`) for a screenshot of where it got stuck. Usually the job site has an unusual form layout.

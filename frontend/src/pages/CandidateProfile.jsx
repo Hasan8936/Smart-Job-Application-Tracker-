@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Sparkles, Save, Info } from 'lucide-react'
+import { Bot, Info, Save, Sparkles } from 'lucide-react'
 import Layout from '../components/Layout'
 import { getProfile, extractProfile, saveProfile } from '../api/profile'
 
@@ -14,13 +14,15 @@ const FIELDS = [
   { key: 'experience', label: 'Experience', rows: 5, placeholder: 'One entry per line' },
 ]
 
-const EMPTY = FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: '' }), {})
+const EMPTY = { ...FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: '' }), {}), phone: '', linkedinUrl: '' }
 
 function dataToFields(data) {
   const next = { ...EMPTY }
   FIELDS.forEach((f) => {
     next[f.key] = Array.isArray(data?.[f.key]) ? data[f.key].join('\n') : ''
   })
+  next.phone = data?.phone || ''
+  next.linkedinUrl = data?.linkedinUrl || ''
   return next
 }
 
@@ -32,12 +34,15 @@ function fieldsToDto(fields) {
       .map((s) => s.trim())
       .filter(Boolean)
   })
+  dto.phone = (fields.phone || '').trim() || null
+  dto.linkedinUrl = (fields.linkedinUrl || '').trim() || null
   return dto
 }
 
 export default function CandidateProfile() {
   const [fields, setFields] = useState(EMPTY)
   const [meta, setMeta] = useState({ sourceResumeId: null, updatedAt: null })
+  const hasAutoApplyInfo = !!(fields.phone && fields.linkedinUrl)
   const [loading, setLoading] = useState(true)
   const [extracting, setExtracting] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -124,6 +129,46 @@ export default function CandidateProfile() {
   return (
     <Layout title="Candidate profile" subtitle="Structured details extracted from your resume" actions={actions}>
       <div className="max-w-4xl space-y-5">
+
+        {/* ── Auto Apply callout ── */}
+        <div className={`flex items-start gap-3 rounded-xl2 p-4 border ${hasAutoApplyInfo ? 'bg-violet-50 dark:bg-violet-900/15 border-violet-200 dark:border-violet-700' : 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700'}`}>
+          <Bot size={18} className={`shrink-0 mt-0.5 ${hasAutoApplyInfo ? 'text-violet-500' : 'text-amber-500'}`} />
+          <div>
+            <p className={`text-sm font-medium ${hasAutoApplyInfo ? 'text-violet-700 dark:text-violet-300' : 'text-amber-700 dark:text-amber-300'}`}>
+              {hasAutoApplyInfo ? 'Auto Apply profile ready' : 'Complete your profile for Auto Apply'}
+            </p>
+            <p className={`text-xs mt-0.5 ${hasAutoApplyInfo ? 'text-violet-600/80 dark:text-violet-400' : 'text-amber-600/80 dark:text-amber-400'}`}>
+              {hasAutoApplyInfo
+                ? 'Your phone number and LinkedIn URL are set. Skyvern will use these when applying to jobs on your behalf.'
+                : 'Add your phone number and LinkedIn URL below so Skyvern can fill job application forms automatically.'}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Auto Apply fields ── */}
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div className="bg-surface border border-line rounded-xl2 shadow-card p-4">
+            <label className="block font-display text-[15px] text-ink mb-1">Phone number <span className="text-xs text-muted font-normal">(for Auto Apply)</span></label>
+            <input
+              type="tel"
+              value={fields.phone}
+              onChange={e => updateField('phone', e.target.value)}
+              placeholder="+91 98765 43210"
+              className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            />
+          </div>
+          <div className="bg-surface border border-line rounded-xl2 shadow-card p-4">
+            <label className="block font-display text-[15px] text-ink mb-1">LinkedIn URL <span className="text-xs text-muted font-normal">(for Auto Apply)</span></label>
+            <input
+              type="url"
+              value={fields.linkedinUrl}
+              onChange={e => updateField('linkedinUrl', e.target.value)}
+              placeholder="https://linkedin.com/in/your-profile"
+              className="w-full px-3 py-2.5 rounded-lg border border-line bg-paper focus:bg-surface text-sm"
+            />
+          </div>
+        </div>
+
         <div className="flex items-start gap-2 text-xs text-muted bg-surface border border-line rounded-xl2 p-3">
           <Info size={15} className="shrink-0 mt-0.5" />
           <p>

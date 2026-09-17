@@ -86,6 +86,11 @@ export async function updateJobDocument(id, content) {
     return response.data
 }
 
+export async function checkAutoApplyConfigured() {
+    const response = await api.get('/jobs/auto-apply/configured')
+    return response.data // { configured: boolean }
+}
+
 export async function autoApply(jobId) {
     const response = await api.post(`/jobs/${jobId}/auto-apply`)
     return response.data

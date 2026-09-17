@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import {
-  ChevronLeft, ChevronRight, Filter, Loader2, RefreshCw,
+  Bot, ChevronLeft, ChevronRight, ExternalLink, Filter, Info, Loader2, RefreshCw,
   Search, Sparkles, X
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 import {
-  autoApply, discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
+  autoApply, checkAutoApplyConfigured, discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
   getSyncProgress, listJobDocuments, listJobs, listNewJobs, markJobApplied,
   markJobsVisitedNow, readJobActions, setJobState, updateJobDocument
 } from '../api/jobs'
@@ -69,9 +69,15 @@ export default function Discovery() {
   const [newJobsCount, setNewJobsCount] = useState(0)
   const [showingOnlyNew, setShowingOnlyNew] = useState(false)
   const [sessionSince, setSessionSince] = useState(null)
+  const [skyvernConfigured, setSkyvernConfigured] = useState(null) // null = loading, true/false = known
 
   useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew])
   useEffect(() => { checkForNewJobs() }, [])
+  useEffect(() => {
+    checkAutoApplyConfigured()
+      .then(d => setSkyvernConfigured(d.configured))
+      .catch(() => setSkyvernConfigured(false))
+  }, [])
 
   async function checkForNewJobs() {
     const since = getLastJobsVisit()
@@ -220,6 +226,34 @@ export default function Discovery() {
 
   return (
     <Layout title="Discover jobs" subtitle="Find roles from configured official job sources">
+
+      {/* ── Skyvern Auto-Apply banner ── */}
+      {skyvernConfigured === false && (
+        <div className="flex items-start gap-3 bg-violet-50 dark:bg-violet-900/15 border border-violet-200 dark:border-violet-700 rounded-xl2 p-4 mb-4">
+          <Bot size={18} className="shrink-0 mt-0.5 text-violet-500" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-violet-700 dark:text-violet-300">Auto Apply is not set up</p>
+            <p className="text-xs text-violet-600/80 dark:text-violet-400 mt-0.5">
+              To enable one-click job applications, self-host Skyvern and set <code className="font-mono bg-violet-100 dark:bg-violet-900/40 px-1 rounded">SKYVERN_API_URL</code> + <code className="font-mono bg-violet-100 dark:bg-violet-900/40 px-1 rounded">SKYVERN_API_KEY</code> on your backend.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <a
+                href="https://github.com/Skyvern-AI/skyvern#quick-start"
+                target="_blank" rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 underline underline-offset-2"
+              >
+                <ExternalLink size={11} /> Skyvern quick-start guide
+              </a>
+              <a
+                href="/candidate-profile"
+                className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 underline underline-offset-2"
+              >
+                <Info size={11} /> Add phone &amp; LinkedIn to your profile
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Search bar ── */}
       <form onSubmit={applySearch} className="bg-surface border border-line rounded-xl2 shadow-card overflow-hidden mb-4">

@@ -28,6 +28,11 @@ public class JobActionController {
     @GetMapping("/{id}/documents") public List<GeneratedDocument> documents(@PathVariable Long id) { return service.listDocuments(userId(), id); }
     @PutMapping("/documents/{documentId}") public GeneratedDocument update(@PathVariable Long documentId, @RequestBody DocumentRequest request) { return service.updateDocument(userId(), documentId, request.content()); }
 
+    @GetMapping("/auto-apply/configured")
+    public ResponseEntity<Map<String, Boolean>> isAutoApplyConfigured() {
+        return ResponseEntity.ok(Map.of("configured", skyvernService.isConfigured()));
+    }
+
     @PostMapping("/{id}/auto-apply")
     public ResponseEntity<Map<String, Object>> autoApply(@PathVariable Long id) {
         if (!skyvernService.isConfigured()) {
