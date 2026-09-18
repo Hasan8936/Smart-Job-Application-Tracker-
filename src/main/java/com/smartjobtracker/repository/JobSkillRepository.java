@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface JobSkillRepository extends JpaRepository<JobSkill, Long> {
     List<JobSkill> findByJobPostingIdOrderByName(Long jobPostingId);
+    List<JobSkill> findByJobPostingIdIn(java.util.Collection<Long> jobPostingIds);
     void deleteByJobPostingId(Long jobPostingId);
 }

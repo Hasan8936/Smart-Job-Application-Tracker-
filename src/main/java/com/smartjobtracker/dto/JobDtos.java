@@ -15,14 +15,17 @@ public final class JobDtos {
     public record JobSummary(Long id, String provider, String company, String title, String location,
                              String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl,
                              Integer salaryMin, Integer salaryMax, String salaryCurrency, Boolean salaryEstimated,
-                             String descriptionSnippet) {
+                             String descriptionSnippet, Integer matchScore, java.util.List<String> skills) {
         public static JobSummary from(JobPosting p) {
+            return from(p, null, java.util.List.of());
+        }
+        public static JobSummary from(JobPosting p, Integer matchScore, java.util.List<String> skills) {
             String raw = p.getDescription();
             String snippet = raw == null ? null : (raw.length() > 180 ? raw.substring(0, 180) + "…" : raw);
             return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(),
                 p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl(),
                 p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(),
-                Boolean.TRUE.equals(p.getSalaryEstimated()), snippet);
+                Boolean.TRUE.equals(p.getSalaryEstimated()), snippet, matchScore, skills);
         }
     }
     public record JobDetail(Long id, String provider, String company, String title, String location,
