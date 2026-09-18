@@ -1,6 +1,7 @@
 services:
   - type: web
     name: skyvern-api
+    runtime: image
     plan: standard
     image:
       url: public.ecr.aws/skyvern/skyvern:latest
