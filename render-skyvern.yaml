@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: skyvern-api
+    plan: standard
+    image:
+      url: public.ecr.aws/skyvern/skyvern:latest
+    disk:
+      name: skyvern-data
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: DATABASE_STRING
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PORT
+        value: "8000"
+      - key: ENV
+        value: local
+      - key: BROWSER_TYPE
+        value: chromium-headless
+      - key: BROWSER_STREAMING_MODE
+        value: vnc
+      - key: MAX_STEPS_PER_RUN
+        value: "50"
+      - key: ENABLE_GEMINI
+        value: "true"
+      - key: LLM_KEY
+        value: GEMINI_2_5_PRO
+      - key: SECONDARY_LLM_KEY
+        value: GEMINI_2_5_FLASH
+      - key: VIDEO_PATH
+        value: /data/videos
+      - key: DOWNLOAD_PATH
+        value: /data/downloads
+      - key: BROWSER_SESSION_BASE_PATH
+        value: /data/browser_sessions
+      - key: LOCAL_CREDENTIAL_VAULT_PATH
+        value: /data/credential_vault
+      - key: ENABLE_LOCAL_CREDENTIAL_VAULT
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO
