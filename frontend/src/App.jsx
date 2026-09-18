@@ -18,6 +18,8 @@ const Discovery = lazy(() => import('./pages/Discovery'))
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
 const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 
 function PageSpinner() {
@@ -49,6 +51,8 @@ export default function App() {
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
   )

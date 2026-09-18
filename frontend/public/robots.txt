@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /applications
+Disallow: /resume-match
+Disallow: /resume-builder
+Disallow: /interview-prep
+Disallow: /candidate-profile
+Disallow: /discovery
+Disallow: /reminders
+Disallow: /profile
+Disallow: /oauth2/
+
+Sitemap: https://smart-job-tracker-v2.vercel.app/sitemap.xml

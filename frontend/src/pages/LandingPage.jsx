@@ -499,6 +499,7 @@ export default function LandingPage() {
                 <div className="lp-foot-col-head">Project</div>
                 <a href="https://github.com/Hasan8936/Smart-Job-Application-Tracker-" target="_blank" rel="noreferrer">GitHub repository</a>
                 <Link to="/privacy">Privacy Policy</Link>
+                <Link to="/terms">Terms &amp; Conditions</Link>
               </div>
               <div className="lp-foot-col">
                 <div className="lp-foot-col-head">Account</div>
