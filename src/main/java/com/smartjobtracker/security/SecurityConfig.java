@@ -36,7 +36,8 @@ public class SecurityConfig {
     // credentialed API access) with the specific production domain.
     // Add extra origins via CORS_ALLOWED_ORIGIN_PATTERNS (comma-separated) in Render.
     private static final List<String> DEFAULT_ORIGIN_PATTERNS =
-            List.of("https://smart-job-tracker-v2.vercel.app", "http://localhost:5173", "http://localhost:3000");
+            List.of("https://smart-job-tracker-v2.vercel.app", "https://smartjobtracker.indevs.in",
+                    "http://localhost:5173", "http://localhost:3000");
 
     // CORS_ALLOWED_ORIGIN_PATTERNS is preferred; CORS_ALLOWED_ORIGINS is accepted as a
     // backward-compatible fallback for deployments (e.g. Render) that set that name instead.

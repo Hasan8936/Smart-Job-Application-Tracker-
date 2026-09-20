@@ -11,4 +11,4 @@ Disallow: /reminders
 Disallow: /profile
 Disallow: /oauth2/
 
-Sitemap: https://smart-job-tracker-v2.vercel.app/sitemap.xml
+Sitemap: https://smartjobtracker.indevs.in/sitemap.xml
