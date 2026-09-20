@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plus, Briefcase, MessagesSquare, PartyPopper, XCircle,
-  ArrowRight, Bookmark, Sparkles, Search, CheckCircle2
+  ArrowRight, Bookmark, Sparkles, Search, CheckCircle2,
+  Mail, CalendarDays, Loader2, Link2, Unlink
 } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
@@ -16,6 +17,120 @@ import { AuthContext } from '../context/AuthContext'
 import { listJobs, readJobActions } from '../api/jobs'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
+import { getGmailStatus, beginGmailConnect, disconnectGmail } from '../api/gmail'
+import { getCalendarStatus, getCalendarConnectUrl, disconnectCalendar } from '../api/calendar'
+
+function ConnectedServicesCard() {
+  const [gmail, setGmail] = useState(null)
+  const [calendar, setCalendar] = useState(null)
+  const [gmailBusy, setGmailBusy] = useState(false)
+  const [calBusy, setCalBusy] = useState(false)
+
+  useEffect(() => {
+    getGmailStatus().then(setGmail).catch(() => setGmail({ connected: false }))
+    getCalendarStatus().then(r => setCalendar(r.data)).catch(() => setCalendar({ connected: false, configured: false }))
+  }, [])
+
+  async function connectGmail() {
+    setGmailBusy(true)
+    try {
+      const { authorizationUrl } = await beginGmailConnect()
+      window.location.href = authorizationUrl
+    } catch { setGmailBusy(false) }
+  }
+
+  async function handleDisconnectGmail() {
+    setGmailBusy(true)
+    try { await disconnectGmail(); setGmail({ connected: false }) }
+    finally { setGmailBusy(false) }
+  }
+
+  async function connectCalendar() {
+    setCalBusy(true)
+    try {
+      const { data } = await getCalendarConnectUrl()
+      window.location.href = data.url
+    } catch { setCalBusy(false) }
+  }
+
+  async function handleDisconnectCalendar() {
+    setCalBusy(true)
+    try { await disconnectCalendar(); setCalendar(prev => ({ ...prev, connected: false })) }
+    finally { setCalBusy(false) }
+  }
+
+  const services = [
+    {
+      key: 'gmail',
+      label: 'Gmail',
+      desc: 'Auto-detect job emails and update your applications',
+      icon: Mail,
+      connected: gmail?.connected,
+      configured: true,
+      busy: gmailBusy,
+      onConnect: connectGmail,
+      onDisconnect: handleDisconnectGmail,
+    },
+    {
+      key: 'calendar',
+      label: 'Google Calendar',
+      desc: 'Sync interview events and get smart reminders',
+      icon: CalendarDays,
+      connected: calendar?.connected,
+      configured: calendar?.configured !== false,
+      busy: calBusy,
+      onConnect: connectCalendar,
+      onDisconnect: handleDisconnectCalendar,
+    },
+  ]
+
+  return (
+    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5 mb-6">
+      <h2 className="font-display text-[15px] text-ink mb-4">Connected services</h2>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {services.map(({ key, label, desc, icon: Icon, connected, configured, busy, onConnect, onDisconnect }) => (
+          <div key={key} className="flex items-start gap-3 p-3 rounded-xl bg-paper border border-line">
+            <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${connected ? 'bg-accent/15' : 'bg-paper'} border border-line`}>
+              <Icon size={16} className={connected ? 'text-accent' : 'text-muted'} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-sm font-medium text-ink">{label}</span>
+                {connected && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
+                    <CheckCircle2 size={9} /> Connected
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted leading-snug mb-2">{desc}</p>
+              {!configured ? (
+                <span className="text-xs text-muted italic">Not configured on server</span>
+              ) : connected ? (
+                <button
+                  onClick={onDisconnect}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1 text-xs text-status-rejected hover:opacity-80 disabled:opacity-50"
+                >
+                  {busy ? <Loader2 size={11} className="animate-spin" /> : <Unlink size={11} />}
+                  Disconnect
+                </button>
+              ) : (
+                <button
+                  onClick={onConnect}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:opacity-80 disabled:opacity-50"
+                >
+                  {busy ? <Loader2 size={11} className="animate-spin" /> : <Link2 size={11} />}
+                  Connect
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function timeGreeting() {
   const hour = new Date().getHours()
@@ -216,6 +331,9 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {/* ── Connected services ── */}
+      <ConnectedServicesCard />
 
       {/* ── Recommended jobs ── */}
       <div className="flex items-center justify-between mb-3">
