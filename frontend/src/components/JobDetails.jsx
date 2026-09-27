@@ -1,22 +1,17 @@
 import React, { useState } from 'react'
 import { Bot, ExternalLink, FileText, Loader2, Mail, MessageSquare, Pencil, X } from 'lucide-react'
 import { autoApply, getAutoApplyStatus } from '../api/jobs'
+import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType } from '../lib/jobFormat'
 
-function formatSalaryRange(job) {
-  if (!job.salaryMin && !job.salaryMax) return 'Unavailable'
-  const currency = job.salaryCurrency || ''
-  const min = job.salaryMin ? job.salaryMin.toLocaleString() : '—'
-  const max = job.salaryMax ? job.salaryMax.toLocaleString() : '—'
-  return `${currency} ${min} – ${max}`.trim()
-}
 
 export default function JobDetails({ job, onClose, onGenerate, documents = [], onSaveDocument }) {
   const [autoApplyState, setAutoApplyState] = useState({ status: null, taskId: null, error: null, loading: false })
 
   if (!job) return null
 
-  const salaryLine = formatSalaryRange(job)
-  const isEstimated = job.salaryEstimated && (job.salaryMin || job.salaryMax)
+  const salary = formatSalary(job)
+  const postedFull = formatFullDate(job.postedAt)
+  const postedAgo = formatPostedAt(job.postedAt)
 
   async function handleAutoApply() {
     setAutoApplyState({ status: null, taskId: null, error: null, loading: true })
@@ -55,20 +50,29 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
         <div className="pr-12 mb-6">
           <p className="text-sm text-muted mb-1">{job.company}</p>
           <h2 className="font-display text-2xl text-ink">{job.title}</h2>
-          <p className="text-sm text-muted mt-2">{job.location || 'Location unavailable'} · {job.employmentType || 'Employment type unavailable'}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <div className="bg-paper rounded-lg p-3">
+            <div className="text-xs text-muted">Location</div>
+            <div className="text-sm text-ink mt-1">{job.location || 'Unavailable'}</div>
+            <div className="text-[11px] text-muted mt-0.5 capitalize">
+              {[job.workMode?.toLowerCase(), formatEmploymentType(job.employmentType)?.toLowerCase()].filter(Boolean).join(' · ') || 'Work mode unavailable'}
+            </div>
+          </div>
           <div className="bg-paper rounded-lg p-3">
             <div className="text-xs text-muted">Salary</div>
-            <div className={`text-sm mt-1 ${isEstimated ? 'text-amber-500' : 'text-ink'}`}>
-              {salaryLine}
-              {isEstimated && <span className="ml-1 text-[11px] font-medium">(AI est.)</span>}
+            <div className={`text-sm mt-1 ${salary?.estimated ? 'text-amber-600' : 'text-ink'}`}>
+              {salary ? `${salary.estimated ? 'Est. ' : ''}${salary.text}` : 'Unavailable'}
+            </div>
+            <div className="text-[11px] text-muted mt-0.5">
+              {salary?.note || 'Not listed, and too few similar listed salaries to estimate'}
             </div>
           </div>
           <div className="bg-paper rounded-lg p-3">
             <div className="text-xs text-muted">Posted</div>
-            <div className="text-sm text-ink mt-1">{job.postedAt ? new Date(job.postedAt).toLocaleDateString() : 'Unavailable'}</div>
+            <div className="text-sm text-ink mt-1">{postedFull || 'Unavailable'}</div>
+            {postedAgo && postedAgo !== postedFull && <div className="text-[11px] text-muted mt-0.5">{postedAgo}</div>}
           </div>
         </div>
 

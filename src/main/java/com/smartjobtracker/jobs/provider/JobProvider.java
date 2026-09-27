@@ -30,18 +30,27 @@ public interface JobProvider {
                        String employmentType, String workMode, String applyUrl,
                        String postedAt, String description, String logoUrl,
                        Integer salaryMin, Integer salaryMax, String salaryCurrency,
-                       String rawJson) {}
+                       String rawJson, String salaryPeriod) {
+        /** For sources that report no salary period; {@code salaryPeriod} is YEAR/MONTH/WEEK/DAY/HOUR otherwise. */
+        public ProviderJob(String externalId, String company, String title, String location,
+                           String employmentType, String workMode, String applyUrl,
+                           String postedAt, String description, String logoUrl,
+                           Integer salaryMin, Integer salaryMax, String salaryCurrency, String rawJson) {
+            this(externalId, company, title, location, employmentType, workMode, applyUrl, postedAt, description,
+                    logoUrl, salaryMin, salaryMax, salaryCurrency, rawJson, null);
+        }
+    }
 
     record JobPostingCandidate(String provider, String externalId, String company, String title,
                                String location, String employmentType, String workMode,
                                String applyUrl, String postedAt, String description, String logoUrl,
                                Integer salaryMin, Integer salaryMax, String salaryCurrency,
-                               String rawJson) {
+                               String rawJson, String salaryPeriod) {
         public static JobPostingCandidate from(ProviderJob job, String provider) {
             return new JobPostingCandidate(provider, job.externalId(), job.company(), job.title(),
                     job.location(), job.employmentType(), job.workMode(), job.applyUrl(), job.postedAt(),
                     job.description(), job.logoUrl(), job.salaryMin(), job.salaryMax(),
-                    job.salaryCurrency(), job.rawJson());
+                    job.salaryCurrency(), job.rawJson(), job.salaryPeriod());
         }
     }
 }

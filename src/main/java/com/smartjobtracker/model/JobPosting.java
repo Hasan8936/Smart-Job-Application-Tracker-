@@ -21,6 +21,18 @@ public class JobPosting {
     @Column(name = "salary_min") private Integer salaryMin; @Column(name = "salary_max") private Integer salaryMax;
     @Column(name = "salary_currency") private String salaryCurrency;
     @Column(name = "salary_estimated") private Boolean salaryEstimated = false;
+    /** YEAR, MONTH, WEEK, DAY or HOUR; null when unknown. */
+    @Column(name = "salary_period", length = 10) private String salaryPeriod;
+    /** PROVIDER (job source API), DESCRIPTION (stated in the posting text) or ESTIMATE (from similar postings). */
+    @Column(name = "salary_source", length = 20) private String salarySource;
+    /** For ESTIMATE: how many reported salaries the estimate is based on. */
+    @Column(name = "salary_sample_size") private Integer salarySampleSize;
+    public String getSalaryPeriod() { return salaryPeriod; }
+    public void setSalaryPeriod(String v) { salaryPeriod = v; }
+    public String getSalarySource() { return salarySource; }
+    public void setSalarySource(String v) { salarySource = v; }
+    public Integer getSalarySampleSize() { return salarySampleSize; }
+    public void setSalarySampleSize(Integer v) { salarySampleSize = v; }
     @Column(name = "raw_json", columnDefinition = "text") private String rawJson;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();

@@ -21,11 +21,13 @@ public class JobSyncService {
     private final JobPostingRepository postingRepository; private final JobProviderSyncRepository syncRepository; private final JobSkillRepository skillRepository;
     private final JobSkillExtractor skillExtractor;
     private final SyncProgressStore progressStore;
+    private final SalaryEstimator salaryEstimator;
     public JobSyncService(List<JobProvider> providers, JobNormalizer normalizer, JobDeduplicator deduplicator,
                           JobPostingRepository postingRepository, JobProviderSyncRepository syncRepository,
                           JobSkillRepository skillRepository, JobSkillExtractor skillExtractor,
-                          SyncProgressStore progressStore) {
+                          SyncProgressStore progressStore, SalaryEstimator salaryEstimator) {
         this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor; this.progressStore = progressStore;
+        this.salaryEstimator = salaryEstimator;
     }
     /** Synchronous sync — used by scheduled jobs and tests. No progress tracking. */
     public SyncResult sync(JobQuery query) {
@@ -63,6 +65,11 @@ public class JobSyncService {
                 sync.setProvider(provider.id()); sync.setQueryKey(queryKey); sync.setStatus("FAILED"); sync.setLastSyncedAt(OffsetDateTime.now()); syncRepository.save(sync);
                 providerErrors.put(provider.id(), ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
             }
+        }
+        // New reported salaries may make new estimates possible (and re-synced rows lost their old ones).
+        if (saved > 0) {
+            try { salaryEstimator.refreshEstimates(); }
+            catch (RuntimeException ex) { log.warn("Salary estimate refresh failed after sync", ex); }
         }
         return new SyncResult(saved, providerErrors);
     }

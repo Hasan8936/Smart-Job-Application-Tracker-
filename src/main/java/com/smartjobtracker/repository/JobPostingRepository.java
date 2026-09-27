@@ -24,9 +24,18 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
                             @Param("postedAfter") OffsetDateTime postedAfter, @Param("postedBefore") OffsetDateTime postedBefore,
                             Pageable pageable);
 
-    /** Jobs with no salary data that were synced recently enough to be worth estimating. */
-    @Query("select j from JobPosting j where j.salaryMin is null and j.salaryMax is null and j.createdAt > :since")
-    List<JobPosting> findRecentWithoutSalary(@Param("since") OffsetDateTime since);
+    /** Postings whose yearly salary was reported by the source or stated in the posting (the estimator's evidence). */
+    @Query("select j from JobPosting j where j.salarySource in ('PROVIDER', 'DESCRIPTION') and j.salaryPeriod = 'YEAR' " +
+            "and j.salaryCurrency is not null and (j.salaryMin is not null or j.salaryMax is not null)")
+    List<JobPosting> findWithReportedYearlySalary();
+
+    /**
+     * Postings with no reported salary: blank, previously estimated, or legacy (pre-V25) estimates. Legacy rows with a
+     * salary that was NOT flagged estimated came from a job source, so they are excluded and never overwritten.
+     */
+    @Query("select j from JobPosting j where j.salarySource = 'ESTIMATE' or (j.salarySource is null and " +
+            "(j.salaryEstimated = true or (j.salaryMin is null and j.salaryMax is null)))")
+    List<JobPosting> findWithoutReportedSalary();
 
     /** Delete job postings older than {@code cutoff} that no user has saved, bookmarked, or applied to. */
     @org.springframework.data.jpa.repository.Modifying

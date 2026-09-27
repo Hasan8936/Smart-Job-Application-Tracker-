@@ -77,7 +77,8 @@ public class JobSpyProvider implements JobProvider {
                     num(j, "salaryMin"),
                     num(j, "salaryMax"),
                     text(j, "salaryCurrency"),
-                    j.toString()
+                    j.toString(),
+                    period(text(j, "salaryPeriod"))
                 ));
             }
             log.info("JobSpy returned {} jobs for keywords='{}'", jobs.size(), keywords);
@@ -90,6 +91,18 @@ public class JobSpyProvider implements JobProvider {
 
     @Override
     public ProviderJob fetchJobDetails(String externalId) { return null; }
+
+    /** JobSpy intervals: yearly, monthly, weekly, daily, hourly. */
+    private String period(String interval) {
+        return switch (interval.toLowerCase(java.util.Locale.ROOT)) {
+            case "yearly" -> "YEAR";
+            case "monthly" -> "MONTH";
+            case "weekly" -> "WEEK";
+            case "daily" -> "DAY";
+            case "hourly" -> "HOUR";
+            default -> null;
+        };
+    }
 
     private String text(JsonNode node, String key) {
         JsonNode v = node.get(key);

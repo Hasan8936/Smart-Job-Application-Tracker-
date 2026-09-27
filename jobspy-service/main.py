@@ -40,6 +40,7 @@ def search_jobs(req: SearchRequest):
                 "salaryMin": _num(row.get("min_amount")),
                 "salaryMax": _num(row.get("max_amount")),
                 "salaryCurrency": _str(row.get("currency")),
+                "salaryPeriod": _str(row.get("interval")),
                 "source": _str(row.get("site")),
             })
         return {"jobs": result}

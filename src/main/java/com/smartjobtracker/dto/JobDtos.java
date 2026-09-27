@@ -15,29 +15,33 @@ public final class JobDtos {
     public record JobSummary(Long id, String provider, String company, String title, String location,
                              String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl,
                              Integer salaryMin, Integer salaryMax, String salaryCurrency, Boolean salaryEstimated,
-                             String descriptionSnippet, Integer matchScore, java.util.List<String> skills) {
+                             String descriptionSnippet, Integer matchScore, java.util.List<String> skills,
+                             String salaryPeriod, String salarySource, Integer salarySampleSize) {
         public static JobSummary from(JobPosting p) {
             return from(p, null, java.util.List.of());
         }
         public static JobSummary from(JobPosting p, Integer matchScore, java.util.List<String> skills) {
-            String raw = p.getDescription();
+            String raw = p.getDescription() == null ? null : p.getDescription().replaceAll("\\s+", " ").trim();
             String snippet = raw == null ? null : (raw.length() > 180 ? raw.substring(0, 180) + "…" : raw);
             return new JobSummary(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(),
                 p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getLogoUrl(),
                 p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(),
-                Boolean.TRUE.equals(p.getSalaryEstimated()), snippet, matchScore, skills);
+                Boolean.TRUE.equals(p.getSalaryEstimated()), snippet, matchScore, skills,
+                p.getSalaryPeriod(), p.getSalarySource(), p.getSalarySampleSize());
         }
     }
     public record JobDetail(Long id, String provider, String company, String title, String location,
                             String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt,
                             String description, String logoUrl, Integer salaryMin, Integer salaryMax,
                             String salaryCurrency, Boolean salaryEstimated,
-                            java.util.List<String> requiredSkills, java.util.List<String> preferredSkills) {
+                            java.util.List<String> requiredSkills, java.util.List<String> preferredSkills,
+                            String salaryPeriod, String salarySource, Integer salarySampleSize) {
         public static JobDetail from(JobPosting p, java.util.List<String> requiredSkills, java.util.List<String> preferredSkills) {
             return new JobDetail(p.getId(), p.getProvider(), p.getCompany(), p.getTitle(), p.getLocation(),
                 p.getEmploymentType(), p.getWorkMode(), p.getApplyUrl(), p.getPostedAt(), p.getDescription(),
                 p.getLogoUrl(), p.getSalaryMin(), p.getSalaryMax(), p.getSalaryCurrency(),
-                Boolean.TRUE.equals(p.getSalaryEstimated()), requiredSkills, preferredSkills);
+                Boolean.TRUE.equals(p.getSalaryEstimated()), requiredSkills, preferredSkills,
+                p.getSalaryPeriod(), p.getSalarySource(), p.getSalarySampleSize());
         }
     }
 }

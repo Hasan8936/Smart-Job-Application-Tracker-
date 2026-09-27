@@ -1,21 +1,12 @@
 import React, { useState } from 'react'
-import { Bookmark, Bot, Check, ExternalLink, MapPin, Star } from 'lucide-react'
+import { Bookmark, Bot, Check, ExternalLink, MapPin, Star, Wallet } from 'lucide-react'
+import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType } from '../lib/jobFormat'
 
 function matchColor(score) {
   if (score == null) return 'text-muted'
   if (score >= 70) return 'text-status-offer'
   if (score >= 40) return 'text-status-interview'
   return 'text-muted'
-}
-
-function formatSalary(job) {
-  if (!job.salaryMin && !job.salaryMax) return null
-  const currency = job.salaryCurrency || ''
-  const min = job.salaryMin ? job.salaryMin.toLocaleString() : null
-  const max = job.salaryMax ? job.salaryMax.toLocaleString() : null
-  const range = min && max ? `${min} – ${max}` : min || max
-  const label = job.salaryEstimated ? ' (Est.)' : ''
-  return `${currency} ${range}${label}`.trim()
 }
 
 export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) {
@@ -25,7 +16,8 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
   const isBookmarked = action === 'BOOKMARKED'
   const isApplied = action === 'APPLIED'
 
-  const salaryDisplay = formatSalary(job)
+  const salary = formatSalary(job)
+  const posted = formatPostedAt(job.postedAt)
 
   async function handleAutoApply(e) {
     e.stopPropagation()
@@ -64,12 +56,17 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
           <div className="text-sm text-muted truncate">{job.company || 'Company unavailable'}</div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted">
             <span className="inline-flex items-center gap-1"><MapPin size={12} />{job.location || 'Location unavailable'}</span>
-            {job.employmentType && <span className="capitalize">{job.employmentType}</span>}
-            {salaryDisplay && (
-              <span className={job.salaryEstimated ? 'text-amber-500' : 'text-ink-soft'}>
-                {salaryDisplay}
-              </span>
+            {job.workMode && job.workMode.toLowerCase() !== (job.location || '').toLowerCase() && (
+              <span className="capitalize">{job.workMode.toLowerCase()}</span>
             )}
+            {job.employmentType && <span>{formatEmploymentType(job.employmentType)}</span>}
+            <span
+              className={`inline-flex items-center gap-1 ${salary?.estimated ? 'text-amber-600' : salary ? 'text-ink-soft font-medium' : ''}`}
+              title={salary?.note || 'No salary listed, and not enough similar listed salaries to estimate one'}
+            >
+              <Wallet size={12} />
+              {salary ? `${salary.estimated ? 'Est. ' : ''}${salary.text}` : 'Salary unavailable'}
+            </span>
           </div>
         </div>
 
@@ -108,8 +105,8 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-line">
-        <span className="text-xs text-muted">
-          {job.postedAt ? new Date(job.postedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Date unavailable'}
+        <span className="text-xs text-muted" title={formatFullDate(job.postedAt) || undefined}>
+          {posted ? `Posted ${/^(Today|Yesterday)$/.test(posted) ? posted.toLowerCase() : posted}` : 'Posted date unavailable'}
         </span>
         <div className="flex items-center gap-1.5">
           <button

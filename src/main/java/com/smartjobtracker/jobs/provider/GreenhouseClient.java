@@ -23,7 +23,7 @@ public class GreenhouseClient {
         List<JobProvider.ProviderJob> jobs = new ArrayList<>();
         for (String board : safe(boards)) {
             try {
-                JsonNode root = http.get("https://boards-api.greenhouse.io/v1/boards/" + enc(board) + "/jobs?content=true");
+                JsonNode root = http.get("https://boards-api.greenhouse.io/v1/boards/" + enc(board) + "/jobs?content=true&pay_transparency=true");
                 for (JsonNode node : root.path("jobs")) jobs.add(parse(node, board));
             } catch (ProviderHttpClient.ProviderUnavailableException e) {
                 log.warn("Greenhouse board '{}' unavailable ({}), skipping", board, e.getMessage());
@@ -36,10 +36,15 @@ public class GreenhouseClient {
             if (id.equals(job.externalId())) return job;
         return null;
     }
-    private JobProvider.ProviderJob parse(JsonNode n, String board) {
-        return new JobProvider.ProviderJob(board + ":" + n.path("id").asText(), board,
+    JobProvider.ProviderJob parse(JsonNode n, String board) {
+        // first_published is when the job went live; updated_at changes on any edit.
+        String posted = text(n, "first_published") != null ? text(n, "first_published") : text(n, "updated_at");
+        String company = text(n, "company_name") != null ? text(n, "company_name") : board;
+        SalaryInfo pay = SalaryInfo.fromGreenhouse(n.path("pay_input_ranges"));
+        return new JobProvider.ProviderJob(board + ":" + n.path("id").asText(), company,
                 text(n, "title"), n.path("location").path("name").asText(null), null, null,
-                text(n, "absolute_url"), text(n, "updated_at"), text(n, "content"), null, null, null, null, raw(n));
+                text(n, "absolute_url"), posted, text(n, "content"), null,
+                pay.min(), pay.max(), pay.currency(), raw(n), pay.period());
     }
     private String text(JsonNode n, String key) { return n.path(key).isMissingNode() ? null : n.path(key).asText(null); }
     private String raw(JsonNode n) { try { return mapper.writeValueAsString(n); } catch (Exception e) { return "{}"; } }
