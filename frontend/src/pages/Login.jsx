@@ -63,7 +63,7 @@ export default function Login() {
 
   return (
     <>
-    <AuthLayout id="login" heading="Welcome back" copy="Sign in to continue managing your applications.">
+    <AuthLayout id="login" heading="Welcome back" copy="Pick up exactly where you left off.">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className="block text-xs font-medium text-muted mb-1.5">Email address</label>
@@ -131,4 +131,3 @@ export default function Login() {
     </>
   )
 }
-

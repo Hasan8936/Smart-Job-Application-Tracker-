@@ -30,6 +30,18 @@ export default function AuthLayout({ heading, copy, children, id }) {
             </Suspense>
           </div>
 
+          {id === 'login' && (
+            <>
+              <div className="auth-login-glow auth-login-glow-a" />
+              <div className="auth-login-glow auth-login-glow-b" />
+              <img
+                src="/hero-career-agents.png"
+                alt="Three glowing AI career assistant agents"
+                className="auth-login-agents"
+              />
+            </>
+          )}
+
           {/* Top: logo */}
           <div className="relative z-10 flex items-center gap-3 p-11 pb-0">
             <BrandLogo markOnly variant="void" className="w-8 h-8" />
@@ -59,7 +71,7 @@ export default function AuthLayout({ heading, copy, children, id }) {
                 className="font-display font-bold leading-[0.9] text-white mb-5"
                 style={{ fontSize: 38, letterSpacing: '-0.02em' }}
               >
-                SMART<br />JOB<br />TRACKER
+                {id === 'login' ? <>WELCOME<br />BACK<span className="auth-login-title-dot">.</span></> : <>SMART<br />JOB<br />TRACKER</>}
               </p>
 
               {/* Violet → cyan accent bar */}
@@ -72,7 +84,7 @@ export default function AuthLayout({ heading, copy, children, id }) {
               />
 
               <p className="text-[14px] leading-relaxed max-w-[34ch]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Applications, resume matching, and reminders — tracked together instead of scattered across sheets and inboxes.
+                {id === 'login' ? 'Your applications, your signals, and your next opportunity — in one focused workspace.' : 'Applications, resume matching, and reminders — tracked together instead of scattered across sheets and inboxes.'}
               </p>
             </div>
           </div>
