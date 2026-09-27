@@ -10,6 +10,12 @@ mvn spring-boot:run
 
 Edit database settings in `src/main/resources/application.yml`.
 
+## Architecture
+
+![Smart Job Tracker runtime architecture](docs/architecture/runtime-architecture.png)
+
+Runtime view: React SPA (Vercel) → JwtFilter → REST controllers → domain services → PostgreSQL, with Google OAuth2, Gemini, Gmail/Calendar, job-board APIs, and SMTP/WhatsApp as external dependencies. Open [the interactive diagram](docs/architecture/runtime-architecture.html) locally for pan/zoom, search, and path tracing; the source spec is [runtime.architecture.json](docs/architecture/runtime.architecture.json).
+
 ## Running backend tests locally without Maven installed
 
 If you don't have Maven on your PATH, you can run the backend tests using Docker.

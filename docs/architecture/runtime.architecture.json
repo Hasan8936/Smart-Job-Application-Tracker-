@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Smart Job Tracker Runtime",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1180,
+      640
+    ],
+    "repository": {
+      "url": "https://github.com/Hasan8936/Smart-Job-Application-Tracker-",
+      "provider": "github",
+      "revision": "b76dc0c93fbba9730fb96534b7f2583e44ea06b7"
+    }
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Job Seeker",
+      "sublabel": "Browser",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "React SPA",
+      "brand": "react",
+      "sublabel": "Vite · Vercel",
+      "pos": [
+        220,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "frontend/src/api/axios.js"
+        }
+      ]
+    },
+    {
+      "id": "jwt",
+      "type": "security",
+      "label": "JwtFilter",
+      "sublabel": "Spring Security 6",
+      "pos": [
+        410,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "tag": "Bearer JWT",
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/security/JwtFilter.java"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "REST Controllers",
+      "sublabel": "/api/**",
+      "pos": [
+        600,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/controller/ApplicationController.java"
+        }
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Domain Services",
+      "sublabel": "match · tailor · sync",
+      "pos": [
+        800,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/service/JobApplicationService.java"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "brand": "postgresql",
+      "sublabel": "JPA · Flyway",
+      "pos": [
+        1010,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/resources/db/migration/V10__gmail_connections_and_ingested_emails.sql"
+        }
+      ]
+    },
+    {
+      "id": "oauth",
+      "type": "security",
+      "label": "Google OAuth2",
+      "sublabel": "OIDC login",
+      "pos": [
+        410,
+        100
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "gemini",
+      "type": "external",
+      "label": "Gemini API",
+      "brand": "google-gemini",
+      "sublabel": "LLM + embeddings",
+      "pos": [
+        610,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/service/GeminiClient.java"
+        }
+      ]
+    },
+    {
+      "id": "boards",
+      "type": "external",
+      "label": "Job Board APIs",
+      "sublabel": "Greenhouse · Lever · Ashby",
+      "pos": [
+        1000,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/jobs/provider/JobProvider.java"
+        }
+      ]
+    },
+    {
+      "id": "sched",
+      "type": "backend",
+      "label": "@Scheduled Jobs",
+      "sublabel": "pollers · reminders",
+      "pos": [
+        800,
+        500
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/service/IntelligentReminderService.java"
+        }
+      ]
+    },
+    {
+      "id": "gmail",
+      "type": "external",
+      "label": "Gmail / Calendar",
+      "sublabel": "Google APIs",
+      "pos": [
+        800,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/service/GmailService.java"
+        }
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "external",
+      "label": "SMTP · WhatsApp",
+      "sublabel": "Meta Graph API",
+      "pos": [
+        1010,
+        500
+      ],
+      "size": [
+        140,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main/java/com/smartjobtracker/service/NotificationService.java"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Render · Spring Boot container",
+      "wraps": [
+        "jwt",
+        "api",
+        "svc",
+        "sched"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Authenticated zone",
+      "wraps": [
+        "api",
+        "svc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browse",
+      "from": "users",
+      "to": "spa",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rest",
+      "from": "spa",
+      "to": "jwt",
+      "label": "REST",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authz",
+      "from": "jwt",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "invoke",
+      "from": "api",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "persist",
+      "from": "svc",
+      "to": "db",
+      "label": "SQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "oidc",
+      "from": "oauth",
+      "to": "jwt",
+      "label": "OIDC",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "ai",
+      "from": "svc",
+      "to": "gemini",
+      "label": "prompt",
+      "variant": "dashed"
+    },
+    {
+      "id": "sync",
+      "from": "svc",
+      "to": "gmail",
+      "label": "OAuth",
+      "variant": "dashed",
+      "labelDx": -12
+    },
+    {
+      "id": "discover",
+      "from": "svc",
+      "to": "boards",
+      "label": "fetch jobs",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "tick",
+      "from": "sched",
+      "to": "svc",
+      "label": "cron"
+    },
+    {
+      "id": "send",
+      "from": "sched",
+      "to": "notify",
+      "label": "notify",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Primary path",
+      "items": [
+        "SPA sends Bearer JWT to /api/**",
+        "Controller → Service → Repository → Postgres"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust boundaries",
+      "items": [
+        "JwtFilter gates every /api/** except /auth/**",
+        "Gmail refresh tokens encrypted at rest"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "External calls",
+      "items": [
+        "Gemini with deterministic rule fallback",
+        "Official career-page APIs only"
+      ]
+    }
+  ]
+}
