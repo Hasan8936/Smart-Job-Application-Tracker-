@@ -107,6 +107,7 @@ Endpoints:
 * `GET /api/google-calendar/callback` → receives the Google redirect, stores tokens
 * `GET /api/google-calendar/status` → `{connected, configured}`
 * `DELETE /api/google-calendar/disconnect`
+<img width="1440" height="900" alt="image" src="https://github.com/user-attachments/assets/35e0f8f1-bb52-48b6-a21e-c73f1944d301" />
 
 To activate:
 
