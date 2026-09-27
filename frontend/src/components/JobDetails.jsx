@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
 import { Bot, ExternalLink, FileText, Loader2, Mail, MessageSquare, Pencil, X } from 'lucide-react'
 import { autoApply, getAutoApplyStatus } from '../api/jobs'
+import ComingSoonModal from './ComingSoonModal'
 import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType, safeHttpUrl } from '../lib/jobFormat'
 
 
-export default function JobDetails({ job, onClose, onGenerate, documents = [], onSaveDocument }) {
+// autoApplyAvailable: only true when the backend reports Skyvern configured; otherwise the button explains it's coming soon.
+export default function JobDetails({ job, onClose, onGenerate, documents = [], onSaveDocument, autoApplyAvailable = false }) {
   const [autoApplyState, setAutoApplyState] = useState({ status: null, taskId: null, error: null, loading: false })
+  const [comingSoon, setComingSoon] = useState(false)
 
   if (!job) return null
 
@@ -14,6 +17,7 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
   const postedAgo = formatPostedAt(job.postedAt)
 
   async function handleAutoApply() {
+    if (!autoApplyAvailable) { setComingSoon(true); return }
     setAutoApplyState({ status: null, taskId: null, error: null, loading: true })
     try {
       const data = await autoApply(job.id)
@@ -131,6 +135,7 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
           </div>
         )}
       </section>
+      <AutoApplyComingSoon open={comingSoon} onClose={() => setComingSoon(false)} />
     </div>
   )
 }
@@ -145,5 +150,19 @@ function SkillGroup({ label, skills }) {
         ))}
       </div>
     </div>
+  )
+}
+
+export function AutoApplyComingSoon({ open, onClose }) {
+  return (
+    <ComingSoonModal open={open} onClose={onClose} icon={Bot} title="Auto Apply is on its way"
+      points={[
+        'Fills in official application forms for you from your profile and universal resume',
+        'You review everything before it is submitted',
+        'Every auto-applied job is tracked in Applications automatically',
+      ]}>
+      One-click applications aren't available yet. Until then, use <strong className="text-ink">Open official application</strong> and
+      {' '}<strong className="text-ink">Mark applied</strong> to keep your pipeline up to date.
+    </ComingSoonModal>
   )
 }

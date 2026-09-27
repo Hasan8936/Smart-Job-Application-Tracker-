@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Plus, Trash2, BellRing, Settings2, Calendar, CheckCircle2, XCircle } from 'lucide-react'
+import { Plus, Trash2, BellRing, Settings2, Calendar, CheckCircle2, XCircle, MessageCircle } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
+import ComingSoonModal from '../components/ComingSoonModal'
 import { getCalendarStatus, getCalendarConnectUrl, disconnectCalendar } from '../api/calendar'
 
 const TYPE_LABEL = { INTERVIEW: 'Interview', ASSESSMENT: 'Assessment', DEADLINE: 'Deadline', FOLLOW_UP: 'Follow up' }
@@ -19,11 +20,8 @@ export default function Reminders() {
   const [saving, setSaving] = useState(false)
   const [preferences, setPreferences] = useState(null)
   const [preferenceSaving, setPreferenceSaving] = useState(false)
-  const [whatsapp, setWhatsapp] = useState(null)
-  const [verificationCode, setVerificationCode] = useState('')
-  const [deliveries, setDeliveries] = useState([])
   const [reminderError, setReminderError] = useState('')
-  const [whatsappError, setWhatsappError] = useState('')
+  const [whatsappInfo, setWhatsappInfo] = useState(false)
   const [calendarStatus, setCalendarStatus] = useState(null)
   const [calendarBusy, setCalendarBusy] = useState(false)
   const [calendarMsg, setCalendarMsg] = useState('')
@@ -33,7 +31,7 @@ export default function Reminders() {
   }
 
   useEffect(() => {
-    fetchReminders(); fetchPreferences(); fetchWhatsapp(); fetchDeliveries(); fetchCalendarStatus()
+    fetchReminders(); fetchPreferences(); fetchCalendarStatus()
     // Handle redirect back from Google OAuth
     const params = new URLSearchParams(window.location.search)
     const cal = params.get('calendar')
@@ -83,14 +81,6 @@ export default function Reminders() {
     } catch (e) { console.error(e) }
   }
 
-  async function fetchWhatsapp() {
-    try { const res = await api.get('/notifications/preferences'); setWhatsapp(res.status === 204 ? { phoneE164: '', whatsappOptIn: false } : res.data) } catch (e) { console.error(e) }
-  }
-
-  async function fetchDeliveries() {
-    try { const res = await api.get('/notifications/history'); setDeliveries(res.data) } catch (e) { console.error(e) }
-  }
-
   async function create(e) {
     e.preventDefault()
     if (!form.eventAt) return
@@ -122,26 +112,6 @@ export default function Reminders() {
       await api.put('/reminders/preferences', preferences)
       fetchPreferences()
     } catch (e) { console.error(e) } finally { setPreferenceSaving(false) }
-  }
-
-  async function saveWhatsapp(e) {
-    e.preventDefault()
-    setWhatsappError('')
-    try { await api.put('/notifications/preferences', { ...whatsapp, consentSource: 'settings' }); fetchWhatsapp() }
-    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not save WhatsApp consent. Try again.')) }
-  }
-
-  async function startVerification() {
-    setWhatsappError('')
-    try { await api.post('/notifications/preferences/verify') }
-    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not send a verification code. Try again.')) }
-  }
-
-  async function confirmVerification(e) {
-    e.preventDefault()
-    setWhatsappError('')
-    try { await api.post('/notifications/preferences/confirm', { code: verificationCode }); setVerificationCode(''); fetchWhatsapp() }
-    catch (e) { console.error(e); setWhatsappError(errorMessage(e, 'Could not verify this code. Try again.')) }
   }
 
   async function remove(id) {
@@ -261,21 +231,19 @@ export default function Reminders() {
           <button disabled={preferenceSaving} className="sm:col-span-2 lg:col-span-4 w-fit inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50">{preferenceSaving ? 'Saving...' : 'Save preferences'}</button>
         </form>
       </section>}
-      {whatsapp && <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
-        <div className="flex items-center gap-2 mb-3"><BellRing size={16} /><h2 className="font-display text-[15px] text-ink">WhatsApp notifications</h2></div>
-        <form onSubmit={saveWhatsapp} className="grid sm:grid-cols-2 gap-3">
-          <label className="text-xs font-medium text-muted">Phone number (E.164)<input required pattern="\\+[1-9][0-9]{7,14}" className="mt-1 w-full px-3 py-2 rounded-lg border border-line bg-paper text-sm text-ink" value={whatsapp.phoneE164 || ''} onChange={(e) => setWhatsapp({ ...whatsapp, phoneE164: e.target.value })} placeholder="+15551234567" /></label>
-          <label className="flex items-center gap-2 text-sm text-ink sm:pt-6"><input type="checkbox" checked={Boolean(whatsapp.whatsappOptIn)} onChange={(e) => setWhatsapp({ ...whatsapp, whatsappOptIn: e.target.checked })} />I agree to receive Smart Job Tracker WhatsApp notifications.</label>
-          <button className="w-fit inline-flex items-center gap-1.5 btn-gradient text-sm font-medium px-4 py-2.5 rounded-full">Save consent</button>
-          {whatsappError && <p className="sm:col-span-2 text-sm text-status-rejected">{whatsappError}</p>}
-        </form>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <button type="button" onClick={startVerification} disabled={!whatsapp.whatsappOptIn} className="border border-line text-ink-soft text-sm font-medium px-4 py-2.5 rounded-full disabled:opacity-50">Send verification code</button>
-          <form onSubmit={confirmVerification} className="flex gap-2"><input required pattern="[0-9]{6}" maxLength="6" className="w-32 px-3 py-2 rounded-lg border border-line bg-paper text-sm" placeholder="6-digit code" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} /><button className="border border-line text-ink-soft text-sm font-medium px-4 py-2.5 rounded-full">Verify number</button></form>
-          <span className="text-xs text-muted">{whatsapp.verifiedAt ? 'Number verified' : 'Verification required before sending'}</span>
+      {/* WhatsApp reminders aren't live yet: explain instead of showing a form that can't deliver. */}
+      <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="flex items-center gap-2 mb-2">
+          <MessageCircle size={16} /><h2 className="font-display text-[15px] text-ink">WhatsApp notifications</h2>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 bg-violet-500/10 border border-violet-400/40 rounded-full px-2 py-0.5">Coming soon</span>
         </div>
-        {deliveries.length > 0 && <div className="mt-5 space-y-2"><h3 className="text-xs font-medium text-muted">Delivery history</h3>{deliveries.slice(0, 10).map((delivery) => <div key={delivery.id} className="flex items-center justify-between gap-3 border-t border-line pt-2 text-sm"><span className="truncate text-ink">{delivery.message}</span><span className="shrink-0 text-xs text-muted">{delivery.status === 'DELIVERED' || delivery.status === 'READ' ? delivery.status : `Not confirmed: ${delivery.status}`}</span></div>)}</div>}
-      </section>}
+        <p className="text-sm text-muted mb-3">Get interview and follow-up reminders on WhatsApp. Email reminders work today.</p>
+        <button type="button" onClick={() => setWhatsappInfo(true)} className="border border-line text-ink-soft text-sm font-medium px-4 py-2.5 rounded-full hover:border-ink/30">Set up WhatsApp</button>
+      </section>
+      <ComingSoonModal open={whatsappInfo} onClose={() => setWhatsappInfo(false)} icon={MessageCircle} title="WhatsApp reminders are coming soon"
+        points={['Interview, assessment and follow-up reminders on WhatsApp', 'Opt-in only, with a verified phone number', 'Turn it off any time']}>
+        We're finishing WhatsApp delivery. Until then your reminders arrive by email, and you can connect Google Calendar below.
+      </ComingSoonModal>
 
       {calendarStatus && (
         <section className="mt-6 bg-surface border border-line rounded-xl2 shadow-card p-5">

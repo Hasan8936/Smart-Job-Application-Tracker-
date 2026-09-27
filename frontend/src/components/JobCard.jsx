@@ -131,7 +131,7 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
           </button>
           {onAutoApply && (
             <button
-              title="Auto Apply with Skyvern"
+              title="Auto Apply (coming soon)"
               onClick={handleAutoApply}
               disabled={applying}
               className="h-9 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 border border-violet-400 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50"

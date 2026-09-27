@@ -6,7 +6,7 @@
 - Resume matching: an explainable score combining exact skill matching (required skills weigh more than preferred), semantic similarity, and experience and role relevance. Lists matched and missing skills. The score is an estimate.
 - Job discovery: postings from public company career boards on Greenhouse, Lever, and Ashby, plus other configured sources. Not affiliated with these platforms.
 - Gmail sync (optional): read-only access to detect interview invites, rejections, and status updates. Tokens are encrypted at rest.
-- Reminders: interview and follow-up reminders by email and WhatsApp.
+- Reminders: interview and follow-up reminders by email, plus Google Calendar events. WhatsApp reminders are coming soon.
 - AI features only rephrase or re-emphasize information already in the user's resume; they never invent skills or experience.
 - Free to use; sign up with email or Google.
 

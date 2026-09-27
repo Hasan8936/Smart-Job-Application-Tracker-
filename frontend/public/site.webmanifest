@@ -1,0 +1,12 @@
+{
+  "name": "Smart Job Tracker",
+  "short_name": "Job Tracker",
+  "description": "Free AI job application tracker and resume matcher.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07021a",
+  "theme_color": "#07021a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

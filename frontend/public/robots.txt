@@ -9,6 +9,9 @@ Disallow: /candidate-profile
 Disallow: /discovery
 Disallow: /reminders
 Disallow: /profile
+Disallow: /support
+Disallow: /admin
+Disallow: /reset-password
 Disallow: /oauth2/
 
 Sitemap: https://smartjobtracker.indevs.in/sitemap.xml

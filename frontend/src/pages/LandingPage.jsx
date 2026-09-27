@@ -27,8 +27,8 @@ const FEATURES = [
     icon: '🔔',
     iconBg: 'linear-gradient(135deg,rgba(16,185,129,.2),rgba(56,189,248,.1))',
     title: 'Multi-Channel Reminders',
-    desc: 'Never miss a follow-up. Get interview and follow-up reminders by email and WhatsApp, with timing you set per application.',
-    chips: ['Email', 'WhatsApp'],
+    desc: 'Never miss a follow-up. Get interview and follow-up reminders by email, with timing you set per application. WhatsApp is coming soon.',
+    chips: ['Email', 'Google Calendar', 'WhatsApp (soon)'],
   },
   {
     icon: '🔍',
@@ -56,7 +56,7 @@ const FEATURES = [
 const STEPS = [
   { num: '01', color: 'linear-gradient(135deg,#7c3aed,#a78bfa)', title: 'Upload Your Resume', desc: 'Drop your PDF or DOCX and we extract your skills, experience, and profile automatically.' },
   { num: '02', color: 'linear-gradient(135deg,#0e7490,#00f2fe)', title: 'Discover & Apply', desc: 'Browse live postings from Greenhouse, Lever, and Ashby filtered for your target roles.' },
-  { num: '03', color: 'linear-gradient(135deg,#065f46,#10b981)', title: 'Track & Get Reminded', desc: 'Every stage update, follow-up, and interview lands via email or WhatsApp.' },
+  { num: '03', color: 'linear-gradient(135deg,#065f46,#10b981)', title: 'Track & Get Reminded', desc: 'Every stage update, follow-up, and interview lands in your inbox and calendar.' },
   { num: '04', color: 'linear-gradient(135deg,#92400e,#f59e0b)', title: 'Land Your Offer', desc: 'AI prep, resume tailoring, and a complete audit trail — so you walk in confident.' },
 ]
 
@@ -64,7 +64,7 @@ const STEPS = [
 const STATS = [
   { num: '6', label: 'Pipeline Stages', sub: 'Applied to Offer, plus Rejected and Withdrawn', color: '#a78bfa' },
   { num: '3', label: 'Career-Page Sources', sub: 'Greenhouse · Lever · Ashby', color: '#00f2fe' },
-  { num: '2', label: 'Reminder Channels', sub: 'Email and WhatsApp', color: '#10b981' },
+  { num: '2', label: 'Reminder Channels', sub: 'Email and Google Calendar', color: '#10b981' },
   { num: 'Free', label: 'To Get Started', sub: 'No credit card required', color: '#f59e0b' },
 ]
 
@@ -86,7 +86,7 @@ const FAQ_JSON_LD = {
 
 /* ── Landing Page ───────────────────────────────────────────── */
 export default function LandingPage() {
-  usePageMeta({ title: 'Smart Job Tracker – Free AI Job Application Tracker & Resume Matcher', description: 'Free AI job application tracker: match your resume to job descriptions, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders by email and WhatsApp.', path: '/' })
+  usePageMeta({ title: 'Smart Job Tracker – Free AI Job Application Tracker & Resume Matcher', description: 'Free AI job application tracker: match your resume to job descriptions, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders by email and Google Calendar.', path: '/' })
   useJsonLd('ld-faq', FAQ_JSON_LD)
   const navigate = useNavigate()
   const n1Ref = useRef(null)
@@ -221,7 +221,7 @@ export default function LandingPage() {
       <section className="lp-logos">
         <div className="lp-logos-eyebrow">Works with jobs posted on</div>
         <div className="lp-logos-row">
-          {['Greenhouse', 'Lever', 'Ashby', 'Gmail', 'Google Calendar', 'WhatsApp'].map(co => (
+          {['Greenhouse', 'Lever', 'Ashby', 'Gmail', 'Google Calendar'].map(co => (
             <span key={co} className="lp-co">{co}</span>
           ))}
         </div>

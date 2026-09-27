@@ -261,13 +261,14 @@ export default function AccountSettings() {
         {passwordSet && <>{resetLink}<Status message={resetMsg} /></>}
       </Section>
 
-      <Section title="Your data" icon={Download}>
+      {/* Full JSON export is a super-admin tool; regular accounts don't see it. */}
+      {profile?.role === 'ADMIN' && <Section title="Your data" icon={Download}>
         <p className="text-sm text-muted mb-3">Download everything you've stored here — profile, applications, resumes, reminders, saved jobs and support requests — as a JSON file.</p>
         <button type="button" disabled={exporting} onClick={download} className="inline-flex items-center gap-1.5 border border-line rounded-full px-4 py-2 text-sm text-ink disabled:opacity-50">
           {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Download my data
         </button>
         <Status message={exportMsg} />
-      </Section>
+      </Section>}
 
       <Section title="Danger zone" icon={AlertTriangle} danger>
         <p className="text-sm text-ink-soft mb-3">

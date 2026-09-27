@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import api from '../api/axios'
 import AuthLayout from '../components/AuthLayout'
+import { usePageMeta } from '../lib/pageMeta'
 
 export default function ResetPassword() {
+  usePageMeta({ title: 'Choose a new password – Smart Job Tracker', noindex: true })
   const token = new URLSearchParams(window.location.search).get('token') || ''
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
