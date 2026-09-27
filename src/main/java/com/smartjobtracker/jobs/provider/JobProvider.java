@@ -15,10 +15,14 @@ public interface JobProvider {
 
     enum Capability { SALARY, LOGO, POSTED_DATE, OFFICIAL_APPLY_URL }
 
-    record JobQuery(String keywords, List<String> roles, List<String> locations) {
+    /** {@code postedWithinHours}: only postings newer than this (null = the provider's default window). */
+    record JobQuery(String keywords, List<String> roles, List<String> locations, Integer postedWithinHours) {
         public JobQuery {
             roles = roles == null ? List.of() : List.copyOf(roles);
             locations = locations == null ? List.of() : List.copyOf(locations);
+        }
+        public JobQuery(String keywords, List<String> roles, List<String> locations) {
+            this(keywords, roles, locations, null);
         }
     }
 

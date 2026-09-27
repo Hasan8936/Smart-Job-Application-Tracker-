@@ -147,16 +147,35 @@ function UniversalBanner({ universal, uploads, onStartFrom, starting }) {
   const selected = choice || (options[0] ? String(options[0].id) : '')
 
   if (universal) {
+    const name = universal.resume?.personalInfo?.name
     return (
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-accent/30 bg-accent/5">
-        <div className="flex items-center gap-2">
-          <BadgeCheck size={18} className="text-accent shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-ink">Your universal resume</p>
-            <p className="text-xs text-ink-soft">Last updated {formatUpdated(universal.updatedAt)}</p>
+      <div className="mb-5 p-3 rounded-xl border border-accent/30 bg-accent/5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <BadgeCheck size={18} className="text-accent shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-ink">Your universal resume{name ? ` — ${name}` : ''}</p>
+              <p className="text-xs text-ink-soft">Last updated {formatUpdated(universal.updatedAt)}. Edit below and save to change it.</p>
+            </div>
           </div>
+          <span className="text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-accent text-white">Used for job matching</span>
         </div>
-        <span className="text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-accent text-white">Used for job matching</span>
+        {options.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-accent/20">
+            <label htmlFor="universal-replace" className="text-xs text-ink-soft">Or replace it with an uploaded resume:</label>
+            <select id="universal-replace" value={selected} onChange={e => setChoice(e.target.value)}
+              className="px-2 py-1.5 rounded-lg border border-line bg-paper text-xs max-w-[14rem]">
+              {options.map(r => <option key={r.id} value={r.id}>{r.fileName || 'Resume ' + r.id}</option>)}
+            </select>
+            <button type="button" disabled={!selected || starting}
+              onClick={() => {
+                if (window.confirm('Replace your universal resume with this upload? Your current universal resume will be overwritten; the uploaded file itself is not changed.')) onStartFrom(Number(selected), true)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 disabled:opacity-50">
+              {starting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} Replace
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -1261,10 +1280,10 @@ export default function ResumeBuilder() {
     }
   }
 
-  const handleStartFromUpload = async (resumeId) => {
+  const handleStartFromUpload = async (resumeId, overwrite = false) => {
     setStartingUniversal(true)
     try {
-      applySavedUniversal(await universalFromResume(resumeId))
+      applySavedUniversal(await universalFromResume(resumeId, overwrite))
     } catch (err) {
       alert('Could not start from that resume: ' + (err.response?.data?.error || err.message))
     } finally {

@@ -12,8 +12,9 @@ function withoutBlankParams(params) {
     return cleaned
 }
 
-export async function listJobs(params = {}) {
-    const response = await api.get('/jobs', { params: withoutBlankParams(params) })
+/** `options.signal` lets a newer search cancel an older one still in flight. */
+export async function listJobs(params = {}, options = {}) {
+    const response = await api.get('/jobs', { params: withoutBlankParams(params), signal: options.signal })
     return response.data
 }
 
@@ -27,8 +28,8 @@ export async function getSyncProgress(syncId) {
     return response.data
 }
 
-export async function listNewJobs(params = {}) {
-    const response = await api.get('/jobs/new', { params: withoutBlankParams(params) })
+export async function listNewJobs(params = {}, options = {}) {
+    const response = await api.get('/jobs/new', { params: withoutBlankParams(params), signal: options.signal })
     return response.data
 }
 

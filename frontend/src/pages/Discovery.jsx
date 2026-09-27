@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Bot, ChevronLeft, ChevronRight, ExternalLink, Filter, Info, Loader2, RefreshCw,
   Search, Sparkles, X
@@ -28,12 +28,15 @@ function daysAgo(n) {
   return d.toISOString().slice(0, 10)
 }
 
+// `hours` also limits how far back Sync looks on the job boards.
 const DATE_PRESETS = [
   { label: 'Any time', after: '', before: '' },
-  { label: 'Past 24 h', after: daysAgo(1), before: '' },
-  { label: 'Past week', after: daysAgo(7), before: '' },
-  { label: 'Past month', after: daysAgo(30), before: '' },
+  { label: 'Past 24 h', after: daysAgo(1), before: '', hours: 24 },
+  { label: 'Past week', after: daysAgo(7), before: '', hours: 168 },
+  { label: 'Past month', after: daysAgo(30), before: '', hours: 720 },
 ]
+
+const SEARCH_DEBOUNCE_MS = 350
 
 function activeFilterCount(filters) {
   return [filters.location, filters.employmentType, filters.postedAfter, filters.postedBefore]
@@ -73,7 +76,15 @@ export default function Discovery() {
   const [sessionSince, setSessionSince] = useState(null)
   const [skyvernConfigured, setSkyvernConfigured] = useState(null) // null = loading, true/false = known
 
+  const loadRequest = useRef(null)
   useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew, indiaOnly])
+
+  // Search as you type: apply the search text shortly after the user stops typing.
+  useEffect(() => {
+    if (draft.q === filters.q) return
+    const timer = setTimeout(() => { setFilters(f => ({ ...f, q: draft.q })); setPage(0) }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [draft.q])
 
   function toggleIndiaOnly() {
     const next = !indiaOnly
@@ -98,13 +109,6 @@ export default function Discovery() {
     finally { markJobsVisitedNow() }
   }
 
-  const FRESHER_ROLES = [
-    'fresher software engineer', 'junior software engineer', 'entry level software developer',
-    'software trainee', 'graduate software engineer', 'junior frontend developer',
-    'junior backend developer', 'junior full stack developer', 'junior data analyst',
-    'software engineer intern', 'junior devops engineer', 'machine learning engineer fresher',
-  ]
-
   const INDIA_CITIES = [
     'Bangalore', 'Hyderabad', 'Delhi', 'Noida', 'Gurgaon', 'Chennai', 'Pune', 'Mumbai',
     'Chandigarh', 'Lucknow',
@@ -115,10 +119,14 @@ export default function Discovery() {
     try {
       setSyncing(true); setError('')
       setSyncMessage('Connecting to job boards…')
-      const body = {}
-      if (filters.q) body.keywords = filters.q
-      else body.roles = FRESHER_ROLES
-      body.locations = filters.location ? [filters.location] : ['India']
+      // What's in the search box is searched on the job boards; with nothing typed, the backend searches the
+      // roles from your universal resume / profile.
+      const keywords = (draft.q || filters.q || '').trim()
+      const body = { locations: [filters.location || draft.location || 'India'] }
+      if (keywords) body.keywords = keywords
+      const preset = DATE_PRESETS.find(p => p.after === filters.postedAfter && p.before === filters.postedBefore)
+      if (preset?.hours) body.postedWithinHours = preset.hours
+      if (keywords !== filters.q) setFilters(f => ({ ...f, q: keywords }))
 
       const { syncId } = await discoverJobs(body)
 
@@ -142,11 +150,12 @@ export default function Discovery() {
               const errs = progress.errors && Object.keys(progress.errors).length > 0
                 ? ` (${Object.entries(progress.errors).map(([p, m]) => `${p}: ${m}`).join('; ')})`
                 : ''
-              setSyncMessage(`Synced ${progress.totalSaved} job${progress.totalSaved === 1 ? '' : 's'}.${errs}`)
+              const fresh = progress.upToDate?.length ? ` ${progress.upToDate.length === 1 ? 'One source was' : `${progress.upToDate.length} sources were`} synced for this search a few minutes ago, so ${progress.upToDate.length === 1 ? 'it was' : 'they were'} skipped.` : ''
+              setSyncMessage(`Synced ${progress.totalSaved} job${progress.totalSaved === 1 ? '' : 's'}.${fresh}${errs}`)
               resolve()
             }
           } catch (e) { clearInterval(pollTimer); reject(e) }
-        }, 1500)
+        }, 1000)
       })
 
       setPage(0)
@@ -162,15 +171,23 @@ export default function Discovery() {
   }
 
   async function loadJobs() {
+    // Only the newest search counts: cancel one still in flight so a slow old reply can't overwrite it.
+    loadRequest.current?.abort()
+    const request = new AbortController()
+    loadRequest.current = request
     try {
       setLoading(true); setError('')
-      if (showingOnlyNew) {
-        setJobs(await listNewJobs({ ...filters, country: indiaOnly ? 'IN' : undefined, since: sessionSince || undefined, page, size: 10 }))
-      } else {
-        setJobs(await listJobs({ ...filters, country: indiaOnly ? 'IN' : undefined, page, size: 10, sort }))
-      }
-    } catch { setError('Could not load discovered jobs. Try again.') }
-    finally { setLoading(false) }
+      const country = indiaOnly ? 'IN' : undefined
+      const result = showingOnlyNew
+        ? await listNewJobs({ ...filters, country, since: sessionSince || undefined, page, size: 10 }, { signal: request.signal })
+        : await listJobs({ ...filters, country, page, size: 10, sort }, { signal: request.signal })
+      if (!request.signal.aborted) setJobs(result)
+    } catch (e) {
+      if (request.signal.aborted || e?.code === 'ERR_CANCELED') return
+      setError('Could not load discovered jobs. Try again.')
+    } finally {
+      if (loadRequest.current === request) setLoading(false)
+    }
   }
 
   function applySearch(e) {
@@ -272,7 +289,7 @@ export default function Discovery() {
             <input
               value={draft.q}
               onChange={e => setDraft({ ...draft, q: e.target.value })}
-              placeholder="Search title or company…"
+              placeholder="Search role, company, skill or city — e.g. react developer bangalore"
               className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-line bg-paper text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
@@ -425,6 +442,7 @@ export default function Discovery() {
           <button
             onClick={syncSources}
             disabled={syncing}
+            title="Fetch fresh jobs for what's in the search box — or, if it's empty, for the roles on your universal resume"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line text-ink-soft text-xs font-medium disabled:opacity-50 hover:border-ink/30 transition-colors"
           >
             {syncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}

@@ -21,7 +21,7 @@ public class SyncRunner {
     public void runAsync(String syncId, JobQuery query) {
         try {
             JobSyncService.SyncResult result = syncService.sync(syncId, query);
-            progressStore.complete(syncId, result.saved(), result.providerErrors());
+            progressStore.complete(syncId, result.saved(), result.providerErrors(), result.upToDate());
         } catch (Exception e) {
             String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
             progressStore.complete(syncId, 0, Map.of("error", msg));

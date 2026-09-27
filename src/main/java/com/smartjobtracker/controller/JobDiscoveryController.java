@@ -1,17 +1,16 @@
 package com.smartjobtracker.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartjobtracker.dto.JobDtos;
+import com.smartjobtracker.jobs.discovery.DiscoveryPersonalization;
+import com.smartjobtracker.jobs.discovery.JobSearch;
 import com.smartjobtracker.jobs.discovery.JobSyncService;
 import com.smartjobtracker.jobs.discovery.SyncProgressStore;
 import com.smartjobtracker.jobs.discovery.SyncRunner;
 import com.smartjobtracker.jobs.provider.JobProvider.JobQuery;
-import com.smartjobtracker.model.CandidateProfile;
 import com.smartjobtracker.model.JobPosting;
 import com.smartjobtracker.model.JobSkill;
-import com.smartjobtracker.repository.CandidateProfileRepository;
 import com.smartjobtracker.repository.JobPostingRepository;
+import com.smartjobtracker.repository.JobPostingSearchRepository;
 import com.smartjobtracker.repository.JobSkillRepository;
 import com.smartjobtracker.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -23,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.time.OffsetDateTime;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
@@ -34,36 +34,38 @@ public class JobDiscoveryController {
     private final SyncRunner syncRunner;
     private final SyncProgressStore progressStore;
     private final JobPostingRepository repository;
+    private final JobPostingSearchRepository searchRepository;
     private final JobSkillRepository skillRepository;
-    private final CandidateProfileRepository profileRepository;
+    private final DiscoveryPersonalization personalization;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
 
     /** Jobs in this country are listed first (ISO code; blank = no preference). */
     @org.springframework.beans.factory.annotation.Value("${app.job-discovery.preferred-country:IN}")
     private String preferredCountry;
 
-    private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
-
     public JobDiscoveryController(JobSyncService syncService, SyncRunner syncRunner,
                                    SyncProgressStore progressStore,
-                                   JobPostingRepository repository, JobSkillRepository skillRepository,
-                                   CandidateProfileRepository profileRepository,
-                                   UserRepository userRepository, ObjectMapper objectMapper) {
+                                   JobPostingRepository repository, JobPostingSearchRepository searchRepository, JobSkillRepository skillRepository,
+                                   DiscoveryPersonalization personalization, UserRepository userRepository) {
         this.syncService = syncService; this.syncRunner = syncRunner; this.progressStore = progressStore;
-        this.repository = repository; this.skillRepository = skillRepository;
-        this.profileRepository = profileRepository; this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
+        this.repository = repository; this.searchRepository = searchRepository; this.skillRepository = skillRepository;
+        this.personalization = personalization; this.userRepository = userRepository;
     }
 
-    /** Starts an async job sync and returns a syncId immediately. Poll /discover/progress/{syncId} for status. */
+    /**
+     * Starts an async job sync and returns a syncId immediately. Poll /discover/progress/{syncId} for status.
+     * With no keywords and no roles, searches the user's own target/preferred roles (see DiscoveryPersonalization).
+     */
     @PostMapping("/discover")
     public ResponseEntity<JobDtos.AsyncDiscoverResponse> discover(
-            @Valid @RequestBody(required = false) JobDtos.DiscoverRequest request) {
-        JobDtos.DiscoverRequest value = request == null ? new JobDtos.DiscoverRequest(null, List.of(), List.of()) : request;
+            @Valid @RequestBody(required = false) JobDtos.DiscoverRequest request, Authentication auth) {
+        JobDtos.DiscoverRequest value = request == null ? new JobDtos.DiscoverRequest(null, List.of(), List.of(), null) : request;
+        String keywords = blankToNull(value.keywords());
+        List<String> roles = value.roles() == null ? List.of() : value.roles().stream().filter(r -> r != null && !r.isBlank()).toList();
+        if (keywords == null && roles.isEmpty()) roles = personalization.roles(currentUserId(auth));
         String syncId = UUID.randomUUID().toString();
         progressStore.init(syncId);
-        syncRunner.runAsync(syncId, new JobQuery(value.keywords(), value.roles(), value.locations()));
+        syncRunner.runAsync(syncId, new JobQuery(keywords, roles, value.locations(), value.postedWithinHours()));
         return ResponseEntity.accepted().body(new JobDtos.AsyncDiscoverResponse(syncId));
     }
 
@@ -73,7 +75,7 @@ public class JobDiscoveryController {
         SyncProgressStore.SyncProgress p = progressStore.get(syncId);
         if (p == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(new JobDtos.SyncProgressDto(
-                p.status(), p.currentProvider(), p.providerJobs(), p.totalSaved(), p.done(), p.errors()));
+                p.status(), p.currentProvider(), p.providerJobs(), p.totalSaved(), p.done(), p.errors(), p.upToDate()));
     }
 
     @GetMapping
@@ -86,9 +88,9 @@ public class JobDiscoveryController {
                                          @RequestParam(required = false) String country,
                                          @PageableDefault(size = 20, sort = "postedAt", direction = Sort.Direction.DESC) Pageable pageable,
                                          Authentication auth) {
-        Page<JobPosting> page = repository.search(blankToNull(q), blankToNull(location), blankToNull(employmentType), blankToNull(provider),
-                postedAfter, postedBefore, countryCode(country), countryCode(preferredCountry), pageable);
-        return enrichWithMatchScore(page, auth);
+        JobSearch.Criteria criteria = new JobSearch.Criteria(blankToNull(q), blankToNull(location), blankToNull(employmentType),
+                blankToNull(provider), postedAfter, postedBefore, null, countryCode(country), countryCode(preferredCountry));
+        return enrichWithMatchScore(search(criteria, pageable), auth);
     }
 
     @GetMapping("/{id}")
@@ -111,9 +113,15 @@ public class JobDiscoveryController {
                                          @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
                                          Authentication auth) {
         OffsetDateTime effectiveSince = since != null ? since : OffsetDateTime.now().minusDays(7);
-        Page<JobPosting> page = repository.findNewSince(effectiveSince, blankToNull(q), blankToNull(location), blankToNull(employmentType),
-                blankToNull(provider), countryCode(country), countryCode(preferredCountry), pageable);
-        return enrichWithMatchScore(page, auth);
+        JobSearch.Criteria criteria = new JobSearch.Criteria(blankToNull(q), blankToNull(location), blankToNull(employmentType),
+                blankToNull(provider), null, null, effectiveSince, countryCode(country), countryCode(preferredCountry));
+        return enrichWithMatchScore(search(criteria, pageable), auth);
+    }
+
+    /** The page is fetched unsorted because JobSearch applies country-first, relevance, then the requested sort. */
+    private Page<JobPosting> search(JobSearch.Criteria criteria, Pageable pageable) {
+        int size = Math.min(Math.max(pageable.getPageSize(), 1), 100);
+        return searchRepository.findAll(JobSearch.spec(criteria, pageable.getSort()), PageRequest.of(pageable.getPageNumber(), size));
     }
 
     private Page<JobDtos.JobSummary> enrichWithMatchScore(Page<JobPosting> page, Authentication auth) {
@@ -135,28 +143,14 @@ public class JobDiscoveryController {
         });
     }
 
+    /** Skills from the user's profile and the resume used for matching (universal resume first). */
     private Set<String> loadUserSkills(Authentication auth) {
-        if (auth == null) return Set.of();
-        return userRepository.findByEmail(auth.getName())
-            .flatMap(u -> profileRepository.findByUserId(u.getId()))
-            .map(this::parseProfileSkills)
-            .orElse(Set.of());
+        return personalization.skills(currentUserId(auth));
     }
 
-    private Set<String> parseProfileSkills(CandidateProfile p) {
-        Set<String> all = new HashSet<>();
-        addParsed(p.getSkills(), all);
-        addParsed(p.getProgrammingLanguages(), all);
-        addParsed(p.getFrameworks(), all);
-        return all;
-    }
-
-    private void addParsed(String json, Set<String> target) {
-        if (json == null || json.isBlank()) return;
-        try {
-            objectMapper.readValue(json, STRING_LIST)
-                .forEach(s -> target.add(s.toLowerCase(Locale.ROOT).trim()));
-        } catch (Exception ignored) {}
+    private Long currentUserId(Authentication auth) {
+        if (auth == null || auth.getName() == null) return null;
+        return userRepository.findByEmail(auth.getName()).map(com.smartjobtracker.model.User::getId).orElse(null);
     }
 
     private Integer computeMatchScore(List<JobSkill> jobSkills, Set<String> userSkills) {

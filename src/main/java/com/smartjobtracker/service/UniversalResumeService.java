@@ -30,6 +30,7 @@ import java.util.Optional;
 @Service
 public class UniversalResumeService {
     private static final Logger log = LoggerFactory.getLogger(UniversalResumeService.class);
+    /** Used as the resume's name only when neither the resume nor the account has a name. */
     static final String RESUME_FILE_NAME = "Universal resume";
 
     private final UniversalResumeRepository repository;
@@ -69,7 +70,7 @@ public class UniversalResumeService {
         universal.setTemplate(template);
         universal.setDataJson(toJson(dto));
         universal.setUpdatedAt(OffsetDateTime.now());
-        universal.setResumeId(syncMatchingText(userId, universal.getResumeId(), builderService.toResumeText(dto)));
+        universal.setResumeId(syncMatchingText(userId, universal.getResumeId(), displayName(userId, dto), builderService.toResumeText(dto)));
         UniversalResume saved = repository.save(universal);
         log.info("Universal resume saved: userId={} resumeId={} template={}", userId, saved.getResumeId(), template);
         return toResponse(saved);
@@ -108,18 +109,28 @@ public class UniversalResumeService {
                 .orElse(new UniversalResumeDtos.MatchingResume(null, "NONE", null));
     }
 
+    /** The universal resume is named after the person: the name on the resume, else the account name. */
+    private String displayName(Long userId, ResumeBuilderDto dto) {
+        String name = dto.getPersonalInfo() == null ? null : dto.getPersonalInfo().name();
+        if (name == null || name.isBlank()) name = users.findById(userId).map(User::getName).orElse(null);
+        if (name == null || name.isBlank()) return RESUME_FILE_NAME;
+        name = name.trim().replaceAll("\\s+", " ");
+        return name.length() > 200 ? name.substring(0, 200) : name;
+    }
+
     /** Updates the linked text-only Resume, or creates it. Uploaded resumes are never touched. */
-    private Long syncMatchingText(Long userId, Long linkedResumeId, String text) {
+    private Long syncMatchingText(Long userId, Long linkedResumeId, String fileName, String text) {
         if (linkedResumeId != null) {
             Optional<Resume> linked = resumes.findByIdAndUserId(linkedResumeId, userId);
             if (linked.isPresent()) {
                 Resume r = linked.get();
+                r.setFileName(fileName);
                 r.setExtractedText(text);
                 r.setUploadedAt(OffsetDateTime.now());
                 return resumes.save(r).getId();
             }
         }
-        return resumeService.saveFromContent(userId, RESUME_FILE_NAME, text).getId();
+        return resumeService.saveFromContent(userId, fileName, text).getId();
     }
 
     @SuppressWarnings("unchecked")

@@ -15,6 +15,7 @@ import java.util.*;
 @Component
 public class JobSpyProvider implements JobProvider {
     private static final Logger log = LoggerFactory.getLogger(JobSpyProvider.class);
+    static final int MAX_SEARCHES = 3;
 
     private final JobProviderConfig.JobSpySettings config;
     private final ProviderHttpClient http;
@@ -45,14 +46,19 @@ public class JobSpyProvider implements JobProvider {
         try {
             String location = (query.locations() == null || query.locations().isEmpty() || query.locations().get(0).isBlank())
                     ? (config.getDefaultLocation() == null ? "" : config.getDefaultLocation()) : query.locations().get(0);
-            String keywords = ((query.keywords() == null ? "" : query.keywords()) + " " +
-                               String.join(" ", query.roles() == null ? List.of() : query.roles())).trim();
+            // Typed keywords are one search. Otherwise each role is its own search (run in parallel by the service):
+            // gluing twelve roles into one query string returned few, poorly matched results.
+            List<String> searches = (query.keywords() != null && !query.keywords().isBlank())
+                    ? List.of(query.keywords().trim())
+                    : query.roles().stream().filter(r -> r != null && !r.isBlank()).map(String::trim).distinct().limit(MAX_SEARCHES).toList();
+            String keywords = searches.isEmpty() ? "" : searches.get(0);
 
             ObjectNode body = mapper.createObjectNode();
-            body.put("keywords", keywords);
+            body.put("keywords", keywords); // older service versions only read this
+            body.set("queries", mapper.valueToTree(searches));
             body.put("location", location);
             body.put("results_wanted", config.getResultsWanted());
-            body.put("hours_old", config.getHoursOld());
+            body.put("hours_old", query.postedWithinHours() != null ? query.postedWithinHours() : config.getHoursOld());
             body.set("site_names", mapper.valueToTree(config.getSiteNames()));
             if (config.getCountry() != null && !config.getCountry().isBlank()) body.put("country_indeed", config.getCountry());
 
@@ -83,7 +89,7 @@ public class JobSpyProvider implements JobProvider {
                     period(text(j, "salaryPeriod"))
                 ));
             }
-            log.info("JobSpy returned {} jobs for keywords='{}'", jobs.size(), keywords);
+            log.info("JobSpy returned {} jobs for {} search(es)", jobs.size(), searches.size());
             return new JobBatch(jobs, null);
         } catch (Exception e) {
             log.error("JobSpy search failed: {}", e.getMessage(), e);

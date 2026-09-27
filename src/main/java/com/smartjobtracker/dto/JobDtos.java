@@ -8,10 +8,13 @@ public final class JobDtos {
     private JobDtos() {}
     public record DiscoverRequest(@Size(max = 200) String keywords,
                                    @Size(max = 20) java.util.List<@Size(max = 100) String> roles,
-                                   @Size(max = 20) java.util.List<@Size(max = 100) String> locations) {}
+                                   @Size(max = 20) java.util.List<@Size(max = 100) String> locations,
+                                   @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(720) Integer postedWithinHours) {}
     public record DiscoverResponse(int synchronizedJobs, java.util.Map<String, String> providerErrors) {}
     public record AsyncDiscoverResponse(String syncId) {}
-    public record SyncProgressDto(String status, String currentProvider, int providerJobs, int totalSaved, boolean done, java.util.Map<String, String> errors) {}
+    /** {@code upToDate}: sources skipped because the same search was synced moments ago. */
+    public record SyncProgressDto(String status, String currentProvider, int providerJobs, int totalSaved, boolean done,
+                                  java.util.Map<String, String> errors, java.util.List<String> upToDate) {}
     public record JobSummary(Long id, String provider, String company, String title, String location,
                              String employmentType, String workMode, String applyUrl, OffsetDateTime postedAt, String logoUrl,
                              Integer salaryMin, Integer salaryMax, String salaryCurrency, Boolean salaryEstimated,

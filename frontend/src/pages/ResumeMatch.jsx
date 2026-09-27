@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { UploadCloud, FileText, CheckCircle2, XCircle } from 'lucide-react'
+import { UploadCloud, FileText, CheckCircle2, XCircle, BadgeCheck, Loader2 } from 'lucide-react'
 import api from '../api/axios'
-import { getMatchingResume } from '../api/resumeBuilder'
+import { getMatchingResume, universalFromResume } from '../api/resumeBuilder'
 import Layout from '../components/Layout'
 import ScoreRing from '../components/ScoreRing'
 import DeepMatchResults from '../components/DeepMatchResults'
@@ -17,6 +17,8 @@ export default function ResumeMatch() {
   const [matching, setMatching] = useState(false)
   const [deepMatching, setDeepMatching] = useState(false)
   const [error, setError] = useState('')
+  const [matchingResume, setMatchingResume] = useState(null)
+  const [makingUniversal, setMakingUniversal] = useState(null)
 
   useEffect(() => { fetchResumes() }, [])
 
@@ -24,6 +26,7 @@ export default function ResumeMatch() {
     try {
       const [res, matching] = await Promise.all([api.get('/resume/me'), getMatchingResume().catch(() => null)])
       setResumes(res.data)
+      setMatchingResume(matching)
       // Default to the universal resume (else the newest upload) instead of the oldest.
       if (!selectedResumeId) setSelectedResumeId(matching?.resumeId || res.data[0]?.id || '')
     } catch (e) {
@@ -45,6 +48,25 @@ export default function ResumeMatch() {
       console.error(e)
     } finally {
       setUploading(false)
+    }
+  }
+
+  // The universal resume is used for job matching by default; any upload can become it.
+  const universalId = matchingResume?.source === 'UNIVERSAL' ? matchingResume.resumeId : null
+
+  async function makeUniversal(resume) {
+    const replacing = universalId != null
+    if (replacing && !window.confirm(`Replace your universal resume with "${resume.fileName}"? The uploaded file itself is not changed.`)) return
+    setError('')
+    setMakingUniversal(resume.id)
+    try {
+      const saved = await universalFromResume(resume.id, replacing)
+      await fetchResumes()
+      setSelectedResumeId(saved.resumeId)
+    } catch (e) {
+      setError(e.response?.data?.error || 'Could not make this your universal resume.')
+    } finally {
+      setMakingUniversal(null)
     }
   }
 
@@ -123,6 +145,18 @@ export default function ResumeMatch() {
                     />
                     <FileText size={15} className="text-muted" />
                     <span className="flex-1 truncate">{r.fileName}</span>
+                    {r.id === universalId ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent text-white shrink-0"
+                        title="Used for job matching by default. Edit it in the Resume Builder.">
+                        <BadgeCheck size={11} /> Universal
+                      </span>
+                    ) : (
+                      <button type="button" onClick={(e) => { e.preventDefault(); makeUniversal(r) }} disabled={makingUniversal != null}
+                        className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline disabled:opacity-50 shrink-0">
+                        {makingUniversal === r.id && <Loader2 size={11} className="animate-spin" />}
+                        {universalId ? 'Use as universal' : 'Make universal'}
+                      </button>
+                    )}
                     <span className="text-xs text-muted font-mono">{new Date(r.uploadedAt).toLocaleDateString()}</span>
                   </label>
                 ))}

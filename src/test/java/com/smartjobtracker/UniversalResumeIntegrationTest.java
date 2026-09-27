@@ -153,6 +153,30 @@ public class UniversalResumeIntegrationTest {
         assertThat(uploadedText(base, auth, uploadedId)).isNotBlank().isEqualTo(uploadedTextBefore);
     }
 
+    /** Job cards score against the universal resume even with no candidate profile; the resume is named after the user. */
+    @Test
+    public void jobBoardScoresWithUniversalResumeAndResumeIsNamedAfterUser() {
+        String base = "http://localhost:" + port;
+        HttpHeaders auth = login(base, "universal-board@example.com");
+        long jobId = jobRequiring("Java", "Kubernetes");
+
+        JsonNode created = call(base + "/api/resume/universal", HttpMethod.PUT, universal("jakes"), auth);
+        long universalResumeId = created.path("resumeId").asLong();
+        JsonNode matching = call(base + "/api/resume/matching", HttpMethod.GET, null, auth);
+        assertThat(matching.path("fileName").asText()).isEqualTo("Jane Dev");
+
+        Integer score = null;
+        for (JsonNode job : call(base + "/api/jobs?size=100", HttpMethod.GET, null, auth).path("content"))
+            if (job.path("id").asLong() == jobId) score = job.path("matchScore").isNull() ? null : job.path("matchScore").asInt();
+        assertThat(score).as("Java of Java+Kubernetes matched from the universal resume").isEqualTo(50);
+
+        // a rename on the resume renames the linked matching resume, keeping its id
+        JsonNode renamed = call(base + "/api/resume/universal", HttpMethod.PUT,
+                universal("jakes").replace("\"name\":\"Jane Dev\"", "\"name\":\"Jane Q Dev\""), auth);
+        assertThat(renamed.path("resumeId").asLong()).isEqualTo(universalResumeId);
+        assertThat(call(base + "/api/resume/matching", HttpMethod.GET, null, auth).path("fileName").asText()).isEqualTo("Jane Q Dev");
+    }
+
     private String uploadedText(String base, HttpHeaders auth, long resumeId) {
         for (JsonNode r : call(base + "/api/resume/me", HttpMethod.GET, null, auth))
             if (r.path("id").asLong() == resumeId) return r.path("extractedText").asText();
