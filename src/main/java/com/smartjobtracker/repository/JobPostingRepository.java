@@ -18,10 +18,14 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
             "and (:employmentType is null or lower(j.employmentType) = lower(cast(:employmentType as string))) " +
             "and (:provider is null or lower(j.provider) = lower(cast(:provider as string))) " +
             "and (cast(:postedAfter as timestamp) is null or j.postedAt >= :postedAfter) " +
-            "and (cast(:postedBefore as timestamp) is null or j.postedAt <= :postedBefore)")
+            "and (cast(:postedBefore as timestamp) is null or j.postedAt <= :postedBefore) " +
+            "and (:country is null or j.countryCode = :country) " +
+            // Preferred country first; the Pageable's sort (e.g. postedAt desc) applies within each group.
+            "order by case when j.countryCode = :preferredCountry then 0 else 1 end")
     Page<JobPosting> search(@Param("q") String q, @Param("location") String location,
                             @Param("employmentType") String employmentType, @Param("provider") String provider,
                             @Param("postedAfter") OffsetDateTime postedAfter, @Param("postedBefore") OffsetDateTime postedBefore,
+                            @Param("country") String country, @Param("preferredCountry") String preferredCountry,
                             Pageable pageable);
 
     /** Postings whose yearly salary was reported by the source or stated in the posting (the estimator's evidence). */
@@ -46,8 +50,11 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
             "and (:q is null or lower(j.title) like lower(concat('%', cast(:q as string), '%')) or lower(j.company) like lower(concat('%', cast(:q as string), '%'))) " +
             "and (:location is null or lower(j.location) like lower(concat('%', cast(:location as string), '%'))) " +
             "and (:employmentType is null or lower(j.employmentType) = lower(cast(:employmentType as string))) " +
-            "and (:provider is null or lower(j.provider) = lower(cast(:provider as string)))")
+            "and (:provider is null or lower(j.provider) = lower(cast(:provider as string))) " +
+            "and (:country is null or j.countryCode = :country) " +
+            "order by case when j.countryCode = :preferredCountry then 0 else 1 end")
     Page<JobPosting> findNewSince(@Param("since") OffsetDateTime since, @Param("q") String q, @Param("location") String location,
                             @Param("employmentType") String employmentType, @Param("provider") String provider,
+                            @Param("country") String country, @Param("preferredCountry") String preferredCountry,
                             Pageable pageable);
 }

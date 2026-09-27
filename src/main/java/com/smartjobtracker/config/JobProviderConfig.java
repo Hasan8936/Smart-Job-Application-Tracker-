@@ -45,9 +45,13 @@ public class JobProviderConfig {
     public static class JobSpySettings {
         private boolean enabled;
         private String serviceUrl;
-        private List<String> siteNames = List.of("linkedin", "indeed", "glassdoor", "google");
+        private List<String> siteNames = List.of("linkedin", "indeed");
         private int resultsWanted = 20;
         private int hoursOld = 168;
+        /** Country for Indeed/Glassdoor (JobSpy country_indeed), e.g. India, USA. */
+        private String country = "India";
+        /** Location searched when the discovery request doesn't name one. */
+        private String defaultLocation = "India";
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean value) { enabled = value; }
@@ -59,6 +63,10 @@ public class JobProviderConfig {
         public void setResultsWanted(int value) { resultsWanted = value; }
         public int getHoursOld() { return hoursOld; }
         public void setHoursOld(int value) { hoursOld = value; }
+        public String getCountry() { return country; }
+        public void setCountry(String value) { country = value; }
+        public String getDefaultLocation() { return defaultLocation; }
+        public void setDefaultLocation(String value) { defaultLocation = value; }
     }
 
     public static class TelegramSettings {

@@ -24,6 +24,12 @@ class SalaryTextParserTest {
             "CTC: 12 - 18 LPA                                            | 1200000| 1800000| INR | YEAR",
             "Offered salary ₹ 8 LPA for freshers                         | 800000 | null   | INR | YEAR",
             "Salary: 10 to 14 lakhs per annum                            | 1000000| 1400000| INR | YEAR",
+            "CTC: ₹6,00,000 - ₹12,00,000 per annum                       | 600000 | 1200000| INR | YEAR",
+            "Salary INR 12,50,000 to 18,00,000 p.a.                      | 1250000| 1800000| INR | YEAR",
+            "Stipend: Rs. 10,000 per month                               | 10000  | null   | INR | MONTH",
+            "Location Surat Salary range 3,25,000 LPA - 3,60,000 LPA      | 325000 | 360000 | INR | YEAR",
+            "Package: 4.5 LPA for freshers                               | 450000 | null   | INR | YEAR",
+            "Compensation: ₹ 1,20,00,000 per year for this leadership role | 12000000 | null | INR | YEAR",
     })
     void extractsStatedSalaries(String text, Integer min, Integer max, String currency, String period) {
         SalaryInfo s = parser.parse(text);

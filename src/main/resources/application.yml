@@ -89,6 +89,8 @@ app:
   job-discovery:
     # Java Character.UnicodeScript names, comma-separated (e.g. ARABIC,HEBREW). Empty = block nothing.
     blocked-scripts: ${JOB_BLOCKED_SCRIPTS:ARABIC}
+    # Jobs in this ISO country are listed first in Discover and dashboard recommendations. Blank = no preference.
+    preferred-country: ${JOB_PREFERRED_COUNTRY:IN}
   job-providers:
     min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
     max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}
@@ -104,9 +106,11 @@ app:
     jobspy:
       enabled: ${JOBSPY_ENABLED:false}
       service-url: ${JOBSPY_SERVICE_URL:}
-      site-names: ${JOBSPY_SITE_NAMES:linkedin,indeed,glassdoor,google}
+      site-names: ${JOBSPY_SITE_NAMES:linkedin,indeed}
       results-wanted: ${JOBSPY_RESULTS_WANTED:20}
       hours-old: ${JOBSPY_HOURS_OLD:168}
+      country: ${JOBSPY_COUNTRY:India}
+      default-location: ${JOBSPY_DEFAULT_LOCATION:India}
     telegram:
       enabled: ${TELEGRAM_ENABLED:false}
       channels: ${TELEGRAM_CHANNELS:}

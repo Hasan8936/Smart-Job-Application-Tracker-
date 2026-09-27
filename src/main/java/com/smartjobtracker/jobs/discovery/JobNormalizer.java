@@ -27,6 +27,7 @@ public class JobNormalizer {
         target.setEmploymentType(clean(source.employmentType()));
         target.setWorkMode(clean(source.workMode())); target.setApplyUrl(clean(source.applyUrl()));
         target.setLocation(location(source.location(), target.getWorkMode()));
+        target.setCountryCode(CountryDetector.country(target.getLocation()));
         target.setPostedAt(parseDate(source.postedAt())); target.setDescription(toPlainText(source.description()));
         target.setLogoUrl(clean(source.logoUrl())); target.setRawJson(source.rawJson());
         applySalary(target, source);

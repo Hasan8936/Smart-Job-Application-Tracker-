@@ -30,6 +30,10 @@ public class JobPosting {
     /** Written in a blocked script (see ScriptFilter); hidden from job lists but kept for saved/applied references. */
     @Column(name = "script_blocked", nullable = false) private boolean scriptBlocked = false;
     public boolean isScriptBlocked() { return scriptBlocked; }
+    /** ISO country from the location (CountryDetector); null when unknown. */
+    @Column(name = "country_code", length = 2) private String countryCode;
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String v) { countryCode = v; }
     public void setScriptBlocked(boolean v) { scriptBlocked = v; }
     public String getSalaryPeriod() { return salaryPeriod; }
     public void setSalaryPeriod(String v) { salaryPeriod = v; }

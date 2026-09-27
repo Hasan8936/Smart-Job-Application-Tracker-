@@ -39,6 +39,10 @@ public class JobDiscoveryController {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
+    /** Jobs in this country are listed first (ISO code; blank = no preference). */
+    @org.springframework.beans.factory.annotation.Value("${app.job-discovery.preferred-country:IN}")
+    private String preferredCountry;
+
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
 
     public JobDiscoveryController(JobSyncService syncService, SyncRunner syncRunner,
@@ -79,9 +83,11 @@ public class JobDiscoveryController {
                                          @RequestParam(required = false) String provider,
                                          @RequestParam(required = false) OffsetDateTime postedAfter,
                                          @RequestParam(required = false) OffsetDateTime postedBefore,
+                                         @RequestParam(required = false) String country,
                                          @PageableDefault(size = 20, sort = "postedAt", direction = Sort.Direction.DESC) Pageable pageable,
                                          Authentication auth) {
-        Page<JobPosting> page = repository.search(blankToNull(q), blankToNull(location), blankToNull(employmentType), blankToNull(provider), postedAfter, postedBefore, pageable);
+        Page<JobPosting> page = repository.search(blankToNull(q), blankToNull(location), blankToNull(employmentType), blankToNull(provider),
+                postedAfter, postedBefore, countryCode(country), countryCode(preferredCountry), pageable);
         return enrichWithMatchScore(page, auth);
     }
 
@@ -101,10 +107,12 @@ public class JobDiscoveryController {
                                          @RequestParam(required = false) String location,
                                          @RequestParam(required = false) String employmentType,
                                          @RequestParam(required = false) String provider,
+                                         @RequestParam(required = false) String country,
                                          @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
                                          Authentication auth) {
         OffsetDateTime effectiveSince = since != null ? since : OffsetDateTime.now().minusDays(7);
-        Page<JobPosting> page = repository.findNewSince(effectiveSince, blankToNull(q), blankToNull(location), blankToNull(employmentType), blankToNull(provider), pageable);
+        Page<JobPosting> page = repository.findNewSince(effectiveSince, blankToNull(q), blankToNull(location), blankToNull(employmentType),
+                blankToNull(provider), countryCode(country), countryCode(preferredCountry), pageable);
         return enrichWithMatchScore(page, auth);
     }
 
@@ -177,4 +185,13 @@ public class JobDiscoveryController {
     }
 
     private String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+
+    /** Two-letter ISO country code, upper-cased; blank → null; anything else is a 400. */
+    private String countryCode(String value) {
+        String v = blankToNull(value);
+        if (v == null) return null;
+        if (!v.matches("[A-Za-z]{2}"))
+            throw new IllegalArgumentException("country must be a two-letter ISO code"); // → 400 via JobDiscoveryExceptionHandler
+        return v.toUpperCase(Locale.ROOT);
+    }
 }

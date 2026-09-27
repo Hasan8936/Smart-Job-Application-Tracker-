@@ -72,7 +72,7 @@ class ScriptFilterTest {
         JobPostingRepository repo = mock(JobPostingRepository.class);
         when(repo.findAll()).thenReturn(List.of(arabicJob, englishJob, wronglyBlocked));
 
-        assertEquals(2, new ScriptBlockBackfill(repo, arabic).refresh());
+        assertEquals(2, new JobPostingBackfill(repo, arabic).refresh());
         assertTrue(arabicJob.isScriptBlocked());
         assertFalse(wronglyBlocked.isScriptBlocked());
         verify(repo).saveAll(argThat((List<JobPosting> saved) -> saved.size() == 2 && !saved.contains(englishJob)));

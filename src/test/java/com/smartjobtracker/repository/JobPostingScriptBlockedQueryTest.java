@@ -31,11 +31,11 @@ class JobPostingScriptBlockedQueryTest {
         JobPosting visible = save("1", "Backend Engineer", false);
         JobPosting hidden = save("2", "سرآشپز حرفه‌ای", true);
 
-        var search = repository.search(null, null, null, null, null, null, PageRequest.of(0, 20));
+        var search = repository.search(null, null, null, null, null, null, null, null, PageRequest.of(0, 20));
         assertEquals(1, search.getTotalElements());
         assertEquals(visible.getId(), search.getContent().get(0).getId());
 
-        var fresh = repository.findNewSince(OffsetDateTime.now().minusDays(1), null, null, null, null, PageRequest.of(0, 20));
+        var fresh = repository.findNewSince(OffsetDateTime.now().minusDays(1), null, null, null, null, null, null, PageRequest.of(0, 20));
         assertEquals(1, fresh.getTotalElements());
 
         assertTrue(repository.findById(hidden.getId()).isPresent(), "saved/applied references still resolve");

@@ -17,7 +17,11 @@ public class SalaryTextParser {
 
     private static final String CUR = "(US\\$|CA\\$|C\\$|A\\$|S\\$|\\$|€|£|₹|Rs\\.?|INR|USD|EUR|GBP|CAD|AUD|SGD)";
     /** "120,000", "120.000", "274,456.00", "120", "1.5" — optionally followed by k/M. */
-    private static final String AMT = "(\\d{1,3}(?:[,.]\\d{3})+(?:[.,]\\d{2}(?!\\d))?|\\d+(?:\\.\\d+)?)\\s*([kKmM](?![a-zA-Z]))?";
+    /**
+     * Indian lakh grouping first ("6,00,000", "12,50,000", "1,20,00,000"), then "120,000", "120.000", "274,456.00",
+     * "120", "1.5" — optionally followed by k/M.
+     */
+    private static final String AMT = "(\\d{1,2}(?:,\\d{2})+,\\d{3}(?![\\d,])|\\d{1,3}(?:[,.]\\d{3})+(?:[.,]\\d{2}(?!\\d))?|\\d+(?:\\.\\d+)?)\\s*([kKmM](?![a-zA-Z]))?";
     private static final String DASH = "\\s*(?:-|–|—|to)\\s*";
 
     /** currency amount [- [currency] amount]; e.g. "$120k - $150k", "EUR 60.000 to 70.000". */
@@ -25,8 +29,13 @@ public class SalaryTextParser {
             CUR + "\\s?" + AMT + "(?:" + DASH + CUR + "?\\s?" + AMT + ")?", Pattern.CASE_INSENSITIVE);
 
     /** Indian "12 - 18 LPA", "12 to 18 lakhs", "₹ 8 LPA". */
+    /** A lakh count ("12", "4.5") or, when postings misuse the unit, a full rupee amount ("3,25,000"). */
+    private static final String LAKH_NUM = "(\\d{1,2}(?:,\\d{2})+,\\d{3}|\\d{1,3}(?:,\\d{3})+|\\d+(?:\\.\\d+)?)";
+    private static final String LAKH_UNIT = "(?:LPA|L\\.P\\.A|lakhs?|lacs?)";
+    /** "12 - 18 LPA", "4.5 LPA", "10 to 14 lakhs", and "3,25,000 LPA - 3,60,000 LPA" (unit after each bound). */
     private static final Pattern LPA = Pattern.compile(
-            "(?:₹|Rs\\.?|INR)?\\s?(\\d+(?:\\.\\d+)?)(?:" + DASH + "(?:₹|Rs\\.?|INR)?\\s?(\\d+(?:\\.\\d+)?))?\\s*(LPA|L\\.P\\.A|lakhs?|lacs?)(?![a-zA-Z])",
+            "(?:₹|Rs\\.?|INR)?\\s?" + LAKH_NUM + "(?:\\s*" + LAKH_UNIT + ")?(?:" + DASH + "(?:₹|Rs\\.?|INR)?\\s?" + LAKH_NUM + ")?\\s*("
+                    + "LPA|L\\.P\\.A|lakhs?|lacs?)(?![a-zA-Z])",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PAY_WORDS = Pattern.compile(
@@ -58,14 +67,14 @@ public class SalaryTextParser {
 
         Matcher lpa = LPA.matcher(text);
         while (lpa.find()) {
-            double lo = Double.parseDouble(lpa.group(1));
-            Double hi = lpa.group(2) == null ? null : Double.parseDouble(lpa.group(2));
-            if (lo <= 0 || lo > 500 || (hi != null && hi > 500)) continue;
+            double lo = lakhsToRupees(lpa.group(1));
+            Double hi = lpa.group(2) == null ? null : lakhsToRupees(lpa.group(2));
+            if (lo <= 0 || !plausible(Math.max(lo, hi == null ? 0 : hi), "YEAR", "INR")) continue;
             // "LPA" is unambiguous; a bare "lakh" ("5 lakh users") needs a pay word before it.
             boolean explicitLpa = lpa.group(3).toUpperCase(Locale.ROOT).replace(".", "").equals("LPA");
             if (NOT_PAY_WORDS.matcher(window(text, lpa.start() - 90, lpa.end() + 30)).find()) continue;
             if (!explicitLpa && !PAY_WORDS.matcher(window(text, lpa.start() - 90, lpa.start())).find()) continue;
-            return SalaryInfo.of(lo * 100_000, hi == null ? null : hi * 100_000, "INR", "YEAR");
+            return SalaryInfo.of(lo, hi, "INR", "YEAR");
         }
 
         Matcher m = MONEY.matcher(text);
@@ -94,6 +103,13 @@ public class SalaryTextParser {
         return SalaryInfo.NONE;
     }
 
+    /** "12" / "4.5" lakh → rupees; a number of 1,000 or more is already rupees (posting misused the unit). */
+    private static double lakhsToRupees(String number) {
+        double v;
+        try { v = Double.parseDouble(number.replace(",", "")); } catch (NumberFormatException e) { return 0; }
+        return v >= 1_000 ? v : v * 100_000;
+    }
+
     private static String currency(String symbol) {
         String s = symbol.toUpperCase(Locale.ROOT).replace(".", "");
         return switch (s) {
@@ -111,6 +127,7 @@ public class SalaryTextParser {
         if (digits == null) return 0;
         String d = digits;
         // Drop cents ("274,456.00", "60.000,00"), then thousands separators; "1.5" (with k/m) stays a decimal.
+        if (d.matches("\\d{1,2}(?:,\\d{2})+,\\d{3}")) d = d.replace(",", ""); // Indian grouping
         if (d.matches("\\d{1,3}(?:[,.]\\d{3})+[.,]\\d{2}")) d = d.substring(0, d.length() - 3);
         if (d.matches("\\d{1,3}(?:[,.]\\d{3})+")) d = d.replaceAll("[,.]", "");
         double v;
@@ -131,7 +148,17 @@ public class SalaryTextParser {
 
     /** Rejects numbers that can't be pay for the stated period (e.g. "$5 per year", "$2,000,000/hour"). */
     private static boolean plausible(double top, String period, String currency) {
-        double scale = "INR".equals(currency) ? 80 : 1; // rough USD→INR magnitude, only for bounds
+        if ("INR".equals(currency)) {
+            // Indian pay spans internship stipends (₹5,000/month) to senior CTCs (₹1.5 Cr/year).
+            return switch (period) {
+                case "HOUR" -> top >= 50 && top <= 20_000;
+                case "DAY" -> top >= 300 && top <= 100_000;
+                case "WEEK" -> top >= 1_000 && top <= 500_000;
+                case "MONTH" -> top >= 3_000 && top <= 2_500_000;
+                default -> top >= 50_000 && top <= 150_000_000;
+            };
+        }
+        double scale = 1;
         return switch (period) {
             case "HOUR" -> top >= 5 * scale && top <= 1_000 * scale;
             case "DAY" -> top >= 30 * scale && top <= 8_000 * scale;

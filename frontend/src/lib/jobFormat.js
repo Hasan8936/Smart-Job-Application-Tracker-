@@ -6,8 +6,11 @@ function money(value, currency) {
   if (value == null) return null
   if (currency) {
     try {
-      return new Intl.NumberFormat(undefined, {
-        style: 'currency', currency, notation: value >= 10000 ? 'compact' : 'standard', maximumFractionDigits: value >= 10000 ? 1 : 0,
+      // Indian rupees read naturally in lakh/crore (₹3.4L, ₹1.2Cr) rather than thousands (₹336.9K).
+      // Other currencies use K/M regardless of the browser locale (an Indian browser would otherwise show "$2.1L").
+      return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
+        style: 'currency', currency, notation: value >= 10000 ? 'compact' : 'standard',
+        minimumFractionDigits: 0, maximumFractionDigits: value >= 10000 ? 1 : 0,
       }).format(value)
     } catch { /* unknown currency code: fall through */ }
   }

@@ -32,7 +32,7 @@ class JobPostingRepositoryFindNewSinceTest {
         newPosting.setCreatedAt(since.plusMinutes(5));
         repository.saveAndFlush(newPosting);
 
-        List<JobPosting> results = repository.findNewSince(since, null, null, null, null, PageRequest.of(0, 20)).getContent();
+        List<JobPosting> results = repository.findNewSince(since, null, null, null, null, null, null, PageRequest.of(0, 20)).getContent();
 
         assertEquals(1, results.size());
         assertEquals("new-1", results.get(0).getExternalId());
@@ -52,7 +52,7 @@ class JobPostingRepositoryFindNewSinceTest {
         nonMatching.setCreatedAt(since.plusMinutes(1));
         repository.saveAndFlush(nonMatching);
 
-        List<JobPosting> results = repository.findNewSince(since, "backend", null, null, null, PageRequest.of(0, 20)).getContent();
+        List<JobPosting> results = repository.findNewSince(since, "backend", null, null, null, null, null, PageRequest.of(0, 20)).getContent();
 
         assertEquals(1, results.size());
         assertTrue(results.get(0).getTitle().toLowerCase().contains("backend"));
@@ -66,7 +66,7 @@ class JobPostingRepositoryFindNewSinceTest {
         oldPosting.setCreatedAt(since.minusDays(2));
         repository.saveAndFlush(oldPosting);
 
-        List<JobPosting> results = repository.findNewSince(since, null, null, null, null, PageRequest.of(0, 20)).getContent();
+        List<JobPosting> results = repository.findNewSince(since, null, null, null, null, null, null, PageRequest.of(0, 20)).getContent();
 
         assertTrue(results.isEmpty());
     }

@@ -58,6 +58,8 @@ export default function Discovery() {
   const [jobs, setJobs] = useState({ content: [], number: 0, totalPages: 0, totalElements: 0 })
   const [page, setPage] = useState(0)
   const [sort, setSort] = useState('postedAt,desc')
+  // Indian jobs are always listed first; this narrows the list to India only.
+  const [indiaOnly, setIndiaOnly] = useState(() => { try { return localStorage.getItem('discovery-india-only') === '1' } catch { return false } })
   const [actions, setActions] = useState(readJobActions())
   const [details, setDetails] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -71,7 +73,14 @@ export default function Discovery() {
   const [sessionSince, setSessionSince] = useState(null)
   const [skyvernConfigured, setSkyvernConfigured] = useState(null) // null = loading, true/false = known
 
-  useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew])
+  useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew, indiaOnly])
+
+  function toggleIndiaOnly() {
+    const next = !indiaOnly
+    try { localStorage.setItem('discovery-india-only', next ? '1' : '0') } catch { /* storage unavailable */ }
+    setIndiaOnly(next)
+    setPage(0)
+  }
   useEffect(() => { checkForNewJobs() }, [])
   useEffect(() => {
     checkAutoApplyConfigured()
@@ -156,9 +165,9 @@ export default function Discovery() {
     try {
       setLoading(true); setError('')
       if (showingOnlyNew) {
-        setJobs(await listNewJobs({ ...filters, since: sessionSince || undefined, page, size: 10 }))
+        setJobs(await listNewJobs({ ...filters, country: indiaOnly ? 'IN' : undefined, since: sessionSince || undefined, page, size: 10 }))
       } else {
-        setJobs(await listJobs({ ...filters, page, size: 10, sort }))
+        setJobs(await listJobs({ ...filters, country: indiaOnly ? 'IN' : undefined, page, size: 10, sort }))
       }
     } catch { setError('Could not load discovered jobs. Try again.') }
     finally { setLoading(false) }
@@ -397,6 +406,15 @@ export default function Discovery() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleIndiaOnly}
+            aria-pressed={indiaOnly}
+            title="Indian jobs are always shown first; turn on to hide jobs outside India"
+            className={`px-3 py-1.5 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors ${indiaOnly ? 'border-accent bg-accent/10 text-accent' : 'border-line text-ink-soft hover:border-ink/30'}`}
+          >
+            India only
+          </button>
           <select
             value={sort}
             onChange={e => { setSort(e.target.value); setPage(0) }}

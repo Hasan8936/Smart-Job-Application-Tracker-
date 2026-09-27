@@ -1,18 +1,28 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import pandas as pd
 import jobspy
 
-app = FastAPI(title="JobSpy Service", version="1.0.0")
+app = FastAPI(title="JobSpy Service", version="1.1.0")
+
+# Indeed/Glassdoor search one country at a time; JobSpy's own default is "usa".
+DEFAULT_COUNTRY = os.getenv("JOBSPY_COUNTRY", "India")
 
 
 class SearchRequest(BaseModel):
     keywords: str
     location: str = ""
-    site_names: List[str] = ["linkedin", "indeed", "glassdoor", "google"]
+    # Checked for India (Sep 2026): Naukri requires a reCAPTCHA (never bypassed), Glassdoor rejects the location,
+    # Google returns nothing. LinkedIn and Indeed work.
+    site_names: List[str] = ["linkedin", "indeed"]
     results_wanted: int = 20
     hours_old: Optional[int] = 168  # 1 week default
+    country_indeed: str = DEFAULT_COUNTRY
+    # LinkedIn only returns a description when asked (one extra request per job); without it the JD is empty.
+    linkedin_fetch_description: bool = True
 
 
 @app.post("/search")
@@ -24,6 +34,10 @@ def search_jobs(req: SearchRequest):
             location=req.location if req.location else None,
             results_wanted=req.results_wanted,
             hours_old=req.hours_old,
+            country_indeed=req.country_indeed,
+            linkedin_fetch_description=req.linkedin_fetch_description,
+            # HTML keeps paragraphs and lists; the backend normalizer turns it into clean plain text.
+            description_format="html",
         )
         result = []
         for _, row in jobs_df.iterrows():

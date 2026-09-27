@@ -43,7 +43,8 @@ public class JobSpyProvider implements JobProvider {
     public JobBatch search(JobQuery query, String cursor) {
         if (!isEnabled()) return new JobBatch(List.of(), null);
         try {
-            String location = (query.locations() == null || query.locations().isEmpty()) ? "" : query.locations().get(0);
+            String location = (query.locations() == null || query.locations().isEmpty() || query.locations().get(0).isBlank())
+                    ? (config.getDefaultLocation() == null ? "" : config.getDefaultLocation()) : query.locations().get(0);
             String keywords = ((query.keywords() == null ? "" : query.keywords()) + " " +
                                String.join(" ", query.roles() == null ? List.of() : query.roles())).trim();
 
@@ -53,6 +54,7 @@ public class JobSpyProvider implements JobProvider {
             body.put("results_wanted", config.getResultsWanted());
             body.put("hours_old", config.getHoursOld());
             body.set("site_names", mapper.valueToTree(config.getSiteNames()));
+            if (config.getCountry() != null && !config.getCountry().isBlank()) body.put("country_indeed", config.getCountry());
 
             JsonNode root = http.post(config.getServiceUrl() + "/search", body);
 
