@@ -58,6 +58,27 @@ public class CandidateProfile {
     @Column(name = "linkedin_url", length = 500)
     private String linkedinUrl;
 
+    @Column(name = "headline", length = 200)
+    private String headline;
+
+    @Column(name = "location", length = 200)
+    private String location;
+
+    @Column(name = "github_url", length = 500)
+    private String githubUrl;
+
+    @Column(name = "website_url", length = 500)
+    private String websiteUrl;
+
+    public String getHeadline() { return headline; }
+    public void setHeadline(String headline) { this.headline = headline; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+    public String getGithubUrl() { return githubUrl; }
+    public void setGithubUrl(String githubUrl) { this.githubUrl = githubUrl; }
+    public String getWebsiteUrl() { return websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
 

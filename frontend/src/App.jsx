@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import CookieBanner from './components/CookieBanner'
 
 const Login = lazy(() => import('./pages/Login'))
@@ -19,6 +20,8 @@ const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
+const Support = lazy(() => import('./pages/Support'))
+const Admin = lazy(() => import('./pages/Admin'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 
@@ -50,6 +53,8 @@ export default function App() {
       <Route path="/discovery" element={<ProtectedRoute><Discovery /></ProtectedRoute>} />
       <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+      <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<NotFound />} />

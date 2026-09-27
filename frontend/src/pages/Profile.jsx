@@ -2,6 +2,8 @@ import React, { useContext } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, CalendarClock, CheckCircle2, Link2, Loader2, LogOut, Sparkles, Unlink, X } from 'lucide-react'
 import Layout from '../components/Layout'
+import AccountSettings from '../components/AccountSettings'
+import Avatar from '../components/Avatar'
 import { AuthContext } from '../context/AuthContext'
 import { beginGmailConnect, disconnectGmail, getGmailReviewQueue, getGmailStatus, reviewGmailEmail, syncGmail } from '../api/gmail'
 import { confirmInterviewCandidate, dismissInterviewCandidate, getInterviewCandidates, syncCalendar } from '../api/interviews'
@@ -61,11 +63,11 @@ export default function Profile() {
 
   return (
     <Layout title="Profile" subtitle="Your account details">
-      <div className="max-w-md bg-surface border border-line rounded-xl2 shadow-card p-6">
+      <div className="max-w-2xl space-y-5">
+      <AccountSettings />
+      <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
         <div className="flex items-center gap-3 mb-6">
-          <span className="h-12 w-12 rounded-full bg-ink text-white flex items-center justify-center font-display text-lg">
-            {name.slice(0, 1).toUpperCase()}
-          </span>
+          <Avatar className="h-12 w-12 text-lg" />
           <div>
             <div className="font-display text-lg text-ink">{name}</div>
             {email && <div className="text-sm text-muted">{email}</div>}
@@ -121,6 +123,7 @@ export default function Profile() {
         >
           <LogOut size={15} /> Log out
         </button>
+      </div>
       </div>
     </Layout>
   )

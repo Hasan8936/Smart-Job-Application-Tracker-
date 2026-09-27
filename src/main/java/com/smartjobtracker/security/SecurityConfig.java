@@ -23,6 +23,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 @Configuration
+// Enables @PreAuthorize on admin services (defence in depth behind the /api/admin/** matcher).
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
@@ -74,6 +76,7 @@ public class SecurityConfig {
                         // isn't configured yet) Spring forwards to /error, and without this the
                         // unauthenticated forward turns a 404 into a confusing 403 Access Denied.
                         .requestMatchers("/api/auth/**", "/api/gmail/callback", "/api/google-calendar/callback", "/api/notifications/webhook", "/api/whatsapp/webhook", "/oauth2/**", "/login/**", "/error", "/api/health", "/actuator/health", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

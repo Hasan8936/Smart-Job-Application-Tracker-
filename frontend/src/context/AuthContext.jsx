@@ -45,13 +45,21 @@ export function AuthProvider({ children }){
     return api.post('/auth/register', { name, email, password })
   }
 
+  /** Reload /users/me after profile changes (name, photo, password) so the sidebar and pages stay in sync. */
+  const refreshProfile = async () => {
+    const token = getToken()
+    if (!token) return
+    const res = await api.get("/users/me")
+    setUser({ token, profile: res.data })
+  }
+
   const logout = () => {
     clearToken()
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithToken, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, register, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

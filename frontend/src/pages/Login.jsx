@@ -34,6 +34,8 @@ export default function Login() {
     } else if (code.startsWith('google-login-failed-')) {
       const status = code.replace('google-login-failed-', '')
       setError(`Signed in with Google, but loading your account failed (server responded ${status}). Please try again.`)
+    } else if (code === 'account-suspended') {
+      setError('Your account has been suspended. Contact support if you think this is a mistake.')
     } else if (code === 'google-login-failed') {
       setError('Google sign-in did not complete. Please try again.')
     }
@@ -49,7 +51,9 @@ export default function Login() {
       const dest = location.state?.from?.pathname || '/dashboard'
       nav(dest)
     } catch (err) {
-      setError('That email and password combination didn\'t work.')
+      setError(err.response?.status === 403
+        ? (err.response?.data?.message || 'Your account has been suspended. Contact support if you think this is a mistake.')
+        : 'That email and password combination didn\'t work.')
     } finally {
       setLoading(false)
     }

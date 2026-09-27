@@ -19,11 +19,14 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final com.smartjobtracker.service.SuperAdminBootstrap superAdmin;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+                          com.smartjobtracker.service.SuperAdminBootstrap superAdmin) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.superAdmin = superAdmin;
     }
 
     @PostMapping("/register")
@@ -45,6 +48,13 @@ public class AuthController {
             if (!passwordEncoder.matches(req.getPassword(), u.getPasswordHash())) {
                 return ResponseEntity.status(401).body("Invalid credentials");
             }
+            if (u.isSuspended()) {
+                return ResponseEntity.status(403).contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .body(com.smartjobtracker.security.JwtFilter.SUSPENDED_BODY);
+            }
+            superAdmin.promoteIfConfigured(u);
+            u.setLastLoginAt(java.time.OffsetDateTime.now());
+            userRepository.save(u);
             String token = jwtUtil.generateToken(u.getEmail());
             return ResponseEntity.ok(new AuthResponse(token));
         }).orElse(ResponseEntity.status(401).body("Invalid credentials"));

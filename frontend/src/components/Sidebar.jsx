@@ -1,8 +1,9 @@
 import React, { useContext } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, FileEdit, GraduationCap, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, FileEdit, GraduationCap, ChevronsLeft, ChevronsRight, LifeBuoy, ShieldCheck } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
+import Avatar from './Avatar'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid, end: true },
@@ -12,7 +13,10 @@ const links = [
   { to: '/interview-prep', label: 'Interview prep', icon: GraduationCap },
   { to: '/discovery', label: 'Discover jobs', icon: Search },
   { to: '/reminders', label: 'Reminders', icon: BellRing },
+  { to: '/support', label: 'Help & support', icon: LifeBuoy },
 ]
+// Only rendered for role=ADMIN; the API enforces this independently.
+const adminLink = { to: '/admin', label: 'Admin', icon: ShieldCheck }
 
 function NavPill({ to, end, onClick, collapsed, children: label, Icon }) {
   return (
@@ -81,7 +85,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
       </div>
 
       <nav className={`flex-1 py-5 space-y-1 ${isCollapsed ? 'px-2' : 'px-3'}`}>
-        {links.map(({ to, label, icon: Icon, end }) => (
+        {(user?.profile?.role === 'ADMIN' ? [...links, adminLink] : links).map(({ to, label, icon: Icon, end }) => (
           <NavPill key={to} to={to} end={end} onClick={onNavigate} collapsed={isCollapsed} Icon={Icon}>
             {label}
           </NavPill>
@@ -98,9 +102,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
             } ${isActive ? 'bg-accent-soft text-accent' : 'text-ink-soft hover:text-ink hover:bg-mist'}`
           }
         >
-          <span className="h-6 w-6 shrink-0 rounded-full bg-accent flex items-center justify-center text-[11px] font-semibold text-white">
-            {name.slice(0, 1).toUpperCase()}
-          </span>
+          <Avatar className="h-6 w-6 text-[11px]" />
           {isCollapsed ? (
             <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-ink text-white text-xs font-medium px-2.5 py-1.5 opacity-0 scale-95 origin-left transition-all group-hover:opacity-100 group-hover:scale-100 z-50">
               {name}

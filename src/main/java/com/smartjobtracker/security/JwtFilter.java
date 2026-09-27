@@ -15,6 +15,9 @@ import java.io.IOException;
 
 public class JwtFilter extends OncePerRequestFilter {
 
+    public static final String SUSPENDED_BODY =
+            "{\"error\":\"account_suspended\",\"message\":\"Your account has been suspended. Contact support if you think this is a mistake.\"}";
+
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
@@ -31,6 +34,13 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 String username = jwtUtil.validateAndGetSubject(token);
                 UserDetails ud = userDetailsService.loadUserByUsername(username);
+                if (!ud.isEnabled()) {
+                    // Suspended account: refuse every API call with a clear reason instead of a generic 403.
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write(SUSPENDED_BODY);
+                    return;
+                }
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception ex) {

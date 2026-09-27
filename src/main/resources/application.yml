@@ -11,6 +11,11 @@ server:
     min-response-size: 1024
 
 spring:
+  servlet:
+    multipart:
+      # Spring's default is 1MB. Profile photos are capped at 2MB in ProfilePhotoProcessor; resumes may be larger.
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:5MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:6MB}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smart_job_tracker}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -54,6 +59,11 @@ spring:
     baseline-on-migrate: true
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  # Email of an existing account to promote to ADMIN at startup/login. Unset = no admin. Never a password.
+  super-admin-email: ${SUPER_ADMIN_EMAIL:}
+  support:
+    # Max tickets a user may open per rolling hour.
+    max-tickets-per-hour: ${SUPPORT_MAX_TICKETS_PER_HOUR:10}
   anthropic:
     api-key: ${ANTHROPIC_API_KEY:}
     model: ${ANTHROPIC_MODEL:claude-sonnet-4-20250514}

@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -26,7 +25,9 @@ public class UserService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPasswordHash())
-                .authorities(Collections.emptyList())
+                // Role and suspension are read from the database on every request (JwtFilter calls this each time).
+                .roles(user.getRole() == null ? "USER" : user.getRole())
+                .disabled(user.isSuspended())
                 .build();
     }
 }

@@ -31,6 +31,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private static final Logger log = LoggerFactory.getLogger(OAuth2LoginSuccessHandler.class);
 
     private final UserRepository userRepository;
+    private final com.smartjobtracker.service.SuperAdminBootstrap superAdmin;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final String frontendUrl;
@@ -45,7 +46,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl,
             org.springframework.beans.factory.ObjectProvider<OAuth2AuthorizedClientService> authorizedClientService,
             org.springframework.beans.factory.ObjectProvider<GmailService> gmailService,
-            org.springframework.beans.factory.ObjectProvider<GoogleCalendarService> calendarService) {
+            org.springframework.beans.factory.ObjectProvider<GoogleCalendarService> calendarService,
+            com.smartjobtracker.service.SuperAdminBootstrap superAdmin) {
+        this.superAdmin = superAdmin;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -73,8 +76,18 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 created.setEmail(email);
                 created.setName(googleUser.getAttribute("name"));
                 created.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+                created.setPasswordSet(false); // random hash: the user never chose a password
                 return userRepository.save(created);
             });
+
+            if (user.isSuspended()) {
+                log.info("Blocked Google sign-in for suspended userId={}", user.getId());
+                getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/login?error=account-suspended");
+                return;
+            }
+            superAdmin.promoteIfConfigured(user);
+            user.setLastLoginAt(java.time.OffsetDateTime.now());
+            user = userRepository.save(user);
 
             // Store Gmail + Calendar tokens obtained during this sign-in authorization.
             // Wrapped in its own try-catch so a token storage failure never blocks sign-in.
