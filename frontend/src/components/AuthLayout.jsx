@@ -59,13 +59,15 @@ export default function AuthLayout({ heading, copy, children, id }) {
             />
 
             <div className="relative">
-              {/* Watermark monogram */}
-              <div
-                className="font-display font-black leading-none select-none mb-4"
-                style={{ fontSize: 84, color: 'rgba(255,255,255,0.05)', letterSpacing: '-0.04em' }}
-              >
-                SJT
-              </div>
+              {/* Watermark monogram — intentionally omitted on the login artwork. */}
+              {id !== 'login' && (
+                <div
+                  className="font-display font-black leading-none select-none mb-4"
+                  style={{ fontSize: 84, color: 'rgba(255,255,255,0.05)', letterSpacing: '-0.04em' }}
+                >
+                  SJT
+                </div>
+              )}
 
               <p
                 className="font-display font-bold leading-[0.9] text-white mb-5"
