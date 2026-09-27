@@ -20,6 +20,8 @@ public class JobApplication {
     @Column(name = "role_title")
     private String roleTitle;
 
+    // TEXT in V1__init.sql; without this H2 (tests/local) creates VARCHAR(255) and full posting descriptions fail.
+    @Column(name = "job_description", columnDefinition = "TEXT")
     private String jobDescription;
 
     @Enumerated(EnumType.STRING)

@@ -6,6 +6,7 @@ import {
 import Layout from '../components/Layout'
 import JobCard from '../components/JobCard'
 import JobDetails, { AutoApplyComingSoon } from '../components/JobDetails'
+import AppliedNotice from '../components/AppliedNotice'
 import {
   autoApply, checkAutoApplyConfigured, discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
   getSyncProgress, listJobDocuments, listJobs, listNewJobs, markJobApplied,
@@ -76,6 +77,7 @@ export default function Discovery() {
   const [sessionSince, setSessionSince] = useState(null)
   const [skyvernConfigured, setSkyvernConfigured] = useState(null) // null = loading, true/false = known
   const [autoApplyInfo, setAutoApplyInfo] = useState(false)
+  const [appliedNotice, setAppliedNotice] = useState(null)
 
   const loadRequest = useRef(null)
   useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew, indiaOnly])
@@ -210,7 +212,10 @@ export default function Discovery() {
 
   async function action(id, value) {
     try {
-      if (value === 'APPLIED') await markJobApplied(id); else await setJobState(id, value)
+      if (value === 'APPLIED') {
+        await markJobApplied(id)
+        setAppliedNotice({ company: jobs.content.find(job => job.id === id)?.company })
+      } else await setJobState(id, value)
       setActions(current => ({ ...current, [id]: value }))
     } catch { setError('Could not update this job action.') }
   }
@@ -525,6 +530,7 @@ export default function Discovery() {
         autoApplyAvailable={skyvernConfigured === true}
       />
       <AutoApplyComingSoon open={autoApplyInfo} onClose={() => setAutoApplyInfo(false)} />
+      <AppliedNotice notice={appliedNotice} onClose={() => setAppliedNotice(null)} />
     </Layout>
   )
 }

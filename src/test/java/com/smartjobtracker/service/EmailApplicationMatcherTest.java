@@ -34,6 +34,43 @@ class EmailApplicationMatcherTest {
         assertNull(matcher.match(List.of(first, second), classification("Acme", "Unknown", null, 0.99), 0.80));
     }
 
+    @Test
+    void singleApplicationAtCompanyMatchesWhenRoleIsMissing() {
+        JobApplication stripe = application(20L, "Stripe", "Backend Engineer");
+        JobApplication other = application(21L, "Acme", "Analyst");
+        EmailApplicationMatcher.MatchResult match = matcher.match(List.of(stripe, other), classification("Stripe", null, null, 0.9), null, 0.80);
+        assertEquals(20L, match.application().getId());
+        assertEquals("COMPANY_ONLY", match.method());
+    }
+
+    @Test
+    void companyNamedInEmailTextMatchesWhenClassifierFoundNoCompany() {
+        JobApplication stripe = application(22L, "Stripe", "Backend Engineer");
+        JobApplication acme = application(23L, "Acme Corp", "Analyst");
+        String email = "Stripe Recruiting <no-reply@stripe.com> Thank you for applying to Stripe! We received your application.";
+        EmailApplicationMatcher.MatchResult match = matcher.match(List.of(stripe, acme), classification(null, null, null, 0.65), email, 0.80);
+        assertEquals(22L, match.application().getId());
+        assertEquals("COMPANY_IN_EMAIL", match.method());
+    }
+
+    @Test
+    void emailTextMatchStaysManualWhenAmbiguousOrNameTooShort() {
+        JobApplication a = application(24L, "Stripe", "Engineer");
+        JobApplication b = application(25L, "Stripe", "Analyst");
+        assertNull(matcher.match(List.of(a, b), classification(null, null, null, 0.9), "Update from Stripe", 0.80));
+        JobApplication shortName = application(26L, "HP", "Engineer");
+        assertNull(matcher.match(List.of(shortName), classification(null, null, null, 0.9), "Your shipping update", 0.80));
+        JobApplication google = application(27L, "Google", "SWE");
+        JobApplication meta = application(28L, "Meta", "SWE");
+        assertNull(matcher.match(List.of(google, meta), classification(null, null, null, 0.9), "Google vs Meta offers", 0.80));
+    }
+
+    @Test
+    void unknownApplicationReferenceIsNeverGuessed() {
+        JobApplication stripe = application(29L, "Stripe", "Engineer");
+        assertNull(matcher.match(List.of(stripe), classification("Stripe", "Engineer", "999", 0.99), "Stripe", 0.80));
+    }
+
     private JobApplication application(Long id, String company, String role) {
         JobApplication application = new JobApplication(); application.setId(id); application.setCompanyName(company); application.setRoleTitle(role); return application;
     }

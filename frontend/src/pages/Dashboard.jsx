@@ -14,7 +14,8 @@ import ApplicationDrawer from '../components/ApplicationDrawer'
 import ScoreRing from '../components/ScoreRing'
 import TopCompanies from '../components/TopCompanies'
 import { AuthContext } from '../context/AuthContext'
-import { listJobs, readJobActions } from '../api/jobs'
+import { listJobs, readJobActions, markJobApplied, setJobState } from '../api/jobs'
+import AppliedNotice from '../components/AppliedNotice'
 import { getMatchingResume } from '../api/resumeBuilder'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
@@ -153,6 +154,8 @@ export default function Dashboard() {
   const [jobError, setJobError] = useState('')
   const [jobActions, setJobActions] = useState(readJobActions())
   const [selectedJob, setSelectedJob] = useState(null)
+  const [appliedNotice, setAppliedNotice] = useState(null)
+  const [jobActionError, setJobActionError] = useState('')
 
   useEffect(() => {
     // Fetch applications and jobs in parallel — neither blocks the other
@@ -206,7 +209,21 @@ export default function Dashboard() {
     }
   }
 
-  function updateJobAction(id, action) {
+  // Persists the action on the server (Mark applied creates the application) before updating the card.
+  async function updateJobAction(id, action) {
+    try {
+      if (action === 'APPLIED') {
+        await markJobApplied(id)
+        setAppliedNotice({ company: jobs.find((job) => job.id === id)?.company })
+        fetchApps()
+      } else if (action === 'SAVED' || action === 'BOOKMARKED') {
+        await setJobState(id, action)
+      }
+      setJobActionError('')
+    } catch {
+      setJobActionError('Could not update this job. Try again.')
+      return
+    }
     setJobActions((current) => {
       const next = { ...current }
       if (action) next[id] = action
@@ -369,6 +386,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-3">
+          {jobActionError && <p className="text-sm text-status-rejected">{jobActionError}</p>}
           {jobs[0]?.matchScore != null && (
             <p className="text-xs text-muted mb-3">
               Top match: {jobs[0].title} · {Math.round(jobs[0].matchScore)}%
@@ -395,6 +413,7 @@ export default function Dashboard() {
         isEditing={false}
       />
       <JobDetails job={selectedJob} onClose={() => setSelectedJob(null)} />
+      <AppliedNotice notice={appliedNotice} onClose={() => setAppliedNotice(null)} />
     </Layout>
   )
 }
