@@ -7,6 +7,8 @@ import com.smartjobtracker.model.Resume;
 import com.smartjobtracker.model.User;
 import com.smartjobtracker.repository.ResumeRepository;
 import com.smartjobtracker.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,8 @@ import java.util.stream.Collectors;
 @Service
 public class ResumeBuilderService {
 
-    private final ResumeTailoringService tailoringService;
+    private static final Logger log = LoggerFactory.getLogger(ResumeBuilderService.class);
+
     private final ResumeService resumeService;
     private final CandidateProfileService profileService;
     private final UserRepository userRepository;
@@ -28,16 +31,16 @@ public class ResumeBuilderService {
     private final ResumeProfileExtractor profileExtractor;
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
+    private final ResumeTemplateRenderer templateRenderer;
 
-    public ResumeBuilderService(ResumeTailoringService tailoringService,
-                                ResumeService resumeService,
+    public ResumeBuilderService(ResumeService resumeService,
                                 CandidateProfileService profileService,
                                 UserRepository userRepository,
                                 ResumeRepository resumeRepository,
                                 ResumeProfileExtractor profileExtractor,
                                 GeminiClient geminiClient,
-                                ObjectMapper objectMapper) {
-        this.tailoringService = tailoringService;
+                                ObjectMapper objectMapper,
+                                ResumeTemplateRenderer templateRenderer) {
         this.resumeService = resumeService;
         this.profileService = profileService;
         this.userRepository = userRepository;
@@ -45,6 +48,7 @@ public class ResumeBuilderService {
         this.profileExtractor = profileExtractor;
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
+        this.templateRenderer = templateRenderer;
     }
 
     /** Returns profile-based pre-fill data so the form can start populated. */
@@ -69,28 +73,48 @@ public class ResumeBuilderService {
         return result;
     }
 
-    /** Converts builder form data to formatted resume text, renders PDF, saves Resume entity. */
+    /** Lists the available resume templates for the builder's picker. */
+    public List<Map<String, String>> templates() {
+        List<Map<String, String>> out = new ArrayList<>();
+        for (ResumeTemplate t : ResumeTemplate.values()) {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("id", t.id());
+            m.put("name", t.displayName());
+            m.put("description", t.description());
+            if (t.attribution() != null) m.put("attribution", t.attribution());
+            out.add(m);
+        }
+        return out;
+    }
+
+    /** Renders the chosen template from builder form data, saves the plain-text version as a Resume, returns the PDF. */
     @Transactional
     public Map<String, Object> export(Long userId, ResumeBuilderDto dto) {
+        ResumeTemplate template = templateOf(dto);
         String content = toResumeText(dto);
-        byte[] pdf = tailoringService.renderContent(content);
+        byte[] pdf = templateRenderer.renderPdf(dto, template);
         String role = dto.getTargetRole() == null || dto.getTargetRole().isBlank()
                 ? "resume" : dto.getTargetRole().toLowerCase().replace(" ", "-");
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String fileName = role + "-resume-" + date + ".pdf";
         Resume saved = resumeService.saveFromContent(userId, fileName, content);
+        log.info("Resume builder export: userId={} resumeId={} template={}", userId, saved.getId(), template.id());
         return Map.of("resumeId", saved.getId(), "fileName", fileName, "pdf", pdf);
     }
 
     /** Generates PDF bytes from builder form data without saving. */
     public byte[] renderOnly(ResumeBuilderDto dto) {
-        return tailoringService.renderContent(toResumeText(dto));
+        return templateRenderer.renderPdf(dto, templateOf(dto));
     }
 
-    /** Generates a LaTeX (.tex) source file for the resume, suitable for Overleaf. */
+    /** Generates a LaTeX (.tex) source file in the chosen template, ready to compile on Overleaf. */
     public byte[] exportLatex(ResumeBuilderDto dto) {
-        String latex = tailoringService.toLatex(toResumeText(dto));
-        return latex.getBytes(StandardCharsets.UTF_8);
+        return templateRenderer.renderLatex(dto, templateOf(dto)).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private ResumeTemplate templateOf(ResumeBuilderDto dto) {
+        return ResumeTemplate.fromId(dto.getTemplate())
+                .orElseThrow(() -> new IllegalArgumentException("Unknown resume template: " + dto.getTemplate()));
     }
 
     /** Parses an existing saved resume into structured builder form data for the import feature. */

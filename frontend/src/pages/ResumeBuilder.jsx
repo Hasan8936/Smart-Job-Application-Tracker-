@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import {
-  getPrefill, exportResume, importResume, aiEnhanceResume,
+  getPrefill, getTemplates, exportResume, previewResume, importResume, aiEnhanceResume,
   exportLatex, listResumes, uploadResume
 } from '../api/resumeBuilder'
 
@@ -940,7 +940,43 @@ function Step2({ form, setForm, suggestions, onNext, onBack }) {
 
 // ─── Step 3: Review & Export ──────────────────────────────────────────────────
 
-function Step3({ form, onBack, onExport, onExportLatex, onEnhance, exporting, exportingLatex, enhancing, exportDone }) {
+// Shown until GET /resume/build/templates answers (or if it fails).
+const FALLBACK_TEMPLATES = [
+  { id: 'jakes', name: "Jake's Resume", description: 'Classic single-column layout with centered name and ruled sections.' },
+  { id: 'sb2nov', name: 'sb2nov Classic', description: 'Bold company, italic role, right-aligned dates, sans-serif type.' },
+  { id: 'compact', name: 'Minimal Compact', description: 'Denser one-line entries and tighter margins to fit more on one page.' },
+]
+
+function TemplatePicker({ value, onChange }) {
+  const [templates, setTemplates] = useState(FALLBACK_TEMPLATES)
+  useEffect(() => {
+    getTemplates().then(t => { if (Array.isArray(t) && t.length) setTemplates(t) }).catch(() => {})
+  }, [])
+  const selected = templates.find(t => t.id === value)
+
+  return (
+    <fieldset>
+      <legend className="text-sm font-semibold text-ink mb-1">Template</legend>
+      <p className="text-xs text-ink-soft mb-3">
+        All templates are single-column text with standard headings and fonts, so applicant tracking systems can read them.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
+        {templates.map(t => (
+          <label key={t.id}
+            className={`cursor-pointer rounded-xl border p-3 text-left transition-colors ${value === t.id ? 'border-accent bg-accent/5' : 'border-line hover:border-accent/40'}`}>
+            <input type="radio" name="resume-template" value={t.id} checked={value === t.id}
+              onChange={() => onChange(t.id)} className="sr-only" />
+            <span className="block text-sm font-medium text-ink">{t.name}</span>
+            <span className="block text-xs text-ink-soft mt-1 leading-snug">{t.description}</span>
+          </label>
+        ))}
+      </div>
+      {selected?.attribution && <p className="text-[11px] text-ink-soft mt-2">{selected.attribution}</p>}
+    </fieldset>
+  )
+}
+
+function Step3({ form, setForm, onBack, onExport, onExportLatex, onEnhance, onPreview, previewUrl, previewing, exporting, exportingLatex, enhancing, exportDone }) {
   const pi = form.personalInfo
   const checks = [
     { ok: !!pi.name?.trim(), label: 'Full name', req: true },
@@ -997,12 +1033,30 @@ function Step3({ form, onBack, onExport, onExportLatex, onEnhance, exporting, ex
         {enhancing ? 'Analyzing with AI…' : 'Enhance with AI (Gemini)'}
       </button>
 
-      {/* Live text preview */}
+      <TemplatePicker value={form.template} onChange={id => setForm(f => ({ ...f, template: id }))} />
+
+      {/* Real PDF preview of the chosen template; plain-text outline until one is generated */}
       <div>
-        <h3 className="text-sm font-semibold text-ink mb-2">Preview</h3>
-        <div className="border border-line rounded-xl bg-surface p-4 font-mono text-xs text-ink-soft leading-relaxed max-h-72 overflow-y-auto whitespace-pre-wrap">
-          {previewLines.join('\n') || 'Fill in some details to see your resume preview…'}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-ink">Preview</h3>
+          <button type="button" onClick={onPreview} disabled={previewing}
+            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline disabled:opacity-50">
+            {previewing ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
+            {previewUrl ? 'Refresh PDF preview' : 'Preview PDF'}
+          </button>
         </div>
+        {previewUrl ? (
+          <>
+            <iframe title="Resume PDF preview" src={previewUrl} className="w-full h-[620px] rounded-xl border border-line bg-white" />
+            <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-block mt-1 text-xs text-accent hover:underline">
+              Open preview in a new tab
+            </a>
+          </>
+        ) : (
+          <div className="border border-line rounded-xl bg-surface p-4 font-mono text-xs text-ink-soft leading-relaxed max-h-72 overflow-y-auto whitespace-pre-wrap">
+            {previewLines.join('\n') || 'Fill in some details to see your resume preview…'}
+          </div>
+        )}
       </div>
 
       {exportDone && (
@@ -1034,8 +1088,8 @@ function Step3({ form, onBack, onExport, onExportLatex, onEnhance, exporting, ex
         </p>
       )}
       <p className="text-xs text-ink-soft text-center">
-        The <strong>.tex</strong> button downloads a LaTeX source file you can upload directly to{' '}
-        <span className="text-accent">Overleaf</span> for professional typesetting.
+        The <strong>.tex</strong> button downloads the same template as LaTeX source you can upload to{' '}
+        <span className="text-accent">Overleaf</span> and compile with pdfLaTeX.
       </p>
     </div>
   )
@@ -1054,8 +1108,11 @@ export default function ResumeBuilder() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showLinksModal, setShowLinksModal] = useState(false)
   const [enhancements, setEnhancements] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewing, setPreviewing] = useState(false)
 
   const [form, setForm] = useState({
+    template: 'jakes',
     goal: '',
     targetRole: '',
     personalInfo: { name: '', email: '', phone: '', location: '', linkedin: '', github: '', website: '', leetcode: '' },
@@ -1147,16 +1204,7 @@ export default function ResumeBuilder() {
     setExporting(true)
     setExportDone(false)
     try {
-      const { blob } = await exportResume({
-        goal: form.goal,
-        targetRole: form.targetRole,
-        personalInfo: form.personalInfo,
-        summary: form.summary,
-        experience: form.experience,
-        projects: form.projects,
-        education: form.education,
-        skills: form.skills,
-      })
+      const { blob } = await exportResume(buildDto())
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -1171,19 +1219,28 @@ export default function ResumeBuilder() {
     }
   }
 
+  // Release the previous preview blob whenever it is replaced or the page unmounts.
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }, [previewUrl])
+
+  // A preview goes stale when the template changes; drop it so the user regenerates.
+  useEffect(() => { setPreviewUrl(null) }, [form.template])
+
+  const handlePreview = async () => {
+    setPreviewing(true)
+    try {
+      const blob = await previewResume(buildDto())
+      setPreviewUrl(URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })))
+    } catch (err) {
+      alert('Preview failed. Please try again.')
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
   const handleExportLatex = async () => {
     setExportingLatex(true)
     try {
-      const blob = await exportLatex({
-        goal: form.goal,
-        targetRole: form.targetRole,
-        personalInfo: form.personalInfo,
-        summary: form.summary,
-        experience: form.experience,
-        projects: form.projects,
-        education: form.education,
-        skills: form.skills,
-      })
+      const blob = await exportLatex(buildDto())
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -1200,16 +1257,7 @@ export default function ResumeBuilder() {
   const handleEnhance = async () => {
     setEnhancing(true)
     try {
-      const result = await aiEnhanceResume({
-        goal: form.goal,
-        targetRole: form.targetRole,
-        personalInfo: form.personalInfo,
-        summary: form.summary,
-        experience: form.experience,
-        projects: form.projects,
-        education: form.education,
-        skills: form.skills,
-      })
+      const result = await aiEnhanceResume(buildDto())
       setEnhancements(result)
     } catch (err) {
       alert('AI enhancement unavailable: ' + (err.response?.data?.error || 'AI is not configured on this server.'))
@@ -1240,6 +1288,7 @@ export default function ResumeBuilder() {
   }
 
   const buildDto = () => ({
+    template: form.template,
     goal: form.goal, targetRole: form.targetRole,
     personalInfo: form.personalInfo, summary: form.summary,
     experience: form.experience, projects: form.projects,
@@ -1280,6 +1329,10 @@ export default function ResumeBuilder() {
           {step === 3 && (
             <Step3
               form={form}
+              setForm={setForm}
+              onPreview={handlePreview}
+              previewUrl={previewUrl}
+              previewing={previewing}
               onBack={() => goTo(2)}
               onExport={handleExport}
               onExportLatex={handleExportLatex}

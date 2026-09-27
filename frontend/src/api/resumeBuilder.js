@@ -1,5 +1,7 @@
 import api from './axios'
 
+export const getTemplates = () => api.get('/resume/build/templates').then(r => r.data)
+
 export const getPrefill = () => api.get('/resume/build/prefill').then(r => r.data)
 
 export const exportResume = async (dto) => {

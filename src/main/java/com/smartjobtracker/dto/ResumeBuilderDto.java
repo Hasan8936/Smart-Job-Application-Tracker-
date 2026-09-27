@@ -1,9 +1,14 @@
 package com.smartjobtracker.dto;
 
+import jakarta.validation.constraints.Pattern;
+
 import java.util.List;
 
 public class ResumeBuilderDto {
 
+    /** Resume layout id (see ResumeTemplate); optional, defaults to Jake's Resume. */
+    @Pattern(regexp = "(?i)jakes|sb2nov|compact", message = "must be one of: jakes, sb2nov, compact")
+    private String template;
     private String goal;
     private String targetRole;
     private PersonalInfo personalInfo;
@@ -28,6 +33,8 @@ public class ResumeBuilderDto {
     public record Skills(List<String> languages, List<String> frameworks,
                          List<String> tools, List<String> other) {}
 
+    public String getTemplate() { return template; }
+    public void setTemplate(String template) { this.template = template; }
     public String getGoal() { return goal; }
     public void setGoal(String goal) { this.goal = goal; }
     public String getTargetRole() { return targetRole; }

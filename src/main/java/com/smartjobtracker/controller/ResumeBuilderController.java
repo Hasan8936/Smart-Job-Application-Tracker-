@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -42,9 +43,16 @@ public class ResumeBuilderController {
         return ResponseEntity.ok(builderService.prefill(uid));
     }
 
+    /** Lists the resume templates the builder can render (id, name, description, attribution). */
+    @GetMapping("/templates")
+    public ResponseEntity<?> templates() {
+        if (currentUserId() == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(builderService.templates());
+    }
+
     /** Generates PDF, saves as a Resume in the user's account, returns PDF bytes. */
     @PostMapping("/export")
-    public ResponseEntity<?> export(@RequestBody ResumeBuilderDto dto) {
+    public ResponseEntity<?> export(@Valid @RequestBody ResumeBuilderDto dto) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         var result = builderService.export(uid, dto);
@@ -60,7 +68,7 @@ public class ResumeBuilderController {
 
     /** Renders a PDF preview without saving. */
     @PostMapping("/preview")
-    public ResponseEntity<byte[]> preview(@RequestBody ResumeBuilderDto dto) {
+    public ResponseEntity<byte[]> preview(@Valid @RequestBody ResumeBuilderDto dto) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         byte[] pdf = builderService.renderOnly(dto);
@@ -84,7 +92,7 @@ public class ResumeBuilderController {
 
     /** Calls Gemini to improve bullets, suggest ATS keywords, and score the resume. */
     @PostMapping("/ai-enhance")
-    public ResponseEntity<?> aiEnhance(@RequestBody ResumeBuilderDto dto) {
+    public ResponseEntity<?> aiEnhance(@Valid @RequestBody ResumeBuilderDto dto) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         try {
@@ -96,7 +104,7 @@ public class ResumeBuilderController {
 
     /** Returns a LaTeX (.tex) source file for the resume, ready to upload to Overleaf. */
     @PostMapping("/export-latex")
-    public ResponseEntity<byte[]> exportLatex(@RequestBody ResumeBuilderDto dto) {
+    public ResponseEntity<byte[]> exportLatex(@Valid @RequestBody ResumeBuilderDto dto) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         byte[] latex = builderService.exportLatex(dto);

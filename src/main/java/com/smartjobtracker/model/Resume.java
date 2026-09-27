@@ -16,6 +16,8 @@ public class Resume {
     @Column(name = "file_name")
     private String fileName;
 
+    // Matches V1 (TEXT); without this the H2 test schema is VARCHAR(255) and longer resumes fail to save.
+    @Column(name = "extracted_text", columnDefinition = "text")
     private String extractedText;
 
     private OffsetDateTime uploadedAt = OffsetDateTime.now();
