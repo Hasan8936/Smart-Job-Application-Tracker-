@@ -1,10 +1,13 @@
 import React, { useState, useContext } from 'react'
+import { usePageMeta } from '../lib/pageMeta'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import AuthLayout from '../components/AuthLayout'
+import GoogleAuthButton from '../components/GoogleAuthButton'
 
 export default function Register() {
+  usePageMeta({ title: 'Create a free account – Smart Job Tracker', description: 'Create a free Smart Job Tracker account with email or Google. Track applications, match your resume to jobs, and get interview reminders.', path: '/register' })
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -88,6 +91,7 @@ export default function Register() {
           {loading ? 'Creating account…' : 'Create account'} {!loading && <ArrowRight size={15} />}
         </button>
       </form>
+      <GoogleAuthButton />
       <p className="mt-6 text-sm text-muted text-center">
         Already have an account?{' '}
         <Link to="/login" className="text-accent font-medium hover:text-accent-dark">Sign in</Link>

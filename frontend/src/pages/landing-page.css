@@ -294,7 +294,7 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 16px; color: #fff; margin-bottom: 14px;
 }
-.lp-step-card h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.lp-step-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
 .lp-step-card p  { font-size: 13px; color: var(--t1); line-height: 1.65; }
 
 /* ── Stats ───────────────────────────────────────────────────── */
@@ -312,6 +312,24 @@
 }
 .lp-stat-label { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 5px; }
 .lp-stat-sub   { font-size: 13px; color: var(--t1); }
+
+/* ── FAQ ─────────────────────────────────────────────────────── */
+.lp-faq { padding-bottom: 96px; }
+.lp-faq-list { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+.lp-faq-item {
+  border-radius: 16px; background: var(--gbg); border: 1px solid var(--gb);
+  transition: border-color .2s;
+}
+.lp-faq-item[open], .lp-faq-item:hover { border-color: var(--gb2); }
+.lp-faq-item summary {
+  cursor: pointer; list-style: none; padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.lp-faq-item summary::-webkit-details-marker { display: none; }
+.lp-faq-item summary::after { content: '+'; font-size: 20px; color: var(--t1); flex-shrink: 0; }
+.lp-faq-item[open] summary::after { content: '−'; }
+.lp-faq-item h3 { font-size: 15px; font-weight: 600; color: #fff; }
+.lp-faq-item p { padding: 0 22px 20px; font-size: 14px; color: var(--t1); line-height: 1.7; }
 
 /* ── CTA ─────────────────────────────────────────────────────── */
 .lp-cta { padding-bottom: 90px; }

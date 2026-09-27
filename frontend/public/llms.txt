@@ -1,0 +1,19 @@
+# Smart Job Tracker
+
+> Smart Job Tracker is a free web app for managing a job search: track applications, match your resume to job descriptions, discover jobs, and get interview reminders.
+
+- Application pipeline: track each application through Applied, OA, Interview, Offer, Rejected, or Withdrawn, with full status history.
+- Resume matching: an explainable score combining exact skill matching (required skills weigh more than preferred), semantic similarity, and experience and role relevance. Lists matched and missing skills. The score is an estimate.
+- Job discovery: postings from public company career boards on Greenhouse, Lever, and Ashby, plus other configured sources. Not affiliated with these platforms.
+- Gmail sync (optional): read-only access to detect interview invites, rejections, and status updates. Tokens are encrypted at rest.
+- Reminders: interview and follow-up reminders by email and WhatsApp.
+- AI features only rephrase or re-emphasize information already in the user's resume; they never invent skills or experience.
+- Free to use; sign up with email or Google.
+
+## Pages
+
+- [Home](https://smartjobtracker.indevs.in/): features, how it works, and FAQ
+- [Create an account](https://smartjobtracker.indevs.in/register)
+- [Privacy & Data Policy](https://smartjobtracker.indevs.in/privacy)
+- [Terms & Conditions](https://smartjobtracker.indevs.in/terms)
+- [Source code](https://github.com/Hasan8936/Smart-Job-Application-Tracker-)

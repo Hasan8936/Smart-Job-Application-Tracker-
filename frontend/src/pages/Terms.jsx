@@ -1,6 +1,7 @@
 import React from 'react'
+import { usePageMeta } from '../lib/pageMeta'
 import { Link } from 'react-router-dom'
-import Layout from '../components/Layout'
+import PublicLayout from '../components/PublicLayout'
 
 const LAST_UPDATED = 'September 2026'
 
@@ -14,8 +15,9 @@ function Section({ id, title, children }) {
 }
 
 export default function Terms() {
+  usePageMeta({ title: 'Terms & Conditions – Smart Job Tracker', description: 'The terms for using Smart Job Tracker, including account responsibilities, acceptable use, and AI-generated content.', path: '/terms' })
   return (
-    <Layout>
+    <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-10">
         <header className="mb-10">
           <h1 className="text-3xl font-bold text-ink mb-2">Terms &amp; Conditions</h1>
@@ -153,13 +155,7 @@ export default function Terms() {
             </a>.
           </p>
         </Section>
-
-        <footer className="mt-12 pt-6 border-t border-line text-sm text-muted flex flex-wrap gap-4">
-          <Link to="/" className="hover:text-ink">Home</Link>
-          <Link to="/privacy" className="hover:text-ink">Privacy Policy</Link>
-          <Link to="/login" className="hover:text-ink">Sign in</Link>
-        </footer>
       </div>
-    </Layout>
+    </PublicLayout>
   )
 }

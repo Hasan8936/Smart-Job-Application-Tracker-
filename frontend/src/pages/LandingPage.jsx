@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { usePageMeta, useJsonLd } from '../lib/pageMeta'
 import { Link, useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
 import BrandLogo from '../components/BrandLogo'
@@ -184,7 +185,7 @@ const FEATURES = [
     iconBg: 'linear-gradient(135deg,rgba(124,58,237,.3),rgba(167,139,250,.15))',
     title: 'AI Resume Matching',
     desc: 'Gemini-powered semantic analysis matches your resume to any job description — ranked score, matched keywords, and actionable missing skills.',
-    detail: { bg: 'rgba(124,58,237,.1)', border: 'rgba(124,58,237,.25)', text: '94% avg match accuracy', sub: 'vs. manual keyword scan' },
+    detail: { bg: 'rgba(124,58,237,.1)', border: 'rgba(124,58,237,.25)', text: 'Explainable score', sub: 'Matched and missing skills listed' },
   },
   {
     icon: '📋',
@@ -197,8 +198,8 @@ const FEATURES = [
     icon: '🔔',
     iconBg: 'linear-gradient(135deg,rgba(16,185,129,.2),rgba(56,189,248,.1))',
     title: 'Multi-Channel Reminders',
-    desc: 'Never miss a follow-up. Get interview reminders via Email, WhatsApp, and Telegram — fully customisable timing per application.',
-    chips: ['Email', 'WhatsApp', 'Telegram'],
+    desc: 'Never miss a follow-up. Get interview and follow-up reminders by email and WhatsApp, with timing you set per application.',
+    chips: ['Email', 'WhatsApp'],
   },
   {
     icon: '🔍',
@@ -226,19 +227,38 @@ const FEATURES = [
 const STEPS = [
   { num: '01', color: 'linear-gradient(135deg,#7c3aed,#a78bfa)', title: 'Upload Your Resume', desc: 'Drop your PDF or DOCX and we extract your skills, experience, and profile automatically.' },
   { num: '02', color: 'linear-gradient(135deg,#0e7490,#00f2fe)', title: 'Discover & Apply', desc: 'Browse live postings from Greenhouse, Lever, and Ashby filtered for your target roles.' },
-  { num: '03', color: 'linear-gradient(135deg,#065f46,#10b981)', title: 'Track & Get Reminded', desc: 'Every stage update, follow-up, and interview lands via email, WhatsApp, or Telegram.' },
+  { num: '03', color: 'linear-gradient(135deg,#065f46,#10b981)', title: 'Track & Get Reminded', desc: 'Every stage update, follow-up, and interview lands via email or WhatsApp.' },
   { num: '04', color: 'linear-gradient(135deg,#92400e,#f59e0b)', title: 'Land Your Offer', desc: 'AI prep, resume tailoring, and a complete audit trail — so you walk in confident.' },
 ]
 
+// Product facts only — no outcome claims we can't measure.
 const STATS = [
-  { num: '94%', label: 'Match Accuracy', sub: 'Resume ↔ JD alignment', color: '#a78bfa' },
-  { num: '8h', label: 'Weekly Time Saved', sub: 'vs. manual tracking', color: '#00f2fe' },
-  { num: '3×', label: 'More Interviews', sub: 'with AI-optimised resume', color: '#10b981' },
+  { num: '6', label: 'Pipeline Stages', sub: 'Applied to Offer, plus Rejected and Withdrawn', color: '#a78bfa' },
+  { num: '3', label: 'Career-Page Sources', sub: 'Greenhouse · Lever · Ashby', color: '#00f2fe' },
+  { num: '2', label: 'Reminder Channels', sub: 'Email and WhatsApp', color: '#10b981' },
   { num: 'Free', label: 'To Get Started', sub: 'No credit card required', color: '#f59e0b' },
 ]
 
+export const FAQS = [
+  { q: 'What is Smart Job Tracker?', a: 'Smart Job Tracker is a free web app for managing a job search. It tracks each application through Applied, OA, Interview, Offer, Rejected, or Withdrawn, matches your resume against job descriptions, finds new postings, and sends interview and follow-up reminders.' },
+  { q: 'Is Smart Job Tracker free?', a: 'Yes. You can create an account with email or Google and use it without a credit card.' },
+  { q: 'How is the resume match score calculated?', a: 'The score combines exact matching of skills found in your resume (required skills weigh more than preferred ones), semantic similarity between your resume and the job description, and experience and role relevance. It lists matched and missing skills, and the score is an estimate, not a hiring prediction.' },
+  { q: 'Where do the job listings come from?', a: 'Listings come from public company career boards on Greenhouse, Lever, and Ashby, along with other configured job sources. Each listing links to the original posting, where you apply. Smart Job Tracker is not affiliated with these platforms.' },
+  { q: 'Does Smart Job Tracker read my Gmail?', a: 'Only if you connect Gmail. It uses read-only access to find job-related emails, such as interview invites and rejections, and suggests status updates. Access tokens are encrypted at rest, and you can disconnect Gmail from the dashboard at any time.' },
+  { q: 'What happens to my resume?', a: 'The text is extracted from your PDF or DOCX and stored in your account for matching and profile building. The original file is not kept, and your resume is never modified.' },
+  { q: 'Will the AI invent skills or experience?', a: 'No. Resume tailoring and profile features only rephrase or re-emphasize information that already appears in your resume.' },
+]
+
+const FAQ_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}
+
 /* ── Landing Page ───────────────────────────────────────────── */
 export default function LandingPage() {
+  usePageMeta({ title: 'Smart Job Tracker – Free AI Job Application Tracker & Resume Matcher', description: 'Free AI job application tracker: match your resume to job descriptions, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders by email and WhatsApp.', path: '/' })
+  useJsonLd('ld-faq', FAQ_JSON_LD)
   const navigate = useNavigate()
   const n1Ref = useRef(null)
   const n2Ref = useRef(null)
@@ -270,7 +290,7 @@ export default function LandingPage() {
           <nav className="lp-nav">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
-            <a href="#stats">Why us</a>
+            <a href="#faq">FAQ</a>
           </nav>
           <div className="lp-nav-cta">
             <Link to="/login" className="lp-sign-in">Sign in</Link>
@@ -305,7 +325,7 @@ export default function LandingPage() {
           <nav className="lp-mobile-nav">
             <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it works</a>
-            <a href="#stats" onClick={() => setMobileMenuOpen(false)}>Why us</a>
+            <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
           </nav>
           <div className="lp-mobile-menu-cta">
             <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-ghost lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Sign in</Link>
@@ -354,7 +374,7 @@ export default function LandingPage() {
             Track smarter.<br /><em>Land faster.</em>
           </h1>
           <p className="lp-sub">
-            From first application to final offer — AI matching, smart reminders, and everything in between.
+            A free AI job application tracker — from first application to final offer, with resume matching, smart reminders, and everything in between.
           </p>
           <div className="lp-ctas">
             <Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">Start for free →</Link>
@@ -424,7 +444,7 @@ export default function LandingPage() {
             {STEPS.map((s) => (
               <div key={s.num} className="lp-step-card">
                 <div className="lp-step-num" style={{ background: s.color }}>{s.num}</div>
-                <h4>{s.title}</h4>
+                <h3>{s.title}</h3>
                 <p>{s.desc}</p>
               </div>
             ))}
@@ -436,8 +456,8 @@ export default function LandingPage() {
       <section className="lp-stats" id="stats">
         <div className="lp-wrap">
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div className="lp-eyebrow">By the numbers</div>
-            <h2 className="lp-section-h lp-calistoga lp-grad">Results that speak for themselves</h2>
+            <div className="lp-eyebrow">At a glance</div>
+            <h2 className="lp-section-h lp-calistoga lp-grad">What you get</h2>
           </div>
           <div className="lp-grid-4">
             {STATS.map((s) => (
@@ -446,6 +466,24 @@ export default function LandingPage() {
                 <div className="lp-stat-label">{s.label}</div>
                 <div className="lp-stat-sub">{s.sub}</div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="lp-faq" id="faq">
+        <div className="lp-wrap">
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div className="lp-eyebrow">FAQ</div>
+            <h2 className="lp-section-h lp-calistoga lp-grad">Frequently asked questions</h2>
+          </div>
+          <div className="lp-faq-list">
+            {FAQS.map((f) => (
+              <details key={f.q} className="lp-faq-item">
+                <summary><h3>{f.q}</h3></summary>
+                <p>{f.a}</p>
+              </details>
             ))}
           </div>
         </div>
@@ -460,15 +498,15 @@ export default function LandingPage() {
             <div className="lp-cta-inner">
               <h2 className="lp-cta-h lp-calistoga lp-grad">Ready to land faster?</h2>
               <p className="lp-cta-sub">
-                Join job seekers using AI to cut their search time in half — free, forever.
+                Keep every application, resume match, and reminder in one place — free to use.
               </p>
               <Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">
                 Create your free account →
               </Link>
               <div className="lp-trust-row">
                 <span className="lp-trust-item">✓ No credit card</span>
-                <span className="lp-trust-item">✓ Free forever tier</span>
-                <span className="lp-trust-item">✓ Cancel anytime</span>
+                <span className="lp-trust-item">✓ Free to use</span>
+                <span className="lp-trust-item">✓ Sign up with Google</span>
               </div>
             </div>
           </div>
@@ -491,9 +529,9 @@ export default function LandingPage() {
             <div className="lp-foot-cols">
               <div className="lp-foot-col">
                 <div className="lp-foot-col-head">Product</div>
-                <Link to="/discovery">Job Discovery</Link>
+                <a href="#features">Features</a>
                 <a href="#how-it-works">How it works</a>
-                <Link to="/applications">Application Board</Link>
+                <a href="#faq">FAQ</a>
               </div>
               <div className="lp-foot-col">
                 <div className="lp-foot-col-head">Project</div>

@@ -1,7 +1,9 @@
 import React from 'react'
+import { usePageMeta } from '../lib/pageMeta'
 import { Link } from 'react-router-dom'
 
 export default function NotFound() {
+  usePageMeta({ title: 'Page not found – Smart Job Tracker', noindex: true })
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center bg-canvas">
       <p className="text-8xl font-bold text-accent/20 select-none mb-2">404</p>

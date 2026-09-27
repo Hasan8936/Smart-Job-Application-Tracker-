@@ -55,12 +55,12 @@ export default function AuthLayout({ heading, copy, children, id }) {
                 SJT
               </div>
 
-              <h2
+              <p
                 className="font-display font-bold leading-[0.9] text-white mb-5"
                 style={{ fontSize: 38, letterSpacing: '-0.02em' }}
               >
                 SMART<br />JOB<br />TRACKER
-              </h2>
+              </p>
 
               {/* Violet → cyan accent bar */}
               <div

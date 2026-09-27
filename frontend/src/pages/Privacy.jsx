@@ -1,6 +1,6 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
-import Layout from '../components/Layout'
+import { usePageMeta } from '../lib/pageMeta'
+import PublicLayout from '../components/PublicLayout'
 
 const LAST_UPDATED = 'September 2026'
 
@@ -14,8 +14,9 @@ function Section({ id, title, children }) {
 }
 
 export default function Privacy() {
+  usePageMeta({ title: 'Privacy & Data Policy – Smart Job Tracker', description: 'What Smart Job Tracker collects, how it is used and retained, and how to request access or deletion of your data.', path: '/privacy' })
   return (
-    <Layout>
+    <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-10">
         <header className="mb-10">
           <h1 className="text-3xl font-bold text-ink mb-2">Privacy &amp; Data Policy</h1>
@@ -102,7 +103,7 @@ export default function Privacy() {
             {[
               ['Security',               'Secrets are stored as environment variables, never in code. Passwords are hashed with BCrypt. JWT tokens have short expiry. All API communication uses HTTPS. CORS is restricted to known origins.'],
               ['Availability',           'The service is hosted on Render with health-check monitoring. Background jobs are idempotent and retry-safe. Database is backed up daily.'],
-              ['Confidentiality',        'Gmail integration tokens are encrypted at rest using AES-256. Resume content is processed in memory and not persisted in plain text. Database access is restricted by role.'],
+              ['Confidentiality',        'Gmail integration tokens are encrypted at rest using AES-256. Extracted resume text is stored in your account so matching works; the original file is not kept. Database access is restricted by role.'],
               ['Processing Integrity',   'AI-derived data is labelled as an estimate. Resume content is never fabricated—only verified information from your uploaded file is used. Status history is append-only.'],
               ['Privacy',                'Data collection is minimal and purpose-limited. No third-party advertising trackers. Google OAuth scopes are limited to openid, profile, and email unless you explicitly enable Gmail or Calendar integrations.'],
             ].map(([criterion, detail]) => (
@@ -169,7 +170,7 @@ export default function Privacy() {
         <Section id="contact" title="7. Contact &amp; Data Requests">
           <p>
             For data requests, privacy questions, or to report a concern, email us at{' '}
-            <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">hasanryan052@gmail.com</a>.
+            <a href="mailto:afzalmohd44099@gmail.com" className="text-accent hover:underline">afzalmohd44099@gmail.com</a>.
             We aim to respond within 5 business days.
           </p>
           <p>
@@ -177,10 +178,7 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <div className="mt-8 pt-6 border-t border-line">
-          <Link to="/" className="text-sm text-accent hover:underline">← Back to dashboard</Link>
-        </div>
       </div>
-    </Layout>
+    </PublicLayout>
   )
 }
