@@ -53,7 +53,7 @@ export default function Terms() {
           <p>
             You must provide accurate information when creating an account. You are responsible for
             maintaining the confidentiality of your credentials and for all activity under your account.
-            Notify us immediately at <a href="mailto:afzalmohd44099@gmail.com" className="text-accent hover:underline">afzalmohd44099@gmail.com</a> if
+            Notify us immediately at <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">hasanryan052@gmail.com</a> if
             you suspect unauthorised access.
           </p>
           <p>
@@ -150,8 +150,8 @@ export default function Terms() {
         <Section id="contact" title="9. Contact">
           <p>
             Questions about these terms? Contact us at{' '}
-            <a href="mailto:afzalmohd44099@gmail.com" className="text-accent hover:underline">
-              afzalmohd44099@gmail.com
+            <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">
+              hasanryan052@gmail.com
             </a>.
           </p>
         </Section>

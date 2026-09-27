@@ -170,7 +170,7 @@ export default function Privacy() {
         <Section id="contact" title="7. Contact &amp; Data Requests">
           <p>
             For data requests, privacy questions, or to report a concern, email us at{' '}
-            <a href="mailto:afzalmohd44099@gmail.com" className="text-accent hover:underline">afzalmohd44099@gmail.com</a>.
+            <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">hasanryan052@gmail.com</a>.
             We aim to respond within 5 business days.
           </p>
           <p>
