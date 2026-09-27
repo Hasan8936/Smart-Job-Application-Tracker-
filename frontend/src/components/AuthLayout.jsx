@@ -106,6 +106,12 @@ export default function AuthLayout({ heading, copy, children, id }) {
         {/* ── Right panel — form ── */}
         <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
           <div className="w-full max-w-sm">
+            {id === 'login' && (
+              <div className="auth-mobile-visual" aria-hidden="true">
+                <img src="/hero-career-agents.png" alt="" />
+                <span>SMART JOB TRACKER / 01</span>
+              </div>
+            )}
             {/* Mobile: show logo above form */}
             <BrandLogo className="w-40 h-auto mb-6 lg:hidden" variant="void" />
 

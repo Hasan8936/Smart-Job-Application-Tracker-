@@ -1,5 +1,6 @@
 import React from 'react'
 import { PIPELINE_STAGES, STATUS_META } from '../lib/status'
+import TiltCard from './TiltCard'
 
 // The pipeline is the one piece of visual identity repeated across the app:
 // a proportional, ordered read of where every application currently sits.
@@ -9,7 +10,8 @@ export default function PipelineBar({ applications }) {
   const total = counts.reduce((a, b) => a + b, 0) || 1
 
   return (
-    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+    <TiltCard className="rounded-xl2">
+    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5 h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-[15px] text-ink">Pipeline</h2>
         <span className="text-xs text-muted font-mono">{total} total</span>
@@ -46,5 +48,6 @@ export default function PipelineBar({ applications }) {
         })}
       </div>
     </div>
+    </TiltCard>
   )
 }

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Building2 } from 'lucide-react'
+import TiltCard from './TiltCard'
 
 export default function TopCompanies({ applications }) {
   const counts = {}
@@ -12,7 +13,8 @@ export default function TopCompanies({ applications }) {
   const max = top.length ? top[0][1] : 1
 
   return (
-    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+    <TiltCard className="rounded-xl2">
+    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5 h-full">
       <h2 className="font-display text-[15px] text-ink mb-4">Top companies</h2>
       {top.length === 0 ? (
         <p className="text-sm text-muted">No applications tracked yet.</p>
@@ -33,5 +35,6 @@ export default function TopCompanies({ applications }) {
         </div>
       )}
     </div>
+    </TiltCard>
   )
 }

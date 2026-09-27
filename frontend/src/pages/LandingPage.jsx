@@ -128,7 +128,11 @@ export default function LandingPage() {
   }, [isCarouselPaused])
 
   const goToSlide = (index) => setActiveSlide((index + HERO_SLIDES.length) % HERO_SLIDES.length)
-  const handlePointerDown = (event) => setDragStart(event.clientX)
+  const handlePointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    setDragStart(event.clientX)
+  }
   const handlePointerUp = (event) => {
     if (dragStart === null) return
     const delta = event.clientX - dragStart
@@ -212,6 +216,7 @@ export default function LandingPage() {
         onMouseLeave={() => { setIsCarouselPaused(false); setDragStart(null) }}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        onPointerCancel={() => setDragStart(null)}
         onKeyDown={(event) => {
           if (event.key === 'ArrowRight') goToSlide(activeSlide + 1)
           if (event.key === 'ArrowLeft') goToSlide(activeSlide - 1)

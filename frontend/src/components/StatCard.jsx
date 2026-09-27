@@ -1,4 +1,5 @@
 import React from 'react'
+import TiltCard from './TiltCard'
 
 const TONES = {
   violet: { chip: 'bg-accent-soft text-accent' },
@@ -11,7 +12,8 @@ const TONES = {
 export default function StatCard({ label, value, hint, icon: Icon, tone = 'violet' }) {
   const t = TONES[tone] || TONES.violet
   return (
-    <div className="rounded-xl2 border border-line bg-surface p-4 shadow-card">
+    <TiltCard className="rounded-xl2">
+      <div className="rounded-xl2 border border-line bg-surface p-4 shadow-card h-full">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-muted">{label}</span>
         {Icon && (
@@ -22,6 +24,7 @@ export default function StatCard({ label, value, hint, icon: Icon, tone = 'viole
       </div>
       <div className="mt-2 font-mono text-3xl font-medium text-ink">{value}</div>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
-    </div>
+      </div>
+    </TiltCard>
   )
 }

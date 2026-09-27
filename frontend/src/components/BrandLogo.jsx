@@ -51,6 +51,7 @@ function PlaneIcon({ fill, bg }) {
 /* Mark-only: plane icon in rounded square */
 function MarkOnly({ variant = 'light', className = '' }) {
   const c = COLORS[variant] || COLORS.light
+  const gradientId = `brand-mark-gradient-${variant}`
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -59,10 +60,20 @@ function MarkOnly({ variant = 'light', className = '' }) {
       role="img"
       aria-label="Smart Job Tracker"
     >
+      <defs>
+        <linearGradient id={gradientId} x1="8" y1="72" x2="72" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#7c3aed" />
+          <stop offset="0.58" stopColor="#d946ef" />
+          <stop offset="1" stopColor="#67e8f9" />
+        </linearGradient>
+      </defs>
       <rect width="80" height="80" rx="18" fill={c.iconBg} stroke={c.iconBdr} strokeWidth="1.5" />
+      <path d="M8 58C22 69 41 75 68 68" fill="none" stroke={`url(#${gradientId})`} strokeWidth="4" strokeLinecap="round" opacity=".75" />
       <g transform="translate(40,42)">
-        <PlaneIcon fill={c.iconFg} bg={c.iconBg} />
+        <PlaneIcon fill={`url(#${gradientId})`} bg={c.iconBg} />
       </g>
+      <circle cx="61" cy="18" r="4" fill="#f0abfc" />
+      <circle cx="69" cy="18" r="2.5" fill="#67e8f9" />
     </svg>
   )
 }
@@ -70,6 +81,7 @@ function MarkOnly({ variant = 'light', className = '' }) {
 /* Full logo: plane emblem + "Smart Job" + "── TRACKER ──" */
 function FullLogo({ variant = 'light', className = '', style }) {
   const c = COLORS[variant] || COLORS.light
+  const gradientId = `brand-full-gradient-${variant}`
 
   /*
    * Layout (viewBox 490 × 112):
@@ -89,11 +101,21 @@ function FullLogo({ variant = 'light', className = '', style }) {
       role="img"
       aria-label="Smart Job Tracker"
     >
+      <defs>
+        <linearGradient id={gradientId} x1="8" y1="96" x2="74" y2="14" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#7c3aed" />
+          <stop offset="0.58" stopColor="#d946ef" />
+          <stop offset="1" stopColor="#67e8f9" />
+        </linearGradient>
+      </defs>
       {/* Icon emblem */}
       <rect x="0" y="14" width="82" height="82" rx="18" fill={c.iconBg} stroke={c.iconBdr} strokeWidth="1.5" />
+      <path d="M8 72C23 84 45 90 73 79" fill="none" stroke={`url(#${gradientId})`} strokeWidth="4" strokeLinecap="round" opacity=".75" />
       <g transform="translate(41,55)">
-        <PlaneIcon fill={c.iconFg} bg={c.iconBg} />
+        <PlaneIcon fill={`url(#${gradientId})`} bg={c.iconBg} />
       </g>
+      <circle cx="62" cy="27" r="4" fill="#f0abfc" />
+      <circle cx="70" cy="27" r="2.5" fill="#67e8f9" />
 
       {/* Graduation cap above "b" in "Smart Job" */}
       <g transform="translate(318,20)" fill={c.accent}>

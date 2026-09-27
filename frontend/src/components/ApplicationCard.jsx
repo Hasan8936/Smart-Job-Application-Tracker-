@@ -1,10 +1,12 @@
 import React from 'react'
 import { Pencil, Trash2, Calendar } from 'lucide-react'
 import StatusBadge from './StatusBadge'
+import TiltCard from './TiltCard'
 
 export default function ApplicationCard({ app, onEdit, onDelete }) {
   return (
-    <div className="group bg-surface border border-line rounded-xl2 p-3.5 sm:p-4 flex items-start justify-between gap-3 sm:gap-4 hover:border-ink/20 transition-colors">
+    <TiltCard className="group rounded-xl2">
+    <div className="bg-surface border border-line rounded-xl2 p-3.5 sm:p-4 flex items-start justify-between gap-3 sm:gap-4 hover:border-ink/20 transition-colors">
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display text-[15px] text-ink">{app.companyName}</span>
@@ -46,5 +48,6 @@ export default function ApplicationCard({ app, onEdit, onDelete }) {
         )}
       </div>
     </div>
+    </TiltCard>
   )
 }

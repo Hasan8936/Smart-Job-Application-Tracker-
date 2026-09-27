@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Bookmark, Bot, Check, ExternalLink, MapPin, Star, Wallet } from 'lucide-react'
 import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType, safeHttpUrl } from '../lib/jobFormat'
+import TiltCard from './TiltCard'
 
 function matchColor(score) {
   if (score == null) return 'text-muted'
@@ -31,6 +32,7 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
   }
 
   return (
+    <TiltCard className="rounded-xl2">
     <article className="bg-surface border border-line rounded-xl2 p-4 sm:p-5 shadow-card hover:border-ink/25 transition-colors">
       <div className="flex items-start gap-3">
         {job.logoUrl && !logoFailed ? (
@@ -151,5 +153,6 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
         </div>
       </div>
     </article>
+    </TiltCard>
   )
 }
