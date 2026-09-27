@@ -66,6 +66,45 @@ class NotificationServiceTest {
         verify(deliveries, times(1)).save(delivery);
     }
 
+    @Test
+    void verificationCodeLocksAfterTooManyWrongGuesses() {
+        NotificationPreference preference = preference(true, null);
+        NotificationPreferenceRepository preferences = mock(NotificationPreferenceRepository.class);
+        when(preferences.findByUserId(1L)).thenReturn(Optional.of(preference));
+        NotificationProvider provider = mock(NotificationProvider.class);
+        NotificationService service = service(preferences, mock(NotificationDeliveryRepository.class), provider);
+        service.startVerification(1L);
+        var sent = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(provider).send(eq("+15551234567"), sent.capture());
+        String code = sent.getValue().replaceAll("\\D", "");
+        String wrong = code.equals("000000") ? "111111" : "000000";
+        for (int i = 0; i < NotificationService.MAX_CODE_ATTEMPTS; i++) {
+            assertThrows(IllegalArgumentException.class, () -> service.verifyPhone(1L, wrong));
+        }
+        // The right code no longer works once the attempt budget is spent.
+        assertThrows(IllegalArgumentException.class, () -> service.verifyPhone(1L, code));
+        assertNull(preference.getVerifiedAt());
+    }
+
+    @Test
+    void changingPhoneNumberClearsVerification() {
+        NotificationPreference preference = preference(true, OffsetDateTime.now());
+        NotificationPreferenceRepository preferences = mock(NotificationPreferenceRepository.class);
+        when(preferences.findByUserId(1L)).thenReturn(Optional.of(preference));
+        when(preferences.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        NotificationService service = service(preferences, mock(NotificationDeliveryRepository.class), mock(NotificationProvider.class));
+        assertNull(service.savePreference(1L, "+15559999999", true, "settings").getVerifiedAt());
+    }
+
+    @Test
+    void preferenceJsonNeverContainsCodeHash() throws Exception {
+        NotificationPreference preference = preference(true, null);
+        preference.setVerificationCodeHash("abc123");
+        String json = new ObjectMapper().findAndRegisterModules().writeValueAsString(preference);
+        assertFalse(json.contains("abc123"));
+        assertFalse(json.contains("verificationCodeHash"));
+    }
+
     private NotificationService service(NotificationPreferenceRepository preferences, NotificationDeliveryRepository deliveries, NotificationProvider provider) {
         MetaWhatsAppConfig config = new MetaWhatsAppConfig(); config.setVerifyToken("verify"); config.setAppSecret("secret");
         return new NotificationService(preferences, deliveries, mock(UserRepository.class), provider, config);

@@ -10,7 +10,9 @@ export default function OAuth2Callback() {
   const handled = useRef(false)
 
   useEffect(() => {
-    const token = params.get('token')
+    // The backend sends the JWT in the URL fragment (never sent to servers); ?token= is the legacy form.
+    const token = new URLSearchParams(window.location.hash.slice(1)).get('token') || params.get('token')
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname)
     if (handled.current) return
     handled.current = true
     if (!token) return navigate('/login?error=google-login-failed', { replace: true })

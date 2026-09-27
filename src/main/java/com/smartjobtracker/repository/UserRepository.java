@@ -15,6 +15,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmailIgnoreCase(String email);
 
+    /** email is a case-sensitive UNIQUE column, so registration must check case-insensitively itself. */
+    boolean existsByEmailIgnoreCase(String email);
+
+    long countByEmailIgnoreCase(String email);
+
     /** Admin console search: email or name contains {@code q}; optional sign-up date window. */
     @Query("select u from User u where (:q is null or lower(u.email) like lower(concat('%', cast(:q as string), '%')) " +
             "or lower(u.name) like lower(concat('%', cast(:q as string), '%'))) " +

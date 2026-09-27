@@ -25,11 +25,11 @@ public class JobNormalizer {
         target.setProvider(clean(source.provider())); target.setExternalId(clean(source.externalId()));
         target.setCompany(clean(source.company())); target.setTitle(clean(source.title()));
         target.setEmploymentType(clean(source.employmentType()));
-        target.setWorkMode(clean(source.workMode())); target.setApplyUrl(clean(source.applyUrl()));
+        target.setWorkMode(clean(source.workMode())); target.setApplyUrl(httpUrl(source.applyUrl()));
         target.setLocation(location(source.location(), target.getWorkMode()));
         target.setCountryCode(CountryDetector.country(target.getLocation()));
         target.setPostedAt(parseDate(source.postedAt())); target.setDescription(toPlainText(source.description()));
-        target.setLogoUrl(clean(source.logoUrl())); target.setRawJson(source.rawJson());
+        target.setLogoUrl(httpUrl(source.logoUrl())); target.setRawJson(source.rawJson());
         applySalary(target, source);
         target.setDedupeHash(hash(normalizeKey(source.company()) + "|" + normalizeKey(source.title()) + "|" + normalizeKey(source.location())));
         return target;
@@ -56,6 +56,24 @@ public class JobNormalizer {
     }
 
     private String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+
+    /**
+     * Provider URLs end up in an href/src for every user, and some sources (Telegram posts) are
+     * attacker-writable — so only absolute http(s) URLs survive; javascript:, data:, etc. become null.
+     */
+    static String httpUrl(String value) {
+        if (value == null || value.isBlank()) return null;
+        String v = value.trim();
+        try {
+            java.net.URI uri = new java.net.URI(v);
+            String scheme = uri.getScheme();
+            if (scheme == null || uri.getHost() == null) return null;
+            scheme = scheme.toLowerCase(Locale.ROOT);
+            return scheme.equals("http") || scheme.equals("https") ? v : null;
+        } catch (java.net.URISyntaxException e) {
+            return null;
+        }
+    }
 
     /**
      * Job boards send HTML, sometimes entity-escaped (Greenhouse sends "&lt;p&gt;"). Unescape, keep paragraph

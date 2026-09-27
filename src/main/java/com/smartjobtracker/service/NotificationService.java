@@ -33,6 +33,9 @@ public class NotificationService {
     private final NotificationProvider provider;
     private final MetaWhatsAppConfig config;
     private final SecureRandom random = new SecureRandom();
+    /** Wrong-code count per user for the currently issued code; a new code resets it. */
+    private final java.util.concurrent.ConcurrentHashMap<Long, Integer> failedCodeAttempts = new java.util.concurrent.ConcurrentHashMap<>();
+    static final int MAX_CODE_ATTEMPTS = 5;
 
     public NotificationService(NotificationPreferenceRepository preferences, NotificationDeliveryRepository deliveries,
                                 UserRepository users, NotificationProvider provider, MetaWhatsAppConfig config) {
@@ -42,6 +45,12 @@ public class NotificationService {
     @Transactional
     public NotificationPreference savePreference(Long userId, String phone, boolean optIn, String source) {
         NotificationPreference preference = preferences.findByUserId(userId).orElseGet(NotificationPreference::new);
+        // A verification proves ownership of one number only; a new number must be verified again.
+        if (!java.util.Objects.equals(preference.getPhoneE164(), phone)) {
+            preference.setVerifiedAt(null);
+            preference.setVerificationCodeHash(null);
+            preference.setVerificationExpiresAt(null);
+        }
         preference.setUserId(userId); preference.setChannel(NotificationChannel.WHATSAPP); preference.setPhoneE164(phone);
         preference.setWhatsappOptIn(optIn);
         preference.setConsentSource(source == null || source.isBlank() ? "settings" : source);
@@ -71,6 +80,7 @@ public class NotificationService {
         if (!preference.isWhatsappOptIn() || preference.getPhoneE164() == null) throw new IllegalArgumentException("WhatsApp opt-in and phone are required");
         String code = String.format("%06d", random.nextInt(1_000_000));
         preference.setVerificationCodeHash(hash(code));
+        failedCodeAttempts.remove(userId);
         preference.setVerificationExpiresAt(OffsetDateTime.now().plusMinutes(10));
         preferences.save(preference);
         provider.send(preference.getPhoneE164(), "Smart Job Tracker verification code: " + code);
@@ -79,10 +89,15 @@ public class NotificationService {
     @Transactional
     public void verifyPhone(Long userId, String code) {
         NotificationPreference preference = preferences.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("WhatsApp preference not found"));
+        if (failedCodeAttempts.getOrDefault(userId, 0) >= MAX_CODE_ATTEMPTS) {
+            throw new IllegalArgumentException("Too many wrong codes. Request a new verification code.");
+        }
         if (preference.getVerificationExpiresAt() == null || preference.getVerificationExpiresAt().isBefore(OffsetDateTime.now())
                 || preference.getVerificationCodeHash() == null || !MessageDigest.isEqual(preference.getVerificationCodeHash().getBytes(StandardCharsets.UTF_8), hash(code).getBytes(StandardCharsets.UTF_8))) {
+            failedCodeAttempts.merge(userId, 1, Integer::sum);
             throw new IllegalArgumentException("Invalid or expired verification code");
         }
+        failedCodeAttempts.remove(userId);
         preference.setVerifiedAt(OffsetDateTime.now());
         preference.setVerificationCodeHash(null);
         preference.setVerificationExpiresAt(null);

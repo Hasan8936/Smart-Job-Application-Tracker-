@@ -55,6 +55,7 @@ export default function CandidateProfile() {
     setError('')
     try {
       const res = await getProfile()
+      if (res.status === 204) return // no profile yet — nothing to show, not an error
       setFields(dataToFields(res.data))
       setMeta({ sourceResumeId: res.data.sourceResumeId, updatedAt: res.data.updatedAt })
     } catch (e) {

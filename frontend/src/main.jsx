@@ -9,7 +9,8 @@ import { AuthProvider } from './context/AuthContext'
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      <BrowserRouter>
+      {/* Opt into v7 behaviour now (no relative links in splat routes are affected); silences the upgrade warnings. */}
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
         <Analytics />
       </BrowserRouter>

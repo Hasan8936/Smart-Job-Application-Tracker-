@@ -1,7 +1,12 @@
 package com.smartjobtracker.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class AuthRequest {
+    @NotBlank @Size(max = 255)
     private String email;
+    @NotBlank @Size(max = 200)
     private String password;
 
     public String getEmail() { return email; }

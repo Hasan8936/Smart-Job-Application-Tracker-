@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Bot, ExternalLink, FileText, Loader2, Mail, MessageSquare, Pencil, X } from 'lucide-react'
 import { autoApply, getAutoApplyStatus } from '../api/jobs'
-import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType } from '../lib/jobFormat'
+import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType, safeHttpUrl } from '../lib/jobFormat'
 
 
 export default function JobDetails({ job, onClose, onGenerate, documents = [], onSaveDocument }) {
@@ -80,7 +80,7 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
         {(!job.description || job.description.trim().length < 300) && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
             {job.description ? 'This listing has only a short description.' : 'The job source did not include a description.'}
-            {job.applyUrl && <> See the <a href={job.applyUrl} target="_blank" rel="noreferrer" className="underline">original posting</a> for full details.</>}
+            {safeHttpUrl(job.applyUrl) && <> See the <a href={safeHttpUrl(job.applyUrl) || undefined} target="_blank" rel="noreferrer" className="underline">original posting</a> for full details.</>}
           </p>
         )}
         <p className="text-sm text-muted whitespace-pre-line leading-6">{job.description || 'Description unavailable.'}</p>
@@ -100,7 +100,7 @@ export default function JobDetails({ job, onClose, onGenerate, documents = [], o
         )}
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <a href={job.applyUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 btn-gradient rounded-full px-4 py-2.5 text-sm font-medium"><ExternalLink size={15} /> Open official application</a>
+          <a href={safeHttpUrl(job.applyUrl) || undefined} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 btn-gradient rounded-full px-4 py-2.5 text-sm font-medium"><ExternalLink size={15} /> Open official application</a>
           <button
             onClick={handleAutoApply}
             disabled={autoApplyState.loading || autoApplyState.status === 'RUNNING' || autoApplyState.status === 'PENDING'}

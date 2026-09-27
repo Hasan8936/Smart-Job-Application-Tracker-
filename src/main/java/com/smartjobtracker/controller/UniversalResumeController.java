@@ -23,11 +23,13 @@ public class UniversalResumeController {
     }
 
     /** The user's universal resume, or 404 when they haven't created one. */
+    /** Missing resume → 404, or 204 when the caller passes optional=true (a new user's normal state, not an error). */
     @GetMapping("/universal")
-    public ResponseEntity<UniversalResumeDtos.Response> get() {
+    public ResponseEntity<UniversalResumeDtos.Response> get(@RequestParam(defaultValue = "false") boolean optional) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
-        return service.get(uid).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return service.get(uid).map(ResponseEntity::ok)
+                .orElseGet(() -> optional ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build());
     }
 
     /** Creates or replaces the universal resume; its matching text is regenerated. */

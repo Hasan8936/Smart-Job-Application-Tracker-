@@ -32,6 +32,10 @@ public class SuperAdminBootstrap implements ApplicationRunner {
             log.info("SUPER_ADMIN_EMAIL not set; no super admin configured");
             return;
         }
+        if (users.countByEmailIgnoreCase(superAdminEmail) > 1) {
+            log.warn("SUPER_ADMIN_EMAIL matches several accounts ignoring case; no account will be promoted");
+            return;
+        }
         users.findByEmailIgnoreCase(superAdminEmail).ifPresentOrElse(
                 u -> { if (promoteIfConfigured(u)) users.save(u); },
                 () -> log.info("SUPER_ADMIN_EMAIL is set but no account with that email exists yet; it will be promoted on first login"));
@@ -41,6 +45,12 @@ public class SuperAdminBootstrap implements ApplicationRunner {
     public boolean promoteIfConfigured(User user) {
         if (superAdminEmail.isEmpty() || user == null || user.getEmail() == null) return false;
         if (!user.getEmail().equalsIgnoreCase(superAdminEmail) || user.isAdmin()) return false;
+        // Accounts created before registration became case-insensitive may include a look-alike
+        // (e.g. "Admin@x" beside "admin@x"). Promote nobody until an operator resolves it.
+        if (users.countByEmailIgnoreCase(superAdminEmail) > 1) {
+            log.warn("Refusing ADMIN promotion for userId={}: several accounts match SUPER_ADMIN_EMAIL ignoring case", user.getId());
+            return false;
+        }
         user.setRole("ADMIN");
         log.info("Promoted userId={} to ADMIN (SUPER_ADMIN_EMAIL)", user.getId());
         return true;

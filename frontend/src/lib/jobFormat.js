@@ -65,3 +65,15 @@ export function formatEmploymentType(value) {
   const words = value.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim().toLowerCase()
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
+
+// Apply links come from third-party feeds (some user-writable, e.g. Telegram). Only http(s) may reach an href;
+// anything else (javascript:, data:) renders as no link. The backend filters too — this covers older rows.
+export function safeHttpUrl(url) {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null
+  } catch {
+    return null
+  }
+}

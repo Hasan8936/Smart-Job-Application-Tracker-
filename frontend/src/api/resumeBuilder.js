@@ -4,7 +4,9 @@ export const getTemplates = () => api.get('/resume/build/templates').then(r => r
 
 // Universal resume: the user's editable master resume, used for job matching by default.
 export const getUniversalResume = () =>
-  api.get('/resume/universal').then(r => r.data).catch(err => { if (err.response?.status === 404) return null; throw err })
+  api.get('/resume/universal', { params: { optional: true } })
+    .then(r => (r.status === 204 ? null : r.data))
+    .catch(err => { if (err.response?.status === 404) return null; throw err })
 
 export const saveUniversalResume = (dto) => api.put('/resume/universal', dto).then(r => r.data)
 

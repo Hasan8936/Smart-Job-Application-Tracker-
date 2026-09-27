@@ -53,7 +53,9 @@ export default function Login() {
     } catch (err) {
       setError(err.response?.status === 403
         ? (err.response?.data?.message || 'Your account has been suspended. Contact support if you think this is a mistake.')
-        : 'That email and password combination didn\'t work.')
+        : err.response?.status === 429
+          ? 'Too many failed sign-in attempts. Please wait a few minutes and try again.'
+          : 'That email and password combination didn\'t work.')
     } finally {
       setLoading(false)
     }

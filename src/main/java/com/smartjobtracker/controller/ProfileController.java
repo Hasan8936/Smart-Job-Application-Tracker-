@@ -41,12 +41,13 @@ public class ProfileController {
         return u == null ? null : u.getId();
     }
 
+    /** No profile yet → 404, or 204 when the caller passes optional=true (a new user's normal state, not an error). */
     @GetMapping
-    public ResponseEntity<?> getProfile() {
+    public ResponseEntity<?> getProfile(@RequestParam(defaultValue = "false") boolean optional) {
         Long uid = currentUserId();
         if (uid == null) return ResponseEntity.status(401).build();
         Optional<CandidateProfileDto> profile = profileService.getProfile(uid);
-        if (profile.isEmpty()) return ResponseEntity.notFound().build();
+        if (profile.isEmpty()) return optional ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
         return ResponseEntity.ok(profile.get());
     }
 

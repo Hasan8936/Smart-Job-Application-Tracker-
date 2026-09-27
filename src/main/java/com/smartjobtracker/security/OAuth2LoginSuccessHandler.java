@@ -94,8 +94,10 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             tryStoreTokens(user, email, authentication);
 
             String token = jwtUtil.generateToken(user.getEmail());
+            // Fragment, not query: browsers never send '#...' to a server, so the JWT stays out of
+            // Vercel/CDN access logs and Referer headers.
             getRedirectStrategy().sendRedirect(request, response,
-                    frontendUrl + "/oauth2/callback?token=" + token);
+                    frontendUrl + "/oauth2/callback#token=" + token);
         } catch (Exception ex) {
             log.error("Google OAuth2 login succeeded at the provider but failed while finishing sign-in", ex);
             getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/login?error=google-login-failed-server");

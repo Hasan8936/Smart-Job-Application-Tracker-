@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Bookmark, Bot, Check, ExternalLink, MapPin, Star, Wallet } from 'lucide-react'
-import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType } from '../lib/jobFormat'
+import { formatSalary, formatPostedAt, formatFullDate, formatEmploymentType, safeHttpUrl } from '../lib/jobFormat'
 
 function matchColor(score) {
   if (score == null) return 'text-muted'
@@ -140,7 +140,7 @@ export default function JobCard({ job, action, onAction, onOpen, onAutoApply }) 
             </button>
           )}
           <a
-            href={job.applyUrl}
+            href={safeHttpUrl(job.applyUrl) || undefined}
             target="_blank"
             rel="noreferrer"
             title="Open official application"

