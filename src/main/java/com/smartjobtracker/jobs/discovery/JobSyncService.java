@@ -22,12 +22,14 @@ public class JobSyncService {
     private final JobSkillExtractor skillExtractor;
     private final SyncProgressStore progressStore;
     private final SalaryEstimator salaryEstimator;
+    private final ScriptFilter scriptFilter;
     public JobSyncService(List<JobProvider> providers, JobNormalizer normalizer, JobDeduplicator deduplicator,
                           JobPostingRepository postingRepository, JobProviderSyncRepository syncRepository,
                           JobSkillRepository skillRepository, JobSkillExtractor skillExtractor,
-                          SyncProgressStore progressStore, SalaryEstimator salaryEstimator) {
+                          SyncProgressStore progressStore, SalaryEstimator salaryEstimator, ScriptFilter scriptFilter) {
         this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor; this.progressStore = progressStore;
         this.salaryEstimator = salaryEstimator;
+        this.scriptFilter = scriptFilter;
     }
     /** Synchronous sync — used by scheduled jobs and tests. No progress tracking. */
     public SyncResult sync(JobQuery query) {
@@ -48,9 +50,14 @@ public class JobSyncService {
             try {
                 JobProvider.JobBatch batch = provider.search(query, syncRepository.findByProviderAndQueryKey(provider.id(), queryKey).map(JobProviderSync::getCursor).orElse(null));
                 int providerSaved = 0;
-                for (JobPosting candidate : deduplicator.deduplicate(batch.jobs().stream()
+                List<JobPosting> normalized = batch.jobs().stream()
                     .filter(job -> hasRequiredFields(job))
-                    .map(provider::normalize).map(normalizer::normalize).toList())) {
+                    .map(provider::normalize).map(normalizer::normalize).toList();
+                List<JobPosting> readable = normalized.stream()
+                    .filter(job -> !scriptFilter.isBlocked(job.getTitle(), job.getDescription())).toList();
+                if (readable.size() < normalized.size())
+                    log.info("Skipped {} posting(s) in a blocked script from provider={}", normalized.size() - readable.size(), provider.id());
+                for (JobPosting candidate : deduplicator.deduplicate(readable)) {
                     JobPosting stored = upsert(candidate);
                     skillRepository.deleteByJobPostingId(stored.getId());
                     skillRepository.saveAll(skillExtractor.extract(stored.getId(), stored.getDescription()));

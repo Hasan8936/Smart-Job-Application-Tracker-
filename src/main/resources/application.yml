@@ -86,6 +86,9 @@ app:
     poll-interval-ms: ${WHATSAPP_POLL_INTERVAL_MS:60000}
   google-calendar:
     redirect-uri: ${GOOGLE_CALENDAR_REDIRECT_URI:${RENDER_EXTERNAL_URL:http://localhost:8080}/api/google-calendar/callback}
+  job-discovery:
+    # Java Character.UnicodeScript names, comma-separated (e.g. ARABIC,HEBREW). Empty = block nothing.
+    blocked-scripts: ${JOB_BLOCKED_SCRIPTS:ARABIC}
   job-providers:
     min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
     max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}

@@ -27,6 +27,10 @@ public class JobPosting {
     @Column(name = "salary_source", length = 20) private String salarySource;
     /** For ESTIMATE: how many reported salaries the estimate is based on. */
     @Column(name = "salary_sample_size") private Integer salarySampleSize;
+    /** Written in a blocked script (see ScriptFilter); hidden from job lists but kept for saved/applied references. */
+    @Column(name = "script_blocked", nullable = false) private boolean scriptBlocked = false;
+    public boolean isScriptBlocked() { return scriptBlocked; }
+    public void setScriptBlocked(boolean v) { scriptBlocked = v; }
     public String getSalaryPeriod() { return salaryPeriod; }
     public void setSalaryPeriod(String v) { salaryPeriod = v; }
     public String getSalarySource() { return salarySource; }
