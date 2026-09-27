@@ -16,6 +16,12 @@ export const fetchProfilePhotoUrl = async () => {
   return URL.createObjectURL(res.data)
 }
 
+/**
+ * Emails the signed-in user a password reset link (the normal forgot-password flow). For accounts that don't know
+ * their password — e.g. Google sign-ups from before passwords could be set here.
+ */
+export const sendPasswordResetLink = (email) => api.post('/auth/forgot-password', { email })
+
 export const changePassword = (currentPassword, newPassword) =>
   api.post('/users/me/password', { currentPassword, newPassword })
 

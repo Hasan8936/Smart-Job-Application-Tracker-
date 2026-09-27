@@ -59,11 +59,21 @@ public class ProfilePhotoProcessorTest {
     }
 
     @Test
-    void webpIsRecognisedButNeedsAPlugin() {
+    void webpIsDecodedAndReencoded() throws Exception {
+        // A real 1×1 lossless WebP.
+        byte[] webp = java.util.Base64.getDecoder().decode("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==");
+        assertEquals(ProfilePhotoProcessor.Format.WEBP, ProfilePhotoProcessor.sniff(webp));
+        var result = processor.process(webp);
+        assertTrue(result.contentType().equals("image/png") || result.contentType().equals("image/jpeg"));
+        BufferedImage out = ImageIO.read(new ByteArrayInputStream(result.data()));
+        assertEquals(1, out.getWidth());
+    }
+
+    @Test
+    void corruptWebpIsRejected() {
         byte[] webpHeader = "RIFF\0\0\0\0WEBPVP8 ".getBytes(StandardCharsets.ISO_8859_1);
         assertEquals(ProfilePhotoProcessor.Format.WEBP, ProfilePhotoProcessor.sniff(webpHeader));
-        var ex = assertThrows(ProfilePhotoProcessor.InvalidPhotoException.class, () -> processor.process(webpHeader));
-        assertTrue(ex.getMessage().contains("WebP"));
+        assertThrows(ProfilePhotoProcessor.InvalidPhotoException.class, () -> processor.process(webpHeader));
     }
 
     @Test

@@ -20,7 +20,8 @@ import java.util.Iterator;
 /**
  * Validates an uploaded profile photo by its file signature (not the client's Content-Type), then decodes it,
  * scales it to fit 512×512 and re-encodes it — which drops EXIF/GPS and any other embedded metadata.
- * Uses only the JDK's javax.imageio (JPEG and PNG). WebP is recognised but needs an ImageIO WebP plugin to decode.
+ * Uses javax.imageio: the JDK reads JPEG and PNG; WebP is read by the TwelveMonkeys imageio-webp plugin.
+ * The result is always JPEG or PNG.
  */
 @Component
 public class ProfilePhotoProcessor {
@@ -30,6 +31,11 @@ public class ProfilePhotoProcessor {
     static final int MAX_SOURCE_PIXELS = 40_000_000;
 
     public enum Format { JPEG, PNG, WEBP }
+
+    public ProfilePhotoProcessor() {
+        // Plugins inside a Spring Boot jar may be missed by ImageIO's first automatic scan; register them explicitly.
+        ImageIO.scanForPlugins();
+    }
 
     public record Processed(byte[] data, String contentType) {}
 

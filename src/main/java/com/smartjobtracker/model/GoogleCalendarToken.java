@@ -13,9 +13,12 @@ public class GoogleCalendarToken {
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
+    // Encrypted at rest; the column type is unchanged.
+    @Convert(converter = com.smartjobtracker.service.CalendarTokenConverter.class)
     @Column(name = "access_token", nullable = false, columnDefinition = "TEXT")
     private String accessToken;
 
+    @Convert(converter = com.smartjobtracker.service.CalendarTokenConverter.class)
     @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
 

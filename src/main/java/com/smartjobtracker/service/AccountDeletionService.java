@@ -58,10 +58,12 @@ public class AccountDeletionService {
     private final EntityManager em;
     private final GmailTokenCipher cipher;
     private final GoogleTokenRevoker revoker;
+    private final CalendarTokenCrypto calendarTokens;
 
     public AccountDeletionService(UserRepository users, PasswordEncoder passwordEncoder, EntityManager em,
-                                  GmailTokenCipher cipher, GoogleTokenRevoker revoker) {
-        this.users = users; this.passwordEncoder = passwordEncoder; this.em = em; this.cipher = cipher; this.revoker = revoker;
+                                  GmailTokenCipher cipher, GoogleTokenRevoker revoker,
+                                  CalendarTokenCrypto calendarTokens) {
+        this.users = users; this.passwordEncoder = passwordEncoder; this.em = em; this.cipher = cipher; this.revoker = revoker; this.calendarTokens = calendarTokens;
     }
 
     @Transactional
@@ -110,9 +112,13 @@ public class AccountDeletionService {
         } catch (RuntimeException e) {
             log.info("Gmail token not readable for revoke, userId={} ({})", userId, e.getClass().getSimpleName());
         }
-        for (Object t : em.createNativeQuery("select refresh_token from google_calendar_tokens where user_id = :uid")
-                .setParameter("uid", userId).getResultList()) {
-            if (t != null) tokens.add(t.toString());
+        try {
+            for (Object t : em.createNativeQuery("select refresh_token from google_calendar_tokens where user_id = :uid")
+                    .setParameter("uid", userId).getResultList()) {
+                if (t != null) tokens.add(calendarTokens.decrypt(t.toString()));
+            }
+        } catch (RuntimeException e) {
+            log.info("Calendar token not readable for revoke, userId={} ({})", userId, e.getClass().getSimpleName());
         }
         return tokens;
     }

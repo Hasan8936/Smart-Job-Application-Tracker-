@@ -4,7 +4,7 @@ import { AlertTriangle, Camera, Download, KeyRound, Loader2, Save, Trash2, X } f
 import { AuthContext } from '../context/AuthContext'
 import Avatar from './Avatar'
 import {
-  changePassword, deleteMyAccount, deleteProfilePhoto, exportMyData, getAccountDetails,
+  changePassword, deleteMyAccount, deleteProfilePhoto, exportMyData, getAccountDetails, sendPasswordResetLink,
   updateAccountDetails, uploadProfilePhoto, PHOTO_CHANGED_EVENT,
 } from '../api/account'
 
@@ -127,6 +127,26 @@ export default function AccountSettings() {
     finally { setPwBusy(false) }
   }
 
+  // Reset link: for users who don't know their password (e.g. Google sign-ups from before passwords were settable).
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetMsg, setResetMsg] = useState(null)
+  async function emailResetLink() {
+    setResetBusy(true); setResetMsg(null)
+    try {
+      await sendPasswordResetLink(profile?.email)
+      setResetMsg({ text: `We've emailed a link to ${profile?.email}. Use it to choose a password, then come back here.` })
+    } catch (err) { setResetMsg({ error: true, text: errorText(err, 'Could not send the link. Please try again.') }) }
+    finally { setResetBusy(false) }
+  }
+  const resetLink = (
+    <p className="text-xs text-muted mt-3">
+      Don't know your password — for example, you signed up with Google?{' '}
+      <button type="button" disabled={resetBusy} onClick={emailResetLink} className="text-accent hover:underline disabled:opacity-50">
+        {resetBusy ? 'Sending…' : 'Email me a link to set one'}
+      </button>
+    </p>
+  )
+
   // Export
   const [exporting, setExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState(null)
@@ -238,6 +258,7 @@ export default function AccountSettings() {
             <Status message={pwMsg} />
           </div>
         </form>
+        {passwordSet && <>{resetLink}<Status message={resetMsg} /></>}
       </Section>
 
       <Section title="Your data" icon={Download}>
@@ -271,6 +292,7 @@ export default function AccountSettings() {
             <input autoFocus type={passwordSet ? 'password' : 'email'} className={input} value={confirmValue}
               placeholder={passwordSet ? 'Current password' : profile?.email} onChange={e => setConfirmValue(e.target.value)} />
             <Status message={deleteMsg} />
+            {passwordSet && <>{resetLink}<Status message={resetMsg} /></>}
             <div className="flex justify-end gap-2 mt-4">
               <button disabled={deleting} onClick={() => setConfirming(false)} className="border border-line rounded-full px-4 py-2 text-sm">Cancel</button>
               <button disabled={deleting || !confirmValue.trim()} onClick={deleteAccount}
