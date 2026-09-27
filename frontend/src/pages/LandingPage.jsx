@@ -61,6 +61,30 @@ const STEPS = [
 ]
 
 // Product facts only — no outcome claims we can't measure.
+const HERO_SLIDES = [
+  {
+    kicker: '01 / MATCH WITH CONFIDENCE',
+    title: 'Know your edge before you apply.',
+    body: 'Turn every job description into a clear, explainable match score — with the skills that move you forward.',
+    accent: '#a78bfa',
+    type: 'match',
+  },
+  {
+    kicker: '02 / SEE THE WHOLE SEARCH',
+    title: 'Your job search, in one sharp view.',
+    body: 'Move from Applied to Offer without losing the thread. Every application, note, and next step stays in sync.',
+    accent: '#00f2fe',
+    type: 'pipeline',
+  },
+  {
+    kicker: '03 / SHOW UP READY',
+    title: 'Walk into every interview prepared.',
+    body: 'Get role-specific prompts, reminders, and answer frameworks built around your resume — not a generic template.',
+    accent: '#10b981',
+    type: 'prep',
+  },
+]
+
 const STATS = [
   { num: '6', label: 'Pipeline Stages', sub: 'Applied to Offer, plus Rejected and Withdrawn', color: '#a78bfa' },
   { num: '3', label: 'Career-Page Sources', sub: 'Greenhouse · Lever · Ashby', color: '#00f2fe' },
@@ -93,6 +117,24 @@ export default function LandingPage() {
   const n2Ref = useRef(null)
   const n3Ref = useRef(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false)
+  const [dragStart, setDragStart] = useState(null)
+
+  useEffect(() => {
+    if (isCarouselPaused) return undefined
+    const timer = setInterval(() => setActiveSlide((current) => (current + 1) % HERO_SLIDES.length), 5200)
+    return () => clearInterval(timer)
+  }, [isCarouselPaused])
+
+  const goToSlide = (index) => setActiveSlide((index + HERO_SLIDES.length) % HERO_SLIDES.length)
+  const handlePointerDown = (event) => setDragStart(event.clientX)
+  const handlePointerUp = (event) => {
+    if (dragStart === null) return
+    const delta = event.clientX - dragStart
+    if (Math.abs(delta) > 45) goToSlide(activeSlide + (delta < 0 ? 1 : -1))
+    setDragStart(null)
+  }
 
   // Redirect authenticated users
   useEffect(() => {
@@ -164,57 +206,89 @@ export default function LandingPage() {
       )}
 
       {/* ── Hero ── */}
-      <section className="lp-hero">
+      <section
+        className="lp-hero"
+        onMouseEnter={() => setIsCarouselPaused(true)}
+        onMouseLeave={() => { setIsCarouselPaused(false); setDragStart(null) }}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowRight') goToSlide(activeSlide + 1)
+          if (event.key === 'ArrowLeft') goToSlide(activeSlide - 1)
+        }}
+        tabIndex="0"
+        aria-label="Smart Job Tracker product showcase"
+      >
         <div className="lp-dot-grid" />
-        <div className="lp-globe-wrap">
-          <Suspense fallback={null}><GlobeCanvas /></Suspense>
-        </div>
+        <div className="lp-globe-wrap"><Suspense fallback={null}><GlobeCanvas /></Suspense></div>
         <div className="lp-vignette" />
+        <div className="lp-hero-orbit" aria-hidden="true" />
 
-        {/* Notification card 1 — Match Score */}
-        <div ref={n1Ref} className="lp-notif lp-glass lp-n1">
-          <div className="lp-notif-label"><span className="lp-ndot lp-ndot-g" />AI Match Score</div>
-          <div className="lp-notif-title">Software Engineer at Stripe</div>
-          <div className="lp-notif-sub">Skills analysis complete</div>
-          <div className="lp-mtrack"><div className="lp-mfill" style={{ width: '94%' }} /></div>
-          <div className="lp-chip lp-chip-g" style={{ marginTop: 8 }}>94% match</div>
-        </div>
-
-        {/* Notification card 2 — Interview Reminder */}
-        <div ref={n2Ref} className="lp-notif lp-glass lp-n2">
-          <div className="lp-notif-label"><span className="lp-ndot lp-ndot-b" />Interview Reminder</div>
-          <div className="lp-notif-title">Technical Round · Google</div>
-          <div className="lp-notif-sub">Tomorrow 2PM</div>
-          <div className="lp-chip lp-chip-b">Reminder set</div>
-        </div>
-
-        {/* Notification card 3 — Status Update */}
-        <div ref={n3Ref} className="lp-notif lp-glass lp-n3">
-          <div className="lp-notif-label"><span className="lp-ndot lp-ndot-v" />Application Update</div>
-          <div className="lp-notif-title">Meta · Product Designer</div>
-          <div className="lp-notif-sub">Status changed</div>
-          <div className="lp-chip lp-chip-v">Interview Stage</div>
-        </div>
-
-        {/* Hero text */}
-        <div className="lp-hero-text">
-          <div className="lp-badge"><span className="lp-badge-dot" />AI-Powered Job Tracking</div>
-          <h1 className="lp-h1 lp-calistoga lp-grad">
-            Track smarter.<br /><em>Land faster.</em>
-          </h1>
-          <p className="lp-sub">
-            A free AI job application tracker — from first application to final offer, with resume matching, smart reminders, and everything in between.
-          </p>
-          <div className="lp-ctas">
-            <Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">Start for free →</Link>
-            <Link to="/login" className="lp-btn lp-btn-ghost lp-btn-lg">Sign in</Link>
+        <div className="lp-showcase">
+          <div className="lp-showcase-topline">
+            <span><i className="lp-live-dot" /> Smart workspace / live preview</span>
+            <span className="lp-showcase-count">0{activeSlide + 1} <b>/ 03</b></span>
+          </div>
+          <div className="lp-slide-stage">
+            {HERO_SLIDES.map((slide, index) => {
+              const offset = (index - activeSlide + HERO_SLIDES.length) % HERO_SLIDES.length
+              const isActive = index === activeSlide
+              return (
+                <article
+                  key={slide.type}
+                  className={`lp-slide-card lp-slide-${offset} ${isActive ? 'is-active' : ''}`}
+                  style={{ '--slide-accent': slide.accent }}
+                  aria-hidden={!isActive}
+                >
+                  <div className="lp-slide-card-head">
+                    <div className="lp-slide-brand"><span className="lp-mini-mark">✦</span> Smart Job Tracker</div>
+                    <div className="lp-window-dots"><i /><i /><i /></div>
+                  </div>
+                  {slide.type === 'match' && (
+                    <div className="lp-slide-match">
+                      <div className="lp-ui-kicker">Resume intelligence <span>● synced</span></div>
+                      <div className="lp-match-row"><div><strong>Software Engineer</strong><small>Stripe · Remote · Full-time</small></div><div className="lp-score">94<small>% match</small></div></div>
+                      <div className="lp-score-bar"><span style={{ width: '94%' }} /></div>
+                      <div className="lp-skill-grid"><span>✓ React</span><span>✓ TypeScript</span><span>✓ Systems design</span><span className="missing">+ AWS missing</span></div>
+                    </div>
+                  )}
+                  {slide.type === 'pipeline' && (
+                    <div className="lp-slide-pipeline">
+                      <div className="lp-ui-kicker">Application pipeline <span>6 active roles</span></div>
+                      <div className="lp-kanban">{['Applied', 'Interview', 'Offer'].map((stage, stageIndex) => <div key={stage}><small>{stage}</small><div className="lp-kanban-card"><b>{['Notion', 'Google', 'Linear'][stageIndex]}</b><span>{['Product Designer', 'Frontend Engineer', 'Design Engineer'][stageIndex]}</span><em>{['2d ago', 'Tomorrow', 'Offer stage'][stageIndex]}</em></div><div className="lp-kanban-card muted"><b>{['Vercel', 'Stripe', 'Figma'][stageIndex]}</b><span>Open role</span></div></div>)}</div>
+                    </div>
+                  )}
+                  {slide.type === 'prep' && (
+                    <div className="lp-slide-prep">
+                      <div className="lp-ui-kicker">Interview studio <span>AI guided</span></div>
+                      <div className="lp-prep-main"><div className="lp-orb-small">✦</div><div><strong>Tell me about a complex project...</strong><span>Built from your resume + the role</span></div></div>
+                      <div className="lp-wave"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div>
+                      <div className="lp-prep-tags"><span>Answer framework</span><span>STAR method</span><span>2 min practice</span></div>
+                    </div>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+          <div className="lp-showcase-bottom">
+            <div className="lp-slide-progress">{HERO_SLIDES.map((slide, index) => <button key={slide.type} className={index === activeSlide ? 'active' : ''} onClick={(event) => { event.stopPropagation(); goToSlide(index) }} aria-label={`Show ${slide.type} preview`}><span /></button>)}</div>
+            <div className="lp-slide-arrows"><button onClick={(event) => { event.stopPropagation(); goToSlide(activeSlide - 1) }} aria-label="Previous showcase slide">←</button><button onClick={(event) => { event.stopPropagation(); goToSlide(activeSlide + 1) }} aria-label="Next showcase slide">→</button></div>
           </div>
         </div>
 
-        <div className="lp-scroll-hint">
-          <span>Discover</span>
-          <div className="lp-bounce" />
+        <div ref={n1Ref} className="lp-notif lp-glass lp-n1">
+          <div className="lp-notif-label"><span className="lp-ndot lp-ndot-g" />AI Match Score</div><div className="lp-notif-title">Software Engineer at Stripe</div><div className="lp-notif-sub">Skills analysis complete</div><div className="lp-mtrack"><div className="lp-mfill" style={{ width: '94%' }} /></div><div className="lp-chip lp-chip-g" style={{ marginTop: 8 }}>94% match</div>
         </div>
+        <div ref={n2Ref} className="lp-notif lp-glass lp-n2"><div className="lp-notif-label"><span className="lp-ndot lp-ndot-b" />Interview Reminder</div><div className="lp-notif-title">Technical Round · Google</div><div className="lp-notif-sub">Tomorrow 2PM</div><div className="lp-chip lp-chip-b">Reminder set</div></div>
+        <div ref={n3Ref} className="lp-notif lp-glass lp-n3"><div className="lp-notif-label"><span className="lp-ndot lp-ndot-v" />Application Update</div><div className="lp-notif-title">Meta · Product Designer</div><div className="lp-notif-sub">Status changed</div><div className="lp-chip lp-chip-v">Interview Stage</div></div>
+
+        <div className="lp-hero-text">
+          <div className="lp-badge"><span className="lp-badge-dot" />{HERO_SLIDES[activeSlide].kicker}</div>
+          <h1 className="lp-h1 lp-calistoga lp-grad">{HERO_SLIDES[activeSlide].title}</h1>
+          <p className="lp-sub">{HERO_SLIDES[activeSlide].body}</p>
+          <div className="lp-ctas"><Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">Start for free →</Link><Link to="/login" className="lp-btn lp-btn-ghost lp-btn-lg">Sign in</Link></div>
+        </div>
+        <div className="lp-scroll-hint"><span>Discover</span><div className="lp-bounce" /></div>
       </section>
 
       {/* ── Trust logos ── */}
