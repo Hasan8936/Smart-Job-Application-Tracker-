@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Download, GraduationCap, History, Link as LinkIcon, FileText } from 'lucide-react'
 import api from '../api/axios'
+import { getMatchingResume } from '../api/resumeBuilder'
 import Layout from '../components/Layout'
 import { generateInterviewPrep, listInterviewPrepSessions, getInterviewPrepSession, exportInterviewPrep } from '../api/interviewPrep'
 
@@ -29,7 +30,12 @@ export default function InterviewPrep() {
 
   useEffect(() => { load() }, [])
   async function load() {
-    try { const result = await api.get('/resume/me'); setResumes(result.data); if (result.data[0]) setResumeId(result.data[0].id) } catch (e) { console.error(e) }
+    try {
+      const [result, matching] = await Promise.all([api.get('/resume/me'), getMatchingResume().catch(() => null)])
+      setResumes(result.data)
+      const preferred = matching?.resumeId || result.data[0]?.id
+      if (preferred) setResumeId(preferred)
+    } catch (e) { console.error(e) }
     try { setApplications((await api.get('/applications')).data) } catch (e) { console.error(e) }
     try { setPastSessions((await listInterviewPrepSessions()).data) } catch (e) { console.error(e) }
   }

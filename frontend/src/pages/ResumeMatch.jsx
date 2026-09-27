@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { UploadCloud, FileText, CheckCircle2, XCircle } from 'lucide-react'
 import api from '../api/axios'
+import { getMatchingResume } from '../api/resumeBuilder'
 import Layout from '../components/Layout'
 import ScoreRing from '../components/ScoreRing'
 import DeepMatchResults from '../components/DeepMatchResults'
@@ -21,9 +22,10 @@ export default function ResumeMatch() {
 
   async function fetchResumes() {
     try {
-      const res = await api.get('/resume/me')
+      const [res, matching] = await Promise.all([api.get('/resume/me'), getMatchingResume().catch(() => null)])
       setResumes(res.data)
-      if (!selectedResumeId && res.data[0]) setSelectedResumeId(res.data[0].id)
+      // Default to the universal resume (else the newest upload) instead of the oldest.
+      if (!selectedResumeId) setSelectedResumeId(matching?.resumeId || res.data[0]?.id || '')
     } catch (e) {
       console.error(e)
     }

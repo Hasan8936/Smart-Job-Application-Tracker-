@@ -15,6 +15,7 @@ import ScoreRing from '../components/ScoreRing'
 import TopCompanies from '../components/TopCompanies'
 import { AuthContext } from '../context/AuthContext'
 import { listJobs, readJobActions } from '../api/jobs'
+import { getMatchingResume } from '../api/resumeBuilder'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 import { getGmailStatus, beginGmailConnect, disconnectGmail } from '../api/gmail'
@@ -175,9 +176,9 @@ export default function Dashboard() {
     try {
       setJobLoading(true)
       // Fetch job list and resume in parallel — avoids two sequential round-trips
-      const [res, resumesResp] = await Promise.all([
+      const [res, matchingResume] = await Promise.all([
         listJobs({ page: 0, size: 6, sort: 'postedAt,desc' }),
-        api.get('/resume/me').catch(() => ({ data: [] }))
+        getMatchingResume().catch(() => null)
       ])
       const content = res.content || []
       // Show jobs immediately without match scores so the page renders fast
@@ -185,7 +186,8 @@ export default function Dashboard() {
       setJobLoading(false)
 
       // Compute match scores in the background — updates the list once ready
-      const resumeId = resumesResp.data?.[0]?.id
+      // Universal resume if the user has one, else their newest upload.
+      const resumeId = matchingResume?.resumeId
       if (resumeId && content.length > 0) {
         const scored = await Promise.all(
           content.map(async (job) => {

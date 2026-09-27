@@ -4,12 +4,12 @@ import {
   Target, FileText, Eye, Download, Plus, Trash2, ChevronRight,
   ChevronLeft, CheckCircle, AlertCircle, Sparkles, X, Loader2,
   Briefcase, GraduationCap, Wrench, User, ArrowRight, Upload,
-  Link2, Github, Code2, Globe, BookOpen, Wand2, FolderGit2
+  Link2, Github, Code2, Globe, BookOpen, Wand2, FolderGit2, BadgeCheck, Save
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import {
   getPrefill, getTemplates, exportResume, previewResume, importResume, aiEnhanceResume,
-  exportLatex, listResumes, uploadResume
+  exportLatex, listResumes, uploadResume, getUniversalResume, saveUniversalResume, universalFromResume
 } from '../api/resumeBuilder'
 
 // ─── Role suggestions ─────────────────────────────────────────────────────────
@@ -104,6 +104,83 @@ function emptyProject() {
 }
 function emptySkills() {
   return { languages: [], frameworks: [], tools: [], other: [] }
+}
+
+/** Builder form state from a saved universal resume (API data may have nulls and missing lists). */
+function formFromSaved(dto, template, prev) {
+  const str = v => v || ''
+  const pi = dto.personalInfo || {}
+  const s = dto.skills || {}
+  return {
+    ...prev,
+    template: template || prev.template,
+    goal: str(dto.goal),
+    targetRole: str(dto.targetRole),
+    personalInfo: Object.fromEntries(Object.keys(prev.personalInfo).map(k => [k, str(pi[k])])),
+    summary: str(dto.summary),
+    experience: (dto.experience || []).map(e => ({
+      company: str(e.company), role: str(e.role), startDate: str(e.startDate), endDate: str(e.endDate),
+      current: !!e.current, bullets: e.bullets?.length ? e.bullets : [''],
+    })),
+    projects: (dto.projects || []).map(p => ({
+      name: str(p.name), description: p.description?.length ? p.description : [''], techStack: p.techStack || [],
+      githubUrl: str(p.githubUrl), liveUrl: str(p.liveUrl), date: str(p.date),
+    })),
+    education: (dto.education || []).map(e => ({
+      institution: str(e.institution), degree: str(e.degree), field: str(e.field),
+      startYear: str(e.startYear), endYear: str(e.endYear), gpa: str(e.gpa),
+    })),
+    skills: { languages: s.languages || [], frameworks: s.frameworks || [], tools: s.tools || [], other: s.other || [] },
+  }
+}
+
+function formatUpdated(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+// Shows whether this builder holds the user's universal resume, or offers to start one from an upload.
+function UniversalBanner({ universal, uploads, onStartFrom, starting }) {
+  const options = uploads.filter(r => r.id !== universal?.resumeId)
+  const [choice, setChoice] = useState('')
+  const selected = choice || (options[0] ? String(options[0].id) : '')
+
+  if (universal) {
+    return (
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-accent/30 bg-accent/5">
+        <div className="flex items-center gap-2">
+          <BadgeCheck size={18} className="text-accent shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-ink">Your universal resume</p>
+            <p className="text-xs text-ink-soft">Last updated {formatUpdated(universal.updatedAt)}</p>
+          </div>
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-accent text-white">Used for job matching</span>
+      </div>
+    )
+  }
+  return (
+    <div className="mb-5 p-3 rounded-xl border border-line bg-surface/60">
+      <p className="text-sm font-medium text-ink">Create your universal resume</p>
+      <p className="text-xs text-ink-soft mb-2">
+        Save this builder as your universal resume and it will be used for all job matching. You can update it anytime.
+      </p>
+      {options.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="universal-start" className="text-xs text-ink-soft">Start from an uploaded resume:</label>
+          <select id="universal-start" value={selected} onChange={e => setChoice(e.target.value)}
+            className="px-2 py-1.5 rounded-lg border border-line bg-paper text-xs max-w-[14rem]">
+            {options.map(r => <option key={r.id} value={r.id}>{r.fileName || 'Resume ' + r.id}</option>)}
+          </select>
+          <button type="button" disabled={!selected || starting} onClick={() => onStartFrom(Number(selected))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 disabled:opacity-50">
+            {starting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} Start from this
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function buildPreviewText(form) {
@@ -976,7 +1053,7 @@ function TemplatePicker({ value, onChange }) {
   )
 }
 
-function Step3({ form, setForm, onBack, onExport, onExportLatex, onEnhance, onPreview, previewUrl, previewing, exporting, exportingLatex, enhancing, exportDone }) {
+function Step3({ form, setForm, onBack, onExport, onExportLatex, onEnhance, onPreview, previewUrl, previewing, exporting, exportingLatex, enhancing, exportDone, universal, onSaveUniversal, savingUniversal, universalSaved }) {
   const pi = form.personalInfo
   const checks = [
     { ok: !!pi.name?.trim(), label: 'Full name', req: true },
@@ -1059,6 +1136,17 @@ function Step3({ form, setForm, onBack, onExport, onExportLatex, onEnhance, onPr
         )}
       </div>
 
+      <button type="button" onClick={onSaveUniversal} disabled={savingUniversal}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent text-accent font-medium text-sm hover:bg-accent/5 disabled:opacity-50 transition-colors">
+        {savingUniversal ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+        {universal ? 'Update my universal resume' : 'Save as my universal resume'}
+      </button>
+      {universalSaved && (
+        <p role="status" className="flex items-center justify-center gap-1.5 text-xs text-green-700">
+          <BadgeCheck size={14} /> Saved — job matching now uses this version.
+        </p>
+      )}
+
       {exportDone && (
         <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
           <CheckCircle size={16} /> Resume saved to your account and downloaded!
@@ -1110,6 +1198,11 @@ export default function ResumeBuilder() {
   const [enhancements, setEnhancements] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [previewing, setPreviewing] = useState(false)
+  const [universal, setUniversal] = useState(null)
+  const [uploads, setUploads] = useState([])
+  const [savingUniversal, setSavingUniversal] = useState(false)
+  const [universalSaved, setUniversalSaved] = useState(false)
+  const [startingUniversal, setStartingUniversal] = useState(false)
 
   const [form, setForm] = useState({
     template: 'jakes',
@@ -1125,21 +1218,59 @@ export default function ResumeBuilder() {
   const topRef = useRef(null)
 
   useEffect(() => {
-    getPrefill()
-      .then(data => {
-        setForm(f => ({
-          ...f,
-          personalInfo: { ...f.personalInfo, ...(data.personalInfo || {}) },
-          skills: {
-            languages: data.skills?.languages || [],
-            frameworks: data.skills?.frameworks || [],
-            tools: data.skills?.tools || [],
-            other: [],
-          },
-        }))
-      })
-      .catch(() => {})
+    // A saved universal resume wins over profile pre-fill.
+    Promise.all([getPrefill().catch(() => null), getUniversalResume().catch(() => null)]).then(([data, saved]) => {
+      if (saved) {
+        setUniversal(saved)
+        setForm(f => formFromSaved(saved.resume || {}, saved.template, f))
+        return
+      }
+      if (!data) return
+      setForm(f => ({
+        ...f,
+        personalInfo: { ...f.personalInfo, ...(data.personalInfo || {}) },
+        skills: {
+          languages: data.skills?.languages || [],
+          frameworks: data.skills?.frameworks || [],
+          tools: data.skills?.tools || [],
+          other: [],
+        },
+      }))
+    })
+    listResumes().then(r => setUploads(Array.isArray(r) ? r : [])).catch(() => {})
   }, [])
+
+  // Any edit after a save means the saved version is out of date.
+  useEffect(() => { setUniversalSaved(false) }, [form])
+
+  const applySavedUniversal = (saved) => {
+    setUniversal(saved)
+    setForm(f => formFromSaved(saved.resume || {}, saved.template, f))
+  }
+
+  const handleSaveUniversal = async () => {
+    setSavingUniversal(true)
+    try {
+      applySavedUniversal(await saveUniversalResume(buildDto()))
+      // After the form-change effect above has run for the reloaded form.
+      setTimeout(() => setUniversalSaved(true), 0)
+    } catch (err) {
+      alert('Could not save your universal resume: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setSavingUniversal(false)
+    }
+  }
+
+  const handleStartFromUpload = async (resumeId) => {
+    setStartingUniversal(true)
+    try {
+      applySavedUniversal(await universalFromResume(resumeId))
+    } catch (err) {
+      alert('Could not start from that resume: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setStartingUniversal(false)
+    }
+  }
 
   const goTo = (n) => {
     setStep(n)
@@ -1299,6 +1430,8 @@ export default function ResumeBuilder() {
     <Layout title="Resume Builder" subtitle="ATS-ready resume in minutes — with AI enhance and Overleaf export.">
       <div className="max-w-2xl mx-auto" ref={topRef}>
 
+        <UniversalBanner universal={universal} uploads={uploads} onStartFrom={handleStartFromUpload} starting={startingUniversal} />
+
         {/* Import banner (only on steps 1–2) */}
         {step <= 2 && (
           <div className="mb-5 flex items-center justify-between gap-3 p-3 rounded-xl border border-line bg-surface/60">
@@ -1341,6 +1474,10 @@ export default function ResumeBuilder() {
               exportingLatex={exportingLatex}
               enhancing={enhancing}
               exportDone={exportDone}
+              universal={universal}
+              onSaveUniversal={handleSaveUniversal}
+              savingUniversal={savingUniversal}
+              universalSaved={universalSaved}
             />
           )}
         </div>

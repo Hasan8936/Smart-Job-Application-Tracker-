@@ -2,6 +2,18 @@ import api from './axios'
 
 export const getTemplates = () => api.get('/resume/build/templates').then(r => r.data)
 
+// Universal resume: the user's editable master resume, used for job matching by default.
+export const getUniversalResume = () =>
+  api.get('/resume/universal').then(r => r.data).catch(err => { if (err.response?.status === 404) return null; throw err })
+
+export const saveUniversalResume = (dto) => api.put('/resume/universal', dto).then(r => r.data)
+
+export const universalFromResume = (resumeId, overwrite = false) =>
+  api.post('/resume/universal/from-resume', null, { params: { resumeId, overwrite } }).then(r => r.data)
+
+/** { resumeId, source: 'UNIVERSAL' | 'LATEST_UPLOAD' | 'NONE', fileName } */
+export const getMatchingResume = () => api.get('/resume/matching').then(r => r.data)
+
 export const getPrefill = () => api.get('/resume/build/prefill').then(r => r.data)
 
 export const exportResume = async (dto) => {
