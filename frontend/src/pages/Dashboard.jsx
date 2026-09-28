@@ -1,20 +1,21 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plus, Briefcase, MessagesSquare, PartyPopper, XCircle,
   ArrowRight, Bookmark, Sparkles, Search, CheckCircle2,
-  Mail, CalendarDays, Loader2, Link2, Unlink
+  Mail, CalendarDays, Loader2, Link2, Unlink, RefreshCw, Radio
 } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
 import StatCard from '../components/StatCard'
+import TiltCard from '../components/TiltCard'
 import PipelineBar from '../components/PipelineBar'
 import ApplicationCard from '../components/ApplicationCard'
 import ApplicationDrawer from '../components/ApplicationDrawer'
 import ScoreRing from '../components/ScoreRing'
 import TopCompanies from '../components/TopCompanies'
 import { AuthContext } from '../context/AuthContext'
-import { listJobs, readJobActions, markJobApplied, setJobState } from '../api/jobs'
+import { listJobs, readJobActions, markJobApplied, setJobState, discoverJobs, getSyncProgress } from '../api/jobs'
 import AppliedNotice from '../components/AppliedNotice'
 import { getMatchingResume } from '../api/resumeBuilder'
 import JobCard from '../components/JobCard'
@@ -143,6 +144,37 @@ function timeGreeting() {
 
 const emptyForm = { companyName: '', roleTitle: '', jobDescription: '', status: 'APPLIED', appliedDate: '' }
 
+function JobSyncStatusCard({ status, onSync }) {
+  const running = status.phase === 'running'
+  const complete = status.phase === 'success'
+  const failed = status.phase === 'error'
+  return (
+    <TiltCard className="rounded-xl2 mb-6">
+    <div className="job-sync-card rounded-xl2 border border-line bg-surface shadow-card p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className={`job-sync-orb ${running ? 'is-live' : ''} ${complete ? 'is-complete' : ''} ${failed ? 'is-error' : ''}`}><Radio size={16} /></span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-[15px] text-ink">Job board activity</h2>
+              <span className={`job-sync-badge ${running ? 'running' : complete ? 'complete' : failed ? 'error' : ''}`}>
+                {running ? 'Live sync' : complete ? 'Up to date' : failed ? 'Needs attention' : 'Ready'}
+              </span>
+            </div>
+            <p className="text-xs text-muted mt-1 truncate">{status.message}</p>
+          </div>
+        </div>
+        <button type="button" onClick={onSync} disabled={running} className="inline-flex items-center gap-1.5 border border-line rounded-full px-3 py-2 text-xs font-medium text-ink hover:border-accent/50 disabled:opacity-60">
+          <RefreshCw size={13} className={running ? 'animate-spin' : ''} /> {running ? 'Scanning…' : 'Refresh sources'}
+        </button>
+      </div>
+      <div className="job-sync-progress mt-4" aria-label={`Job board sync ${status.progress}%`}><span style={{ width: `${status.progress}%` }} /></div>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-muted"><span>{status.provider ? `Scanning ${status.provider}` : 'Greenhouse · Lever · Ashby'}</span><span>{status.progress}%</span></div>
+    </div>
+    </TiltCard>
+  )
+}
+
 export default function Dashboard() {
   const { user } = useContext(AuthContext)
   const [applications, setApplications] = useState([])
@@ -156,12 +188,39 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState(null)
   const [appliedNotice, setAppliedNotice] = useState(null)
   const [jobActionError, setJobActionError] = useState('')
+  const syncTimer = useRef(null)
+  const [syncStatus, setSyncStatus] = useState({ phase: 'idle', progress: 0, provider: '', message: 'Live sources are ready when you are.' })
 
   useEffect(() => {
     // Fetch applications and jobs in parallel — neither blocks the other
     fetchApps()
     fetchJobs()
+    return () => { if (syncTimer.current) clearInterval(syncTimer.current) }
   }, [])
+
+  async function syncSources() {
+    if (syncStatus.phase === 'running') return
+    try {
+      setSyncStatus({ phase: 'running', progress: 4, provider: 'job boards', message: 'Connecting to official career-page sources…' })
+      const { syncId } = await discoverJobs({ locations: ['India'] })
+      await new Promise((resolve, reject) => {
+        const started = Date.now()
+        syncTimer.current = setInterval(async () => {
+          try {
+            if (Date.now() - started > 120000) throw new Error('Sync timed out')
+            const progress = await getSyncProgress(syncId)
+            const provider = progress.currentProvider?.replace(/-/g, ' ') || 'job boards'
+            const progressValue = Math.min(96, Math.max(8, progress.done ? 100 : (progress.totalSaved ? 20 + Math.min(70, progress.totalSaved) : 28)))
+            setSyncStatus({ phase: progress.done ? 'success' : 'running', progress: progressValue, provider, message: progress.done ? `Synced ${progress.totalSaved || 0} jobs from official sources.` : `Scanning ${provider} — ${progress.totalSaved || 0} jobs found so far…` })
+            if (progress.done) { clearInterval(syncTimer.current); syncTimer.current = null; resolve() }
+          } catch (error) { clearInterval(syncTimer.current); syncTimer.current = null; reject(error) }
+        }, 900)
+      })
+      await fetchJobs()
+    } catch (error) {
+      setSyncStatus({ phase: 'error', progress: 100, provider: '', message: error.response?.data?.error || error.message || 'Could not reach the job boards. Try again shortly.' })
+    }
+  }
 
   async function fetchApps() {
     try {
@@ -310,6 +369,8 @@ export default function Dashboard() {
         <StatCard label="Saved jobs" value={savedJobs || '—'} icon={Bookmark} tone="amber" />
         <StatCard label="Applied jobs" value={appliedJobs || '—'} icon={CheckCircle2} tone="mint" />
       </div>
+
+      <JobSyncStatusCard status={syncStatus} onSync={syncSources} />
 
       {/* ── Recent applications (appears before jobs in DOM to match heading order) ── */}
       <div className="flex items-center justify-between mb-3">

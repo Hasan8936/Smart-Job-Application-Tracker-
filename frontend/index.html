@@ -5,13 +5,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Job Tracker – Free AI Job Application Tracker &amp; Resume Matcher</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="canonical" href="https://smartjobtracker.indevs.in/" />
     <meta name="description" content="Free AI job application tracker. Track every application from Applied to Offer, match your resume to job descriptions with an explainable score, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="theme-color" content="#07021a" />
     <meta name="application-name" content="Smart Job Tracker" />
+    <script>
+      (() => { try { const saved = localStorage.getItem('smart-job-tracker-theme'); const theme = saved === 'dark' || saved === 'light' ? saved : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme } catch (_) {} })();
+    </script>
     <!-- Open Graph / Social Preview -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Smart Job Tracker" />

@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import BrandLogo from './BrandLogo'
+import ThemeToggle from './ThemeToggle'
 
 const AuroraRing = lazy(() => import('./AuroraRing'))
 
@@ -106,7 +107,8 @@ export default function AuthLayout({ heading, copy, children, id }) {
         </div>
 
         {/* ── Right panel — form ── */}
-        <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
+        <div className="relative flex items-center justify-center p-6 sm:p-10 lg:p-14">
+          <ThemeToggle className="absolute right-5 top-5 sm:right-7 sm:top-7" />
           <div className="w-full max-w-sm">
             {id === 'login' && (
               <div className="auth-mobile-visual" aria-hidden="true">

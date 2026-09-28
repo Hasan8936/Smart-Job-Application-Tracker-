@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import Sidebar from './Sidebar'
+import ThemeToggle from './ThemeToggle'
 
 const COLLAPSE_KEY = 'sidebar-collapsed'
 
@@ -53,7 +54,10 @@ export default function Layout({ title, subtitle, actions, children }) {
               <h1 className="font-display text-lg sm:text-xl leading-tight text-ink truncate">{title}</h1>
               {subtitle && <p className="text-xs sm:text-sm text-muted truncate">{subtitle}</p>}
             </div>
-            <div className="ml-auto flex items-center gap-2 shrink-0">{actions}</div>
+            <div className="ml-auto flex items-center gap-2 shrink-0">
+              <ThemeToggle />
+              {actions}
+            </div>
           </div>
         </header>
 
