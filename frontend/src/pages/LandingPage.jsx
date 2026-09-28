@@ -133,7 +133,9 @@ export default function LandingPage() {
   const goToSlide = (index) => setActiveSlide((index + HERO_SLIDES.length) % HERO_SLIDES.length)
   const handlePointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
-    event.currentTarget.setPointerCapture?.(event.pointerId)
+    // Let links/buttons inside the hero receive their click. Pointer capture
+    // here would retarget the click to the <section> and swallow navigation.
+    if (event.target.closest('a, button')) return
     setDragStart(event.clientX)
   }
   const handlePointerUp = (event) => {
