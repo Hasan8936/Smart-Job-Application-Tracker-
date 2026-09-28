@@ -199,6 +199,7 @@ export default function Dashboard() {
   }, [])
 
   async function syncSources() {
+    if (user?.profile?.role !== 'ADMIN') return
     if (syncStatus.phase === 'running') return
     try {
       setSyncStatus({ phase: 'running', progress: 4, provider: 'job boards', message: 'Connecting to official career-page sources…' })
@@ -309,6 +310,7 @@ export default function Dashboard() {
   const offers = applications.filter((a) => a.status === 'OFFER').length
   const rejections = applications.filter((a) => a.status === 'REJECTED').length
   const firstName = (user?.profile?.name || '').split(' ')[0]
+  const isSuperAdmin = user?.profile?.role === 'ADMIN'
 
   // Compare with UPPERCASE values — that's how they're stored
   const savedJobs = Object.values(jobActions).filter((v) => v === 'SAVED' || v === 'BOOKMARKED').length
@@ -370,7 +372,7 @@ export default function Dashboard() {
         <StatCard label="Applied jobs" value={appliedJobs || '—'} icon={CheckCircle2} tone="mint" />
       </div>
 
-      <JobSyncStatusCard status={syncStatus} onSync={syncSources} />
+      {isSuperAdmin && <JobSyncStatusCard status={syncStatus} onSync={syncSources} />}
 
       {/* ── Recent applications (appears before jobs in DOM to match heading order) ── */}
       <div className="flex items-center justify-between mb-3">
