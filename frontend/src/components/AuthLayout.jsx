@@ -1,10 +1,14 @@
 import React, { lazy, Suspense } from 'react'
 import BrandLogo from './BrandLogo'
 import ThemeToggle from './ThemeToggle'
+import { useTheme } from '../context/ThemeContext'
 
 const AuroraRing = lazy(() => import('./AuroraRing'))
 
 export default function AuthLayout({ heading, copy, children, id }) {
+  const { isDark } = useTheme()
+  // Only the login card switches to a white surface in light mode; white logo text would vanish there.
+  const mobileLogoVariant = id === 'login' && !isDark ? 'light' : 'void'
   return (
     <div
       id={id}
@@ -110,14 +114,14 @@ export default function AuthLayout({ heading, copy, children, id }) {
         <div className="relative flex items-center justify-center p-6 sm:p-10 lg:p-14">
           <ThemeToggle className="absolute right-5 top-5 sm:right-7 sm:top-7" />
           <div className="w-full max-w-sm">
+            {/* Mobile: logo sits in the top row beside the theme toggle, above the artwork */}
+            <BrandLogo className="w-40 h-auto mb-6 lg:hidden" variant={mobileLogoVariant} />
             {id === 'login' && (
               <div className="auth-mobile-visual" aria-hidden="true">
                 <img src="/hero-career-agents.png" alt="" />
                 <span>SMART JOB TRACKER / 01</span>
               </div>
             )}
-            {/* Mobile: show logo above form */}
-            <BrandLogo className="w-40 h-auto mb-6 lg:hidden" variant="void" />
 
             <h1 className="font-display text-2xl sm:text-3xl font-semibold text-white mb-1">
               {heading}

@@ -434,7 +434,7 @@ html[data-theme='light'] #login .text-muted { color: #667085 !important; }
 
 .auth-mobile-visual { display: none; }
 @media (max-width: 1023px) {
-  .auth-mobile-visual { display: flex; position: relative; height: 150px; margin: -12px auto 22px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(148, 163, 184, .18); border-radius: 22px; background: radial-gradient(circle at 50% 50%, rgba(217, 70, 239, .18), transparent 62%), #071226; }
+  .auth-mobile-visual { display: flex; position: relative; height: 150px; margin: 0 auto 22px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(148, 163, 184, .18); border-radius: 22px; background: radial-gradient(circle at 50% 50%, rgba(217, 70, 239, .18), transparent 62%), #071226; }
   .auth-mobile-visual img { height: 190px; width: 150px; object-fit: contain; filter: drop-shadow(0 12px 16px rgba(0,0,0,.4)); animation: auth-agent-float 7s ease-in-out infinite; }
   .auth-mobile-visual span { position: absolute; left: 14px; bottom: 12px; color: rgba(240, 171, 252, .7); font: 600 9px 'Outfit', sans-serif; letter-spacing: .12em; }
 }

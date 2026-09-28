@@ -1,7 +1,8 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import React, { lazy, Suspense, useContext, useEffect, useRef, useState } from 'react'
 import { usePageMeta, useJsonLd } from '../lib/pageMeta'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import BrandLogo from '../components/BrandLogo'
+import { AuthContext } from '../context/AuthContext'
 import './landing-page.css'
 
 // Lazy: keeps three.js out of the landing chunk so the hero text (LCP) renders without waiting for it.
@@ -112,7 +113,9 @@ const FAQ_JSON_LD = {
 export default function LandingPage() {
   usePageMeta({ title: 'Smart Job Tracker – Free AI Job Application Tracker & Resume Matcher', description: 'Free AI job application tracker: match your resume to job descriptions, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders by email and Google Calendar.', path: '/' })
   useJsonLd('ld-faq', FAQ_JSON_LD)
-  const navigate = useNavigate()
+  // Signed-in visitors still see the landing page; they just get a Dashboard shortcut instead of sign-in CTAs.
+  const { user } = useContext(AuthContext)
+  const signedIn = Boolean(user)
   const n1Ref = useRef(null)
   const n2Ref = useRef(null)
   const n3Ref = useRef(null)
@@ -140,12 +143,6 @@ export default function LandingPage() {
     setDragStart(null)
   }
 
-  // Redirect authenticated users
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) navigate('/dashboard', { replace: true })
-  }, [navigate])
-
   // Staggered card fade-in
   useEffect(() => {
     const timers = [
@@ -168,8 +165,14 @@ export default function LandingPage() {
             <a href="#faq">FAQ</a>
           </nav>
           <div className="lp-nav-cta">
-            <Link to="/login" className="lp-sign-in">Sign in</Link>
-            <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">Get started free</Link>
+            {signedIn ? (
+              <Link to="/dashboard" className="lp-btn lp-btn-primary lp-btn-sm">Go to dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="lp-sign-in">Sign in</Link>
+                <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">Get started free</Link>
+              </>
+            )}
           </div>
           {/* Mobile hamburger — only visible ≤600px */}
           <button
@@ -203,8 +206,14 @@ export default function LandingPage() {
             <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
           </nav>
           <div className="lp-mobile-menu-cta">
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-ghost lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Sign in</Link>
-            <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-primary lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Get started free</Link>
+            {signedIn ? (
+              <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-primary lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Go to dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-ghost lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Sign in</Link>
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="lp-btn lp-btn-primary lp-btn-lg" style={{width:'100%',justifyContent:'center'}}>Get started free</Link>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -235,7 +244,7 @@ export default function LandingPage() {
             <div className="lp-reference-kicker"><span className="lp-live-dot" /> AI CAREER OPERATING SYSTEM</div>
             <h1 className="lp-reference-title">Find the right<br /><em>next move.</em></h1>
             <p className="lp-reference-sub">Your resume, your applications, and your next opportunity — finally moving in the same direction.</p>
-            <div className="lp-ctas lp-reference-ctas"><Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">Start for free <span>↗</span></Link><Link to="/login" className="lp-reference-text-link">Sign in <span>→</span></Link></div>
+            <div className="lp-ctas lp-reference-ctas">{signedIn ? <Link to="/dashboard" className="lp-btn lp-btn-primary lp-btn-lg">Go to dashboard <span>↗</span></Link> : <><Link to="/register" className="lp-btn lp-btn-primary lp-btn-lg">Start for free <span>↗</span></Link><Link to="/login" className="lp-reference-text-link">Sign in <span>→</span></Link></>}</div>
           </div>
 
           <div className="lp-reference-art">
@@ -245,7 +254,7 @@ export default function LandingPage() {
           </div>
 
           <div className="lp-reference-cards">
-            <div className="lp-reference-heading">Why Smart<br /><em>Job Tracker?</em></div>
+            <div className="lp-reference-heading">Why Smart<br />{' '}<em>Job Tracker?</em></div>
             {HERO_SLIDES.map((slide, index) => (
               <button key={slide.type} className={`lp-reference-card ${index === activeSlide ? 'active' : ''}`} onClick={(event) => { event.stopPropagation(); goToSlide(index) }} aria-label={`Show ${slide.type} highlight`}>
                 <span className="lp-reference-number">0{index + 1}</span><span className="lp-reference-card-copy"><strong>{['Resume clarity', 'A single source of truth', 'Interview-ready confidence'][index]}</strong><small>{['See your strongest skills before you apply.', 'Keep every role and next step in motion.', 'Prepare with context from your actual experience.'][index]}</small></span><span className="lp-reference-arrow">↗</span>

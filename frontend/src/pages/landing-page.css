@@ -561,3 +561,27 @@
 @media (max-width:900px) { .lp-reference-layout { grid-template-columns:1fr 1fr;grid-template-areas:'copy art' 'cards cards';padding-top:106px; }.lp-reference-copy{grid-area:copy}.lp-reference-art{grid-area:art;height:520px}.lp-reference-cards{grid-area:cards;display:grid;grid-template-columns:repeat(3,1fr);padding:10px 0 0}.lp-reference-heading{grid-column:1/-1;margin:0 0 6px}.lp-reference-card{min-height:105px}.lp-reference-footer{bottom:18px} }
 @media (max-width:600px) { .lp-reference-hero { min-height:920px; }.lp-reference-layout { display:flex;flex-direction:column;align-items:stretch;padding:102px 20px 72px; }.lp-reference-copy { order:1;text-align:center; }.lp-reference-kicker{justify-content:center;font-size:9px}.lp-reference-title{font-size:56px;margin-top:18px}.lp-reference-sub{max-width:330px;margin:0 auto}.lp-reference-ctas{justify-content:center}.lp-reference-art{order:2;height:360px;margin-top:-4px}.lp-agent-art{width:290px}.lp-art-label{right:8%;bottom:2%}.lp-reference-cards{order:3;display:flex;padding:0;gap:8px}.lp-reference-heading{font-size:31px;margin:8px 0 7px}.lp-reference-card{min-height:80px;padding:12px 13px}.lp-reference-card-copy small{font-size:10px}.lp-reference-number{font-size:17px}.lp-reference-footer{bottom:18px}.lp-reference-hero .lp-globe-wrap{opacity:.1}.lp-nav{display:none}.lp-reference-hero .lp-mobile-menu-btn{display:flex} }
 @media (prefers-reduced-motion: reduce) { .lp-agent-art,.lp-reference-line i { animation:none; } }
+
+/* ── Phone polish: tighter hero, no overlapping labels, denser grids ── */
+@media (max-width:600px) {
+  .lp-reference-hero { min-height:auto; }
+  .lp-reference-layout { padding:96px 16px 40px; }
+  .lp-reference-title { font-size:clamp(42px,13vw,56px); }
+  .lp-reference-ctas { flex-wrap:wrap; gap:14px 18px; }
+  .lp-reference-art { height:300px; }
+  .lp-agent-art { width:240px; }
+  .lp-art-label, .lp-reference-footer { display:none; }
+  .lp-reference-heading br { display:none; }
+  .lp-btn-lg { padding:14px 26px; font-size:15px; white-space:nowrap; }
+  .lp-features { padding-top:72px; padding-bottom:64px; }
+  .lp-steps, .lp-stats { padding-block:64px; }
+  .lp-faq { padding-bottom:64px; }
+  .lp-stats .lp-wrap > div:first-child { margin-bottom:32px !important; }
+  .lp-grid-4 { grid-template-columns:repeat(2,1fr); gap:12px; }
+  .lp-stat-card { padding:20px 12px; }
+  .lp-stat-num { font-size:34px; }
+  .lp-cta { padding-bottom:64px; }
+  .lp-cta-card { padding:36px 20px; }
+  .lp-foot-cols { grid-template-columns:repeat(2,1fr); gap:24px 16px; }
+  .lp-foot-bottom { flex-direction:column; }
+}
