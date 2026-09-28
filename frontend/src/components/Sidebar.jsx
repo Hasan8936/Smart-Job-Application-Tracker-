@@ -4,6 +4,7 @@ import { LayoutGrid, ListChecks, FileSearch, BellRing, LogOut, Search, FileEdit,
 import { AuthContext } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
 import Avatar from './Avatar'
+import { useTheme } from '../context/ThemeContext'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid, end: true },
@@ -59,6 +60,7 @@ function NavPill({ to, end, onClick, collapsed, children: label, Icon }) {
 
 export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = false, onToggleCollapse }) {
   const { user, logout } = useContext(AuthContext)
+  const { isDark } = useTheme()
   const name = user?.profile?.name || user?.profile?.email || 'Account'
   const isMobile = variant === 'mobile'
   const isCollapsed = collapsed && !isMobile
@@ -72,7 +74,13 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
       }
     >
       <div className={`relative flex items-center h-16 border-b border-line shrink-0 ${isCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
-        <BrandLogo markOnly={isCollapsed} variant="sidebar" className={isCollapsed ? 'w-8 h-8' : 'w-40 h-auto'} />
+        {isCollapsed ? (
+          <BrandLogo markOnly variant={isDark ? 'void' : 'sidebar'} className="w-8 h-8" />
+        ) : (
+          <div className={`dashboard-brand-art ${isDark ? 'is-dark' : 'is-light'}`}>
+            <img src="/dashboard-logo.png" alt="Smart Job Tracker" />
+          </div>
+        )}
         {!isMobile && (
           <button
             onClick={onToggleCollapse}

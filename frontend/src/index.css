@@ -50,6 +50,13 @@ html[data-theme='dark'] .shadow-card { box-shadow: 0 18px 40px rgba(0, 0, 0, .22
 html[data-theme='dark'] input, html[data-theme='dark'] select, html[data-theme='dark'] textarea { color-scheme: dark; }
 html[data-theme='dark'] .theme-toggle { background-color: #12213b !important; }
 
+.dashboard-brand-art { width: 156px; height: 38px; display: flex; align-items: center; overflow: hidden; border-radius: 11px; background: #050914; border: 1px solid rgba(99, 102, 241, .18); }
+.dashboard-brand-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; transition: filter .25s ease, opacity .25s ease; }
+.dashboard-brand-art.is-light { background: linear-gradient(135deg, #111827, #172554); box-shadow: 0 8px 20px rgba(30, 41, 59, .12); }
+.dashboard-brand-art.is-light img { filter: brightness(1.22) saturate(.88) contrast(1.04); }
+.dashboard-brand-art.is-dark { background: linear-gradient(135deg, #020617, #11103b); border-color: rgba(129, 140, 248, .25); box-shadow: 0 10px 26px rgba(0, 0, 0, .28); }
+.dashboard-brand-art.is-dark img { filter: brightness(.95) saturate(1.16) contrast(1.06); }
+
 .font-display {
   letter-spacing: -0.02em;
 }
