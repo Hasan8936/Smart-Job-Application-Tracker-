@@ -74,6 +74,26 @@ class JobSearchTest {
     }
 
     @Test
+    void nonSoftwareRolesMatchCommonWordings() {
+        save("Customer Support Executive", "Acme", "Noida, India", "IN", 1);
+        save("Customer Service Associate", "Globex", "Pune, India", "IN", 1);
+        save("Cyber Security Analyst", "Initech", "Delhi, India", "IN", 1);
+        save("QA Engineer", "Hooli", "Pune, India", "IN", 1);
+        save("Mechanical Design Engineer", "Tata", "Chennai, India", "IN", 1);
+        save("HR Executive", "Wipro", "Mumbai, India", "IN", 1);
+        save("Talent Acquisition Specialist", "Infosys", "Mumbai, India", "IN", 1);
+
+        assertEquals(List.of("Customer Service Associate", "Customer Support Executive"),
+                titles("customer care", null).stream().sorted().toList());
+        assertEquals(List.of("Cyber Security Analyst"), titles("security", null));
+        assertEquals(List.of("Cyber Security Analyst"), titles("cybersecurity analyst", null));
+        assertEquals(List.of("QA Engineer"), titles("quality assurance", null));
+        assertEquals(List.of("Mechanical Design Engineer"), titles("mechanical engineering", null));
+        assertEquals(List.of("HR Executive", "Talent Acquisition Specialist"),
+                titles("human resources", null).stream().sorted().toList());
+    }
+
+    @Test
     void preferredCountryThenRelevanceThenNewestWithUndatedLast() {
         save("Java Developer", "Acme", "Austin", "US", 0);
         save("Platform Engineer", "Initech", "Pune", "IN", 1, "Java");

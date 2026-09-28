@@ -130,7 +130,7 @@ app:
     jobspy:
       enabled: ${JOBSPY_ENABLED:false}
       service-url: ${JOBSPY_SERVICE_URL:}
-      site-names: ${JOBSPY_SITE_NAMES:linkedin,indeed}
+      site-names: ${JOBSPY_SITE_NAMES:linkedin}
       results-wanted: ${JOBSPY_RESULTS_WANTED:20}
       hours-old: ${JOBSPY_HOURS_OLD:168}
       country: ${JOBSPY_COUNTRY:India}

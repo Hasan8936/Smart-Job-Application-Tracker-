@@ -47,6 +47,11 @@ public final class JobSearch {
         PHRASES.put("machine learning", "ml"); PHRASES.put("entry level", "fresher"); PHRASES.put("entry-level", "fresher");
         PHRASES.put("work from home", "remote"); PHRASES.put("react.js", "react"); PHRASES.put("node.js", "node");
         PHRASES.put("software engineer", "sde"); PHRASES.put("software developer", "sde");
+        PHRASES.put("customer care", "customersupport"); PHRASES.put("customer support", "customersupport");
+        PHRASES.put("customer service", "customersupport"); PHRASES.put("customer success", "customersupport");
+        PHRASES.put("human resources", "hr"); PHRASES.put("quality assurance", "qa");
+        PHRASES.put("cyber security", "security"); PHRASES.put("cybersecurity", "security");
+        PHRASES.put("information security", "security");
 
         synonyms(List.of("sde", "swe"), "software engineer", "software developer", "sde", "swe", "software development engineer");
         synonyms(List.of("dev", "developer"), "developer", "development", "engineer");
@@ -64,9 +69,22 @@ public final class JobSearch {
         synonyms(List.of("bangalore", "bengaluru", "blr"), "bangalore", "bengaluru");
         synonyms(List.of("gurgaon", "gurugram"), "gurgaon", "gurugram");
         synonyms(List.of("mumbai", "bombay"), "mumbai", "bombay");
-        synonyms(List.of("qa", "tester", "testing"), "qa", "quality", "test");
+        synonyms(List.of("qa", "tester", "testing"), "qa", "quality", "test", "sdet");
         synonyms(List.of("devops", "sre"), "devops", "site reliability", "sre");
         synonyms(List.of("analyst", "analytics"), "analyst", "analytics");
+        // Non-engineering and non-software roles, so these searches don't come back empty on wording differences.
+        synonyms(List.of("engineer", "engineering"), "engineer", "engineering");
+        synonyms(List.of("customersupport"), "customer care", "customer support", "customer service", "customer success",
+                "customer experience", "call center", "call centre", "help desk", "helpdesk", "bpo");
+        synonyms(List.of("security"), "security", "cyber", "infosec", "soc analyst");
+        synonyms(List.of("hr"), "hr", "human resource", "recruiter", "talent acquisition");
+        synonyms(List.of("recruiter", "recruitment"), "recruiter", "recruitment", "talent acquisition");
+        synonyms(List.of("sales", "bde"), "sales", "business development", "bde");
+        synonyms(List.of("marketing"), "marketing", "seo", "growth");
+        synonyms(List.of("accountant", "accounts", "accounting"), "accountant", "accounts", "accounting");
+        synonyms(List.of("finance", "financial"), "finance", "financial");
+        synonyms(List.of("mech", "mechanical"), "mechanical");
+        synonyms(List.of("electrical", "eee"), "electrical");
     }
 
     private static void synonyms(List<String> terms, String... alternatives) {
@@ -125,6 +143,122 @@ public final class JobSearch {
             }
             return cb.and(where.toArray(Predicate[]::new));
         };
+    }
+
+    /** Onboarding preferences (codes as in {@code JobPreferencesDto}); null/empty fields don't filter. */
+    public record Preferences(List<String> roles, String experienceLevel, List<String> locations,
+                              List<String> workModes, List<String> jobTypes, Integer minSalaryLpa) {}
+
+    /** Title words that clearly don't fit an experience level. Only titles are checked; most postings don't say more. */
+    private static final Map<String, List<String>> EXCLUDED_FOR_LEVEL = Map.of(
+            "FRESHER", List.of("senior", "sr", "sr.", "lead", "principal", "staff", "manager", "director", "head", "architect", "vp"),
+            "JUNIOR", List.of("principal", "staff", "director", "head", "architect", "vp"),
+            "MID", List.of("intern", "internship", "trainee", "director", "vp"),
+            "SENIOR", List.of("intern", "internship", "trainee", "fresher", "freshers", "junior", "graduate"));
+
+    private static final Map<String, List<String>> JOB_TYPE_PATTERNS = Map.of(
+            "FULL_TIME", List.of("%full%"), "PART_TIME", List.of("%part%"),
+            "INTERNSHIP", List.of("%intern%"), "CONTRACT", List.of("%contract%", "%temporary%"));
+
+    /**
+     * Jobs matching the user's saved preferences: the title matches one of their roles, the title doesn't clearly
+     * contradict their experience level, and location, remote, job type and minimum salary fit. A value the posting
+     * doesn't state (employment type, work mode, salary) never hides it — except that "internships only" needs the
+     * posting to say internship. Preferred country first, then newest.
+     */
+    public static Specification<JobPosting> recommended(Preferences p, String preferredCountry) {
+        return (root, query, cb) -> {
+            List<Predicate> where = new ArrayList<>();
+            where.add(cb.isFalse(root.get("scriptBlocked")));
+            Expression<String> title = paddedTitle(cb, root);
+
+            List<Predicate> anyRole = new ArrayList<>();
+            for (String role : nonNull(p.roles())) {
+                List<List<String>> roleTerms = terms(role);
+                if (roleTerms.isEmpty()) continue;
+                List<Predicate> allTerms = new ArrayList<>();
+                for (List<String> alternatives : roleTerms) {
+                    List<Predicate> any = new ArrayList<>();
+                    for (String alt : alternatives) any.add(titleHas(cb, root, title, alt));
+                    allTerms.add(cb.or(any.toArray(Predicate[]::new)));
+                }
+                anyRole.add(cb.and(allTerms.toArray(Predicate[]::new)));
+            }
+            if (!anyRole.isEmpty()) where.add(cb.or(anyRole.toArray(Predicate[]::new)));
+
+            for (String word : EXCLUDED_FOR_LEVEL.getOrDefault(String.valueOf(p.experienceLevel()), List.of())) {
+                where.add(cb.notLike(title, "% " + word + " %"));
+            }
+
+            Set<String> modes = Set.copyOf(nonNull(p.workModes()));
+            Predicate remote = cb.or(
+                    cb.like(cb.lower(cb.coalesce(root.get("workMode"), "")), "%remote%"),
+                    cb.like(cb.lower(cb.coalesce(root.get("location"), "")), "%remote%"),
+                    cb.like(title, "%remote%"), cb.like(title, "% wfh %"));
+            List<Predicate> anyLocation = new ArrayList<>();
+            for (String raw : nonNull(p.locations())) {
+                String loc = raw.toLowerCase(Locale.ROOT).trim();
+                if (loc.equals("remote")) { anyLocation.add(remote); continue; }
+                if (loc.equals("india") || loc.equals("anywhere in india")) {
+                    anyLocation.add(cb.or(cb.equal(root.get("countryCode"), "IN"),
+                            cb.like(cb.lower(cb.coalesce(root.get("location"), "")), "%india%")));
+                    continue;
+                }
+                for (String alt : SYNONYMS.getOrDefault(loc, List.of(loc))) {
+                    anyLocation.add(cb.like(cb.lower(cb.coalesce(root.get("location"), "")), contains(alt)));
+                }
+            }
+            if (!anyLocation.isEmpty()) {
+                if (modes.contains("REMOTE")) anyLocation.add(remote);
+                where.add(cb.or(anyLocation.toArray(Predicate[]::new)));
+            }
+            // On-site/hybrid is almost never stated, so only a remote-only choice can filter.
+            if (modes.equals(Set.of("REMOTE"))) where.add(remote);
+
+            Set<String> types = Set.copyOf(nonNull(p.jobTypes()));
+            if (!types.isEmpty() && types.size() < JOB_TYPE_PATTERNS.size()) {
+                Expression<String> type = cb.lower(cb.coalesce(root.get("employmentType"), ""));
+                List<Predicate> anyType = new ArrayList<>();
+                for (String t : types) for (String pattern : JOB_TYPE_PATTERNS.getOrDefault(t, List.of())) anyType.add(cb.like(type, pattern));
+                Predicate typeMatches = cb.or(anyType.toArray(Predicate[]::new));
+                Predicate internTitle = cb.or(cb.like(title, "% intern %"), cb.like(title, "% interns %"), cb.like(title, "% internship %"));
+                if (types.equals(Set.of("INTERNSHIP"))) {
+                    where.add(cb.or(typeMatches, internTitle));
+                } else {
+                    Predicate unknown = cb.equal(cb.trim(type), "");
+                    where.add(cb.or(typeMatches, types.contains("INTERNSHIP") ? unknown : cb.and(unknown, cb.not(internTitle))));
+                }
+            }
+
+            if (p.minSalaryLpa() != null && p.minSalaryLpa() > 0) {
+                int yearly = p.minSalaryLpa() * 100_000;
+                Expression<Integer> amount = cb.coalesce(root.get("salaryMax"), root.get("salaryMin"));
+                Expression<String> period = cb.upper(cb.coalesce(root.get("salaryPeriod"), ""));
+                Predicate tooLow = cb.and(
+                        cb.or(cb.isNull(root.get("salaryEstimated")), cb.isFalse(root.get("salaryEstimated"))),
+                        cb.equal(cb.upper(cb.coalesce(root.get("salaryCurrency"), "")), "INR"),
+                        cb.isNotNull(amount),
+                        cb.or(cb.and(cb.equal(period, "YEAR"), cb.lessThan(amount, yearly)),
+                              cb.and(cb.equal(period, "MONTH"), cb.lessThan(amount, yearly / 12))));
+                where.add(cb.not(tooLow));
+            }
+
+            Class<?> resultType = query.getResultType();
+            if (resultType != Long.class && resultType != long.class) {
+                query.orderBy(orders(root, cb, preferredCountry, List.of(), Sort.by(Sort.Direction.DESC, "postedAt")));
+            }
+            return cb.and(where.toArray(Predicate[]::new));
+        };
+    }
+
+    private static Predicate titleHas(CriteriaBuilder cb, Root<JobPosting> root, Expression<String> paddedTitle, String alternative) {
+        return alternative.length() <= 3
+                ? cb.like(paddedTitle, "% " + alternative + " %")
+                : cb.like(cb.lower(cb.coalesce(root.get("title"), "")), contains(alternative));
+    }
+
+    private static List<String> nonNull(List<String> values) {
+        return values == null ? List.of() : values.stream().filter(v -> v != null && !v.isBlank()).toList();
     }
 
     private static List<Order> orders(Root<JobPosting> root, CriteriaBuilder cb, String preferredCountry,

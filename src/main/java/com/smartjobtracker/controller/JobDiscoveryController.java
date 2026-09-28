@@ -13,6 +13,7 @@ import com.smartjobtracker.repository.JobPostingRepository;
 import com.smartjobtracker.repository.JobPostingSearchRepository;
 import com.smartjobtracker.repository.JobSkillRepository;
 import com.smartjobtracker.repository.UserRepository;
+import com.smartjobtracker.service.JobPreferenceService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,7 @@ public class JobDiscoveryController {
     private final JobSkillRepository skillRepository;
     private final DiscoveryPersonalization personalization;
     private final UserRepository userRepository;
+    private final JobPreferenceService preferences;
 
     /** Jobs in this country are listed first (ISO code; blank = no preference). */
     @org.springframework.beans.factory.annotation.Value("${app.job-discovery.preferred-country:IN}")
@@ -46,10 +48,12 @@ public class JobDiscoveryController {
     public JobDiscoveryController(JobSyncService syncService, SyncRunner syncRunner,
                                    SyncProgressStore progressStore,
                                    JobPostingRepository repository, JobPostingSearchRepository searchRepository, JobSkillRepository skillRepository,
-                                   DiscoveryPersonalization personalization, UserRepository userRepository) {
+                                   DiscoveryPersonalization personalization, UserRepository userRepository,
+                                   JobPreferenceService preferences) {
         this.syncService = syncService; this.syncRunner = syncRunner; this.progressStore = progressStore;
         this.repository = repository; this.searchRepository = searchRepository; this.skillRepository = skillRepository;
         this.personalization = personalization; this.userRepository = userRepository;
+        this.preferences = preferences;
     }
 
     /**
@@ -91,6 +95,19 @@ public class JobDiscoveryController {
         JobSearch.Criteria criteria = new JobSearch.Criteria(blankToNull(q), blankToNull(location), blankToNull(employmentType),
                 blankToNull(provider), postedAfter, postedBefore, null, countryCode(country), countryCode(preferredCountry));
         return enrichWithMatchScore(search(criteria, pageable), auth);
+    }
+
+    /**
+     * Only jobs matching the user's saved onboarding preferences (see {@link JobSearch#recommended}). An empty page
+     * when no preferences are saved; the client then shows its own prompt instead of unrelated jobs.
+     */
+    @GetMapping("/recommended")
+    public Page<JobDtos.JobSummary> recommended(@PageableDefault(size = 10) Pageable pageable, Authentication auth) {
+        int size = Math.min(Math.max(pageable.getPageSize(), 1), 50);
+        PageRequest page = PageRequest.of(pageable.getPageNumber(), size);
+        return preferences.filters(currentUserId(auth))
+                .map(p -> enrichWithMatchScore(searchRepository.findAll(JobSearch.recommended(p, countryCode(preferredCountry)), page), auth))
+                .orElseGet(() -> Page.empty(page));
     }
 
     @GetMapping("/{id}")

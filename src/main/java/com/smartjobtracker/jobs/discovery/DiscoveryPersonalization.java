@@ -3,7 +3,9 @@ package com.smartjobtracker.jobs.discovery;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartjobtracker.model.CandidateProfile;
+import com.smartjobtracker.model.JobSearchPreference;
 import com.smartjobtracker.repository.CandidateProfileRepository;
+import com.smartjobtracker.repository.JobSearchPreferenceRepository;
 import com.smartjobtracker.repository.ResumeRepository;
 import com.smartjobtracker.service.UniversalResumeService;
 import org.springframework.stereotype.Service;
@@ -33,11 +35,13 @@ public class DiscoveryPersonalization {
     private final UniversalResumeService universalResumes;
     private final JobSkillExtractor skillExtractor;
     private final ObjectMapper mapper;
+    private final JobSearchPreferenceRepository preferences;
 
     public DiscoveryPersonalization(CandidateProfileRepository profiles, ResumeRepository resumes,
-                                    UniversalResumeService universalResumes, JobSkillExtractor skillExtractor, ObjectMapper mapper) {
+                                    UniversalResumeService universalResumes, JobSkillExtractor skillExtractor, ObjectMapper mapper,
+                                    JobSearchPreferenceRepository preferences) {
         this.profiles = profiles; this.resumes = resumes; this.universalResumes = universalResumes;
-        this.skillExtractor = skillExtractor; this.mapper = mapper;
+        this.skillExtractor = skillExtractor; this.mapper = mapper; this.preferences = preferences;
     }
 
     /**
@@ -66,11 +70,17 @@ public class DiscoveryPersonalization {
         return all;
     }
 
-    /** Up to three roles to search: the universal resume's target role, then the profile's preferred roles. */
+    /**
+     * Up to three roles to search: the roles saved in the onboarding job preferences, then the universal resume's
+     * target role, then the profile's preferred roles.
+     */
     @Transactional(readOnly = true)
     public List<String> roles(Long userId) {
         Set<String> roles = new LinkedHashSet<>();
         if (userId != null) {
+            preferences.findByUserId(userId).filter(p -> JobSearchPreference.SAVED.equals(p.getStatus()))
+                    .map(p -> parse(p.getRoles()))
+                    .ifPresent(list -> list.stream().filter(r -> !r.isBlank()).map(String::trim).forEach(roles::add));
             universalResumes.get(userId)
                     .map(u -> u.resume() == null ? null : u.resume().getTargetRole())
                     .filter(r -> !r.isBlank())

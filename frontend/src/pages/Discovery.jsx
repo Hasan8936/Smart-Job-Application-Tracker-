@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Filter, Loader2, RefreshCw,
-  Search, Sparkles, X
+  Search, SlidersHorizontal, Sparkles, X
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import JobCard from '../components/JobCard'
 import JobDetails, { AutoApplyComingSoon } from '../components/JobDetails'
 import AppliedNotice from '../components/AppliedNotice'
+import JobPreferencesModal from '../components/JobPreferencesModal'
+import { getJobPreferences } from '../api/jobPreferences'
 import {
   autoApply, checkAutoApplyConfigured, discoverJobs, generateJobDocument, getJob, getLastJobsVisit,
   getSyncProgress, listJobDocuments, listJobs, listNewJobs, markJobApplied,
@@ -38,6 +40,8 @@ const DATE_PRESETS = [
 ]
 
 const SEARCH_DEBOUNCE_MS = 350
+// A typed search with no saved matches is fetched from the job boards once the user stops typing for this long.
+const AUTO_FETCH_DELAY_MS = 1500
 
 function activeFilterCount(filters) {
   return [filters.location, filters.employmentType, filters.postedAfter, filters.postedBefore]
@@ -78,9 +82,27 @@ export default function Discovery() {
   const [skyvernConfigured, setSkyvernConfigured] = useState(null) // null = loading, true/false = known
   const [autoApplyInfo, setAutoApplyInfo] = useState(false)
   const [appliedNotice, setAppliedNotice] = useState(null)
+  const [prefsOpen, setPrefsOpen] = useState(false)
+  const [prefs, setPrefs] = useState(null)
 
   const loadRequest = useRef(null)
+  // Search terms already fetched from the job boards this visit, so an empty result never re-scrapes in a loop.
+  const autoFetched = useRef(new Set())
   useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew, indiaOnly])
+
+  // Nothing saved yet for this search (e.g. "mechanical engineer", "customer care"): fetch it from LinkedIn
+  // instead of leaving the page blank until the user thinks to press Sync.
+  useEffect(() => {
+    const q = (filters.q || '').trim()
+    if (loading || syncing || error || showingOnlyNew || page !== 0 || q.length < 3 || jobs.totalElements > 0) return undefined
+    const key = q.toLowerCase()
+    if (autoFetched.current.has(key)) return undefined
+    const timer = setTimeout(() => {
+      autoFetched.current.add(key)
+      syncSources(`No saved jobs for "${q}" yet — searching LinkedIn…`)
+    }, AUTO_FETCH_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [loading, syncing, error, jobs, filters.q, page, showingOnlyNew])
 
   // Search as you type: apply the search text shortly after the user stops typing.
   useEffect(() => {
@@ -117,19 +139,32 @@ export default function Discovery() {
     'Chandigarh', 'Lucknow',
   ]
 
-  async function syncSources() {
+  async function openPreferences() {
+    try { setPrefs(await getJobPreferences()) } catch { /* open with empty form */ }
+    setPrefsOpen(true)
+  }
+
+  // Saved preferences replace the search: fetch fresh jobs for the saved roles (the backend's default when no keywords).
+  function onPreferencesSaved(saved) {
+    setPrefs(saved); setPrefsOpen(false)
+    setDraft(d => ({ ...d, q: '' })); setFilters(f => ({ ...f, q: '' }))
+    syncSources(`Searching LinkedIn for ${saved.roles.slice(0, 3).join(', ')}…`, { ignoreSearch: true })
+  }
+
+  async function syncSources(startMessage, options = {}) {
     let pollTimer = null
     try {
       setSyncing(true); setError('')
-      setSyncMessage('Connecting to job boards…')
+      setSyncMessage(typeof startMessage === 'string' ? startMessage : 'Connecting to job boards…')
       // What's in the search box is searched on the job boards; with nothing typed, the backend searches the
       // roles from your universal resume / profile.
-      const keywords = (draft.q || filters.q || '').trim()
+      const keywords = options.ignoreSearch ? '' : (draft.q || filters.q || '').trim()
+      if (keywords) autoFetched.current.add(keywords.toLowerCase())
       const body = { locations: [filters.location || draft.location || 'India'] }
       if (keywords) body.keywords = keywords
       const preset = DATE_PRESETS.find(p => p.after === filters.postedAfter && p.before === filters.postedBefore)
       if (preset?.hours) body.postedWithinHours = preset.hours
-      if (keywords !== filters.q) setFilters(f => ({ ...f, q: keywords }))
+      if (!options.ignoreSearch && keywords !== filters.q) setFilters(f => ({ ...f, q: keywords }))
 
       const { syncId } = await discoverJobs(body)
 
@@ -401,7 +436,7 @@ export default function Discovery() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={toggleIndiaOnly}
@@ -419,9 +454,17 @@ export default function Discovery() {
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
           <button
+            type="button"
+            onClick={openPreferences}
+            title="Roles, locations and job type used for your recommendations and for Sync with an empty search box"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line text-ink-soft text-xs font-medium hover:border-ink/30 transition-colors"
+          >
+            <SlidersHorizontal size={13} /> Preferences
+          </button>
+          <button
             onClick={syncSources}
             disabled={syncing}
-            title="Fetch fresh jobs for what's in the search box — or, if it's empty, for the roles on your universal resume"
+            title="Fetch fresh jobs for what's in the search box — or, if it's empty, for the roles in your job preferences"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line text-ink-soft text-xs font-medium disabled:opacity-50 hover:border-ink/30 transition-colors"
           >
             {syncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
@@ -462,10 +505,11 @@ export default function Discovery() {
       ) : jobs.content?.length === 0 ? (
         <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center">
           <Search size={32} className="mx-auto text-muted mb-3" />
-          <h2 className="font-display text-lg">No jobs found</h2>
+          <h2 className="font-display text-lg">{syncing ? 'Searching LinkedIn…' : 'No jobs found'}</h2>
           <p className="text-sm text-muted mt-1">
-            {filterCount > 0 ? 'Try removing some filters, or ' : 'Try '}
-            run a discovery sync to pull fresh listings.
+            {syncing
+              ? 'Fetching fresh listings for your search. This can take up to a minute.'
+              : <>{filterCount > 0 ? 'Try removing some filters, or ' : 'Try '}run a discovery sync to pull fresh listings.</>}
           </p>
           {filterCount > 0 && (
             <button onClick={clearAllFilters} className="mt-3 text-sm text-accent underline">Clear filters</button>
@@ -531,6 +575,7 @@ export default function Discovery() {
       />
       <AutoApplyComingSoon open={autoApplyInfo} onClose={() => setAutoApplyInfo(false)} />
       <AppliedNotice notice={appliedNotice} onClose={() => setAppliedNotice(null)} />
+      <JobPreferencesModal open={prefsOpen} mode="edit" initial={prefs} onClose={() => setPrefsOpen(false)} onSaved={onPreferencesSaved} />
     </Layout>
   )
 }

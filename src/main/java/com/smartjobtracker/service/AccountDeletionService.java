@@ -44,6 +44,7 @@ public class AccountDeletionService {
             "delete from gmail_connections where user_id = :uid",
             "delete from google_calendar_tokens where user_id = :uid",
             "delete from universal_resumes where user_id = :uid",
+            "delete from job_search_preferences where user_id = :uid",
             "delete from candidate_profiles where user_id = :uid",
             "delete from applications where user_id = :uid",
             "delete from resumes where user_id = :uid",

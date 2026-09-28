@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Plus, Briefcase, MessagesSquare, PartyPopper, XCircle,
   ArrowRight, Bookmark, Sparkles, Search, CheckCircle2,
-  Mail, CalendarDays, Loader2, Link2, Unlink, RefreshCw, Radio
+  Mail, CalendarDays, Loader2, Link2, Unlink, RefreshCw, Radio, SlidersHorizontal
 } from 'lucide-react'
 import api from '../api/axios'
 import Layout from '../components/Layout'
@@ -20,6 +20,8 @@ import AppliedNotice from '../components/AppliedNotice'
 import { getMatchingResume } from '../api/resumeBuilder'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
+import JobPreferencesModal from '../components/JobPreferencesModal'
+import { getJobPreferences, listRecommendedJobs } from '../api/jobPreferences'
 import { getGmailStatus, beginGmailConnect, disconnectGmail } from '../api/gmail'
 import { getCalendarStatus, getCalendarConnectUrl, disconnectCalendar } from '../api/calendar'
 
@@ -190,13 +192,59 @@ export default function Dashboard() {
   const [jobActionError, setJobActionError] = useState('')
   const syncTimer = useRef(null)
   const [syncStatus, setSyncStatus] = useState({ phase: 'idle', progress: 0, provider: '', message: 'Live sources are ready when you are.' })
+  // undefined = loading or unreadable, null = never asked, else {status: 'SAVED' | 'SKIPPED', roles, ...}
+  const [prefs, setPrefs] = useState(undefined)
+  const [prefsModal, setPrefsModal] = useState(null) // null | 'onboarding' | 'edit'
+  const [prefFetch, setPrefFetch] = useState({ running: false, message: '' })
+  const prefTimer = useRef(null)
 
   useEffect(() => {
     // Fetch applications and jobs in parallel — neither blocks the other
     fetchApps()
-    fetchJobs()
-    return () => { if (syncTimer.current) clearInterval(syncTimer.current) }
+    loadPreferencesAndJobs()
+    return () => {
+      if (syncTimer.current) clearInterval(syncTimer.current)
+      if (prefTimer.current) clearInterval(prefTimer.current)
+    }
   }, [])
+
+  async function loadPreferencesAndJobs() {
+    let current
+    try { current = await getJobPreferences() } catch { current = undefined }
+    setPrefs(current)
+    if (current === null) setPrefsModal('onboarding') // first visit: ask what to recommend
+    fetchJobs(current)
+  }
+
+  async function onPreferencesSaved(saved) {
+    setPrefs(saved)
+    setPrefsModal(null)
+    await fetchJobs(saved)
+    fetchForPreferences(saved)
+  }
+
+  // Searches LinkedIn (JobSpy) for the saved roles; the backend uses them when no keywords are sent.
+  async function fetchForPreferences(saved) {
+    const place = (saved.locations || []).find((l) => !/^(anywhere in india|remote)$/i.test(l)) || 'India'
+    try {
+      setPrefFetch({ running: true, message: `Searching LinkedIn for ${saved.roles.slice(0, 3).join(', ')}…` })
+      const { syncId } = await discoverJobs({ locations: [place] })
+      const progress = await new Promise((resolve, reject) => {
+        const started = Date.now()
+        prefTimer.current = setInterval(async () => {
+          try {
+            if (Date.now() - started > 120000) throw new Error('timeout')
+            const p = await getSyncProgress(syncId)
+            if (p.done) { clearInterval(prefTimer.current); prefTimer.current = null; resolve(p) }
+          } catch (error) { clearInterval(prefTimer.current); prefTimer.current = null; reject(error) }
+        }, 1500)
+      })
+      setPrefFetch({ running: false, message: progress.totalSaved ? `Found ${progress.totalSaved} fresh listings for your roles.` : 'Recommendations are up to date.' })
+      await fetchJobs(saved)
+    } catch {
+      setPrefFetch({ running: false, message: 'Could not reach LinkedIn right now. Try Sync on Discover jobs in a minute.' })
+    }
+  }
 
   async function syncSources() {
     if (user?.profile?.role !== 'ADMIN') return
@@ -235,12 +283,20 @@ export default function Dashboard() {
     }
   }
 
-  async function fetchJobs() {
+  // Saved preferences: only jobs matching them. Skipped/never asked: none (the card asks for preferences instead).
+  // Preferences unreadable (undefined): the newest jobs, rather than an empty card.
+  async function fetchJobs(currentPrefs = prefs) {
     try {
-      setJobLoading(true)
+      setJobLoading(true); setJobError('')
+      if (currentPrefs !== undefined && currentPrefs?.status !== 'SAVED') {
+        setJobs([]); setJobLoading(false)
+        return
+      }
       // Fetch job list and resume in parallel — avoids two sequential round-trips
       const [res, matchingResume] = await Promise.all([
-        listJobs({ page: 0, size: 6, sort: 'postedAt,desc' }),
+        currentPrefs?.status === 'SAVED'
+          ? listRecommendedJobs({ page: 0, size: 6 })
+          : listJobs({ page: 0, size: 6, sort: 'postedAt,desc' }),
         getMatchingResume().catch(() => null)
       ])
       const content = res.content || []
@@ -418,14 +474,41 @@ export default function Dashboard() {
       <ConnectedServicesCard />
 
       {/* ── Recommended jobs ── */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg text-ink">Recommended jobs</h2>
-        <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">
-          Explore all <ArrowRight size={14} />
-        </Link>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 mb-3">
+        <div className="min-w-0 max-w-full">
+          <h2 className="font-display text-lg text-ink whitespace-nowrap">Recommended jobs</h2>
+          {prefs?.status === 'SAVED' && (
+            <p className="text-xs text-muted truncate">For {prefs.roles.join(', ')}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-4 shrink-0">
+          {prefs !== undefined && (
+            <button onClick={() => setPrefsModal('edit')} className="text-sm font-medium text-ink-soft inline-flex items-center gap-1 hover:text-accent">
+              <SlidersHorizontal size={14} /> Preferences
+            </button>
+          )}
+          <Link to="/discovery" className="text-sm font-medium text-ink inline-flex items-center gap-1 hover:text-accent">
+            Explore all <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
 
-      {jobLoading ? (
+      {(prefFetch.running || prefFetch.message) && (
+        <p className="text-xs text-muted mb-3 flex items-center gap-1.5" role="status">
+          {prefFetch.running && <Loader2 size={13} className="animate-spin text-accent" />}{prefFetch.message}
+        </p>
+      )}
+
+      {prefs !== undefined && prefs?.status !== 'SAVED' && !jobLoading ? (
+        <div className="bg-surface border border-dashed border-line rounded-xl2 p-6 sm:p-8 text-center">
+          <div className="h-11 w-11 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto mb-3"><SlidersHorizontal size={18} /></div>
+          <p className="font-display text-ink">Tell us what you're looking for</p>
+          <p className="text-sm text-muted mt-1 mb-4">Pick your roles, locations and job type, and we'll recommend only jobs that match.</p>
+          <button onClick={() => setPrefsModal('edit')} className="btn-gradient inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full shadow-glow">
+            Set job preferences
+          </button>
+        </div>
+      ) : jobLoading ? (
         <div className="space-y-3 animate-pulse">
           {[0, 1].map((i) => (
             <div key={i} className="bg-surface border border-line rounded-xl2 shadow-card p-4">
@@ -444,8 +527,22 @@ export default function Dashboard() {
         <div className="text-sm text-status-rejected">{jobError}</div>
       ) : jobs.length === 0 ? (
         <div className="bg-surface border border-dashed border-line rounded-xl2 p-8 text-center">
-          <p className="font-display text-ink">No jobs discovered yet</p>
-          <Link to="/discovery" className="text-sm text-muted hover:text-ink">Open job discovery</Link>
+          {prefs?.status === 'SAVED' ? (
+            <>
+              <p className="font-display text-ink">{prefFetch.running ? 'Finding jobs for your roles…' : 'No matching jobs yet'}</p>
+              <p className="text-sm text-muted mt-1">
+                {prefFetch.running ? 'This can take up to a minute.' : 'Try broader roles or fewer filters.'}
+              </p>
+              {!prefFetch.running && (
+                <button onClick={() => setPrefsModal('edit')} className="mt-3 text-sm text-accent underline">Edit preferences</button>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="font-display text-ink">No jobs discovered yet</p>
+              <Link to="/discovery" className="text-sm text-muted hover:text-ink">Open job discovery</Link>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -477,6 +574,13 @@ export default function Dashboard() {
       />
       <JobDetails job={selectedJob} onClose={() => setSelectedJob(null)} />
       <AppliedNotice notice={appliedNotice} onClose={() => setAppliedNotice(null)} />
+      <JobPreferencesModal
+        open={prefsModal !== null}
+        mode={prefsModal === 'onboarding' ? 'onboarding' : 'edit'}
+        initial={prefs}
+        onClose={() => { if (prefsModal === 'onboarding' && prefs === null) setPrefs({ status: 'SKIPPED' }); setPrefsModal(null) }}
+        onSaved={onPreferencesSaved}
+      />
     </Layout>
   )
 }
