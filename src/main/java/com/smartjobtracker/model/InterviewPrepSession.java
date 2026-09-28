@@ -11,6 +11,8 @@ public class InterviewPrepSession {
     @Column(name = "application_id") private Long applicationId;
     @Column(name = "job_description", nullable = false, columnDefinition = "TEXT") private String jobDescription;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private InterviewPrepSource source;
+    /** AI, OFFLINE or MIXED (V31); null for older sessions. */
+    @Column(length = 20) private String generator;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public Long getId() { return id; } public void setId(Long v) { id = v; }
@@ -20,4 +22,6 @@ public class InterviewPrepSession {
     public String getJobDescription() { return jobDescription; } public void setJobDescription(String v) { jobDescription = v; }
     public InterviewPrepSource getSource() { return source; } public void setSource(InterviewPrepSource v) { source = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { createdAt = v; }
+    public String getGenerator() { return generator; }
+    public void setGenerator(String generator) { this.generator = generator; }
 }

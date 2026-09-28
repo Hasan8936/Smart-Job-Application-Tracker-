@@ -175,6 +175,17 @@ export default function InterviewPrep() {
             </div>
             <button onClick={exportSession} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line text-xs font-medium text-ink-soft hover:bg-mist"><Download size={14} />Export .md</button>
           </div>
+          {/* Say which generator wrote these, so offline drafts are never mistaken for AI answers. */}
+          {session.generator === 'OFFLINE' && (
+            <p className="text-xs text-muted bg-surface border border-line rounded-xl2 px-4 py-3">
+              AI answers weren't available, so these drafts were built from the bullets on your resume. Where your resume can't tell the full story, the answer says what to add from memory.
+            </p>
+          )}
+          {session.generator === 'MIXED' && (
+            <p className="text-xs text-muted bg-surface border border-line rounded-xl2 px-4 py-3">
+              Most answers are AI-written; a few couldn't be generated and were filled with drafts built from your resume.
+            </p>
+          )}
           {grouped.map((group) => (
             <div key={group.category} className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{CATEGORY_LABELS[group.category]}</h3>

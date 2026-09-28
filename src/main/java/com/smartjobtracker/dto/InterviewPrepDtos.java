@@ -23,8 +23,9 @@ public final class InterviewPrepDtos {
     public record Question(Long id, int position, InterviewQuestionCategory category, String question,
                             String suggestedAnswer, String sourceEvidence) {}
 
+    /** generator: AI, OFFLINE or MIXED; null for sessions created before it was recorded. */
     public record Session(Long id, String jobDescription, InterviewPrepSource source, Long resumeId,
-                           Long applicationId, OffsetDateTime createdAt, List<Question> questions) {}
+                           Long applicationId, OffsetDateTime createdAt, List<Question> questions, String generator) {}
 
     public record SessionSummary(Long id, String jobDescriptionPreview, InterviewPrepSource source,
                                   int questionCount, OffsetDateTime createdAt) {}

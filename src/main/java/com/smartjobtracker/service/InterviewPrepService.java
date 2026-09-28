@@ -17,6 +17,9 @@ public class InterviewPrepService {
     private static final Logger log = LoggerFactory.getLogger(InterviewPrepService.class);
     private static final int DEFAULT_COUNT = 50;
     private static final int MAX_COUNT = 80;
+    /** Resume text passed to generators; contact details are stripped first (the model never needs them). */
+    private static final int RESUME_TEXT_CHARS = 12_000;
+    static final String GENERATOR_AI = "AI", GENERATOR_OFFLINE = "OFFLINE", GENERATOR_MIXED = "MIXED";
 
     private final InterviewPrepSessionRepository sessions;
     private final InterviewPrepQuestionRepository questions;
@@ -68,17 +71,32 @@ public class InterviewPrepService {
         InterviewPrepProvider.FactProfile facts = facts(resume);
 
         List<InterviewPrepProvider.QuestionAnswer> generated;
+        String generator;
         boolean hasGeminiKey = aiConfig.getApiKey() != null && !aiConfig.getApiKey().isBlank();
-        try {
-            generated = (hasGeminiKey ? geminiProvider : ruleBasedProvider).generate(jobDescription, facts, count);
-        } catch (RuntimeException ex) {
-            log.warn("Gemini interview prep failed ({}), falling back to rule-based", ex.getMessage());
+        if (!hasGeminiKey) {
             generated = ruleBasedProvider.generate(jobDescription, facts, count);
+            generator = GENERATOR_OFFLINE;
+        } else {
+            try {
+                generated = geminiProvider.generate(jobDescription, facts, count);
+                generator = GENERATOR_AI;
+            } catch (RuntimeException ex) {
+                log.warn("Gemini interview prep failed for userId={} ({}); using offline drafts", userId, ex.getMessage());
+                generated = List.of();
+                generator = GENERATOR_OFFLINE;
+            }
+            if (generated.size() < count) {
+                // Fill only the categories the AI batches left short, so one failed batch doesn't discard the rest.
+                generated = topUp(generated, ruleBasedProvider.generate(jobDescription, facts, count), count);
+                if (GENERATOR_AI.equals(generator)) generator = GENERATOR_MIXED;
+            }
         }
+        log.info("Interview prep for userId={}: {} questions, generator={}", userId, generated.size(), generator);
 
         InterviewPrepSession session = new InterviewPrepSession();
         session.setUserId(userId); session.setResumeId(resume.getId()); session.setApplicationId(applicationId);
         session.setJobDescription(jobDescription); session.setSource(request.source());
+        session.setGenerator(generator);
         session = sessions.save(session);
 
         List<InterviewPrepQuestion> stored = new ArrayList<>();
@@ -139,7 +157,43 @@ public class InterviewPrepService {
         String education = String.join("\n", extracted.getEducation());
         String experience = String.join("\n", extracted.getExperience());
         String projects = String.join("\n", extracted.getProjects());
-        return new InterviewPrepProvider.FactProfile(null, education, experience, skills, projects);
+        String resumeText = withoutContactDetails(text);
+        if (resumeText.length() > RESUME_TEXT_CHARS) resumeText = resumeText.substring(0, RESUME_TEXT_CHARS);
+        return new InterviewPrepProvider.FactProfile(null, education, experience, skills, projects, resumeText);
+    }
+
+    /** Emails, URLs and phone numbers carry no interview content and shouldn't be sent to an AI provider. */
+    static String withoutContactDetails(String text) {
+        if (text == null) return "";
+        return text.replaceAll("[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+", " ")
+                .replaceAll("(?i)\\b(https?://|www\\.)\\S+", " ")
+                .replaceAll("(?i)\\b(linkedin|github)\\.com/\\S*", " ")
+                // Phone numbers: 10+ digits. A plain digit-run pattern would also eat "2020 - 2024" date ranges.
+                .replaceAll("\\+?\\(?\\d{2,4}\\)?[ -]?\\d{3,5}[ -]?\\d{3,5}(?![\\d%])", " ")
+                .replaceAll("[ \\t]{2,}", " ");
+    }
+
+    /** AI results first; then offline questions for whichever categories are still short of the offline split. */
+    static List<InterviewPrepProvider.QuestionAnswer> topUp(List<InterviewPrepProvider.QuestionAnswer> ai,
+                                                           List<InterviewPrepProvider.QuestionAnswer> offline, int count) {
+        List<InterviewPrepProvider.QuestionAnswer> out = new ArrayList<>(ai);
+        java.util.Map<InterviewQuestionCategory, Long> target = new java.util.EnumMap<>(InterviewQuestionCategory.class);
+        java.util.Map<InterviewQuestionCategory, Long> have = new java.util.EnumMap<>(InterviewQuestionCategory.class);
+        for (InterviewPrepProvider.QuestionAnswer qa : offline) target.merge(qa.category(), 1L, Long::sum);
+        for (InterviewPrepProvider.QuestionAnswer qa : ai) have.merge(qa.category(), 1L, Long::sum);
+        for (InterviewPrepProvider.QuestionAnswer qa : offline) {
+            if (out.size() >= count) break;
+            if (have.getOrDefault(qa.category(), 0L) < target.getOrDefault(qa.category(), 0L)) {
+                out.add(qa);
+                have.merge(qa.category(), 1L, Long::sum);
+            }
+        }
+        for (InterviewPrepProvider.QuestionAnswer qa : offline) {   // still short (AI over-filled one category): take any
+            if (out.size() >= count) break;
+            if (!out.contains(qa)) out.add(qa);
+        }
+        out.sort(java.util.Comparator.comparingInt(qa -> qa.category().ordinal()));
+        return out;
     }
 
     @SafeVarargs
@@ -160,6 +214,7 @@ public class InterviewPrepService {
     private InterviewPrepDtos.Session toSession(InterviewPrepSession session, List<InterviewPrepQuestion> qs) {
         return new InterviewPrepDtos.Session(session.getId(), session.getJobDescription(), session.getSource(),
                 session.getResumeId(), session.getApplicationId(), session.getCreatedAt(),
-                qs.stream().map(q -> new InterviewPrepDtos.Question(q.getId(), q.getPosition(), q.getCategory(), q.getQuestion(), q.getSuggestedAnswer(), q.getSourceEvidence())).toList());
+                qs.stream().map(q -> new InterviewPrepDtos.Question(q.getId(), q.getPosition(), q.getCategory(), q.getQuestion(), q.getSuggestedAnswer(), q.getSourceEvidence())).toList(),
+                session.getGenerator());
     }
 }
