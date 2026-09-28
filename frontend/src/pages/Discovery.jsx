@@ -90,7 +90,7 @@ export default function Discovery() {
   const autoFetched = useRef(new Set())
   useEffect(() => { loadJobs() }, [page, sort, filters, showingOnlyNew, indiaOnly])
 
-  // Nothing saved yet for this search (e.g. "mechanical engineer", "customer care"): fetch it from LinkedIn
+  // Nothing saved yet for this search (e.g. "mechanical engineer", "customer care"): fetch it from LinkedIn and Indeed
   // instead of leaving the page blank until the user thinks to press Sync.
   useEffect(() => {
     const q = (filters.q || '').trim()
@@ -99,7 +99,7 @@ export default function Discovery() {
     if (autoFetched.current.has(key)) return undefined
     const timer = setTimeout(() => {
       autoFetched.current.add(key)
-      syncSources(`No saved jobs for "${q}" yet — searching LinkedIn…`)
+      syncSources(`No saved jobs for "${q}" yet — searching LinkedIn and Indeed…`)
     }, AUTO_FETCH_DELAY_MS)
     return () => clearTimeout(timer)
   }, [loading, syncing, error, jobs, filters.q, page, showingOnlyNew])
@@ -148,7 +148,7 @@ export default function Discovery() {
   function onPreferencesSaved(saved) {
     setPrefs(saved); setPrefsOpen(false)
     setDraft(d => ({ ...d, q: '' })); setFilters(f => ({ ...f, q: '' }))
-    syncSources(`Searching LinkedIn for ${saved.roles.slice(0, 3).join(', ')}…`, { ignoreSearch: true })
+    syncSources(`Searching LinkedIn and Indeed for ${saved.roles.slice(0, 3).join(', ')}…`, { ignoreSearch: true })
   }
 
   async function syncSources(startMessage, options = {}) {
@@ -505,7 +505,7 @@ export default function Discovery() {
       ) : jobs.content?.length === 0 ? (
         <div className="bg-surface border border-dashed border-line rounded-xl2 p-10 text-center">
           <Search size={32} className="mx-auto text-muted mb-3" />
-          <h2 className="font-display text-lg">{syncing ? 'Searching LinkedIn…' : 'No jobs found'}</h2>
+          <h2 className="font-display text-lg">{syncing ? 'Searching LinkedIn and Indeed…' : 'No jobs found'}</h2>
           <p className="text-sm text-muted mt-1">
             {syncing
               ? 'Fetching fresh listings for your search. This can take up to a minute.'

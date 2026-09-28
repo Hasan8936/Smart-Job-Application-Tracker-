@@ -223,11 +223,11 @@ export default function Dashboard() {
     fetchForPreferences(saved)
   }
 
-  // Searches LinkedIn (JobSpy) for the saved roles; the backend uses them when no keywords are sent.
+  // Searches LinkedIn and Indeed (JobSpy) for the saved roles; the backend uses them when no keywords are sent.
   async function fetchForPreferences(saved) {
     const place = (saved.locations || []).find((l) => !/^(anywhere in india|remote)$/i.test(l)) || 'India'
     try {
-      setPrefFetch({ running: true, message: `Searching LinkedIn for ${saved.roles.slice(0, 3).join(', ')}…` })
+      setPrefFetch({ running: true, message: `Searching LinkedIn and Indeed for ${saved.roles.slice(0, 3).join(', ')}…` })
       const { syncId } = await discoverJobs({ locations: [place] })
       const progress = await new Promise((resolve, reject) => {
         const started = Date.now()
@@ -242,7 +242,7 @@ export default function Dashboard() {
       setPrefFetch({ running: false, message: progress.totalSaved ? `Found ${progress.totalSaved} fresh listings for your roles.` : 'Recommendations are up to date.' })
       await fetchJobs(saved)
     } catch {
-      setPrefFetch({ running: false, message: 'Could not reach LinkedIn right now. Try Sync on Discover jobs in a minute.' })
+      setPrefFetch({ running: false, message: 'Could not reach the job boards right now. Try Sync on Discover jobs in a minute.' })
     }
   }
 

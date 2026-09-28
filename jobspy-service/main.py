@@ -26,8 +26,8 @@ class SearchRequest(BaseModel):
     queries: List[str] = []
     location: str = ""
     # Checked for India (Sep 2026): Naukri requires a reCAPTCHA (never bypassed), Glassdoor rejects the location,
-    # Google returns nothing. LinkedIn and Indeed work; LinkedIn alone is the default (JOBSPY_SITE_NAMES overrides it).
-    site_names: List[str] = ["linkedin"]
+    # Google returns nothing. LinkedIn and Indeed work.
+    site_names: List[str] = ["linkedin", "indeed"]
     results_wanted: int = 20
     hours_old: Optional[int] = 168  # 1 week default
     country_indeed: str = DEFAULT_COUNTRY

@@ -45,7 +45,7 @@ public class JobProviderConfig {
     public static class JobSpySettings {
         private boolean enabled;
         private String serviceUrl;
-        private List<String> siteNames = List.of("linkedin");
+        private List<String> siteNames = List.of("linkedin", "indeed");
         private int resultsWanted = 20;
         private int hoursOld = 168;
         /** Country for Indeed/Glassdoor (JobSpy country_indeed), e.g. India, USA. */
