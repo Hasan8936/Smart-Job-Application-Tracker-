@@ -40,17 +40,43 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Calistoga:ital@0;1&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Calistoga:ital@0;1&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" /></noscript>
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://smartjobtracker.indevs.in/#organization","name":"Smart Job Tracker","url":"https://smartjobtracker.indevs.in/","logo":"https://smartjobtracker.indevs.in/logo.svg","sameAs":["https://github.com/Hasan8936/Smart-Job-Application-Tracker-"]},{"@type":"WebSite","@id":"https://smartjobtracker.indevs.in/#website","url":"https://smartjobtracker.indevs.in/","name":"Smart Job Tracker","publisher":{"@id":"https://smartjobtracker.indevs.in/#organization"},"inLanguage":"en"},{"@type":"SoftwareApplication","name":"Smart Job Tracker","url":"https://smartjobtracker.indevs.in/","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Free AI job application tracker: track applications from Applied to Offer, match your resume to job descriptions with an explainable score, discover jobs from Greenhouse, Lever and Ashby, and get interview reminders by email and Google Calendar.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"sameAs":["https://github.com/Hasan8936/Smart-Job-Application-Tracker-"],"publisher":{"@id":"https://smartjobtracker.indevs.in/#organization"},"image":"https://smartjobtracker.indevs.in/og-image.png","featureList":["Job application pipeline with status history","Explainable resume-to-job match score","Job discovery from Greenhouse, Lever and Ashby","Optional read-only Gmail sync for status updates","Interview and follow-up reminders by email","Google Calendar integration","Resume builder and tailoring that never invents experience"]}]}</script>
+    <style>
+        /* Boot loader: plain CSS because Tailwind isn't loaded yet. */
+        .boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #fafafa; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        html[data-theme='dark'] .boot { background: #07101f; }
+        .boot-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 36px; border-radius: 20px; background: #ffffff; border: 1px solid #e8e8e8; box-shadow: 0 18px 50px rgba(24, 25, 37, .10); animation: boot-in .25s ease-out both; }
+        html[data-theme='dark'] .boot-card { background: #0f1d36; border-color: rgba(148, 163, 184, .26); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); }
+        .boot-card img { border-radius: 12px; }
+        html[data-theme='dark'] .boot-card img { box-shadow: 0 0 0 1.5px rgba(196, 181, 253, .55); } /* near-black favicon vs navy card */
+        .boot-card p { margin: 0; font-size: 14px; font-weight: 500; color: #4b5563; }
+        html[data-theme='dark'] .boot-card p { color: #cbd5e1; }
+        .boot-spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgba(168, 85, 247, .22); border-top-color: #a855f7; animation: boot-spin .8s linear infinite; }
+        @keyframes boot-spin { to { transform: rotate(360deg); } }
+        @keyframes boot-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .boot-spinner, .boot-card { animation: none; } }
+    </style>
 </head>
 
 <body>
     <div id="root">
-        <!-- Static summary for crawlers that don't run JavaScript; React replaces it on load. -->
-        <main style="max-width:720px;margin:0 auto;padding:48px 16px;font-family:system-ui,sans-serif;color:#e9e4ff;background:#07021a">
+        <!-- Shown only until React mounts (it replaces #root), so visitors see a branded loader instead of raw text. -->
+        <div class="boot" role="status" aria-live="polite">
+            <div class="boot-card">
+                <img src="/favicon.svg" width="52" height="52" alt="" />
+                <div class="boot-spinner" aria-hidden="true"></div>
+                <p>Loading Smart Job Tracker…</p>
+            </div>
+        </div>
+    </div>
+    <!-- Summary for crawlers and browsers without JavaScript; never shown to normal visitors. -->
+    <noscript>
+        <main style="max-width:720px;margin:0 auto;padding:48px 16px;font-family:system-ui,sans-serif">
             <h1>Smart Job Tracker — free AI job application tracker</h1>
             <p>Smart Job Tracker is a free web app for managing a job search. Track every application from Applied through OA, Interview, and Offer; match your resume against job descriptions with an explainable score that lists matched and missing skills; discover postings from Greenhouse, Lever, and Ashby career pages; connect Gmail to detect interview invites and rejections; and get interview and follow-up reminders by email, with WhatsApp coming soon.</p>
-            <p><a href="/register" style="color:#a78bfa">Create a free account</a> · <a href="/login" style="color:#a78bfa">Sign in</a> · <a href="/privacy" style="color:#a78bfa">Privacy</a> · <a href="/terms" style="color:#a78bfa">Terms</a></p>
+            <p><a href="/register">Create a free account</a> · <a href="/login">Sign in</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+            <p>Smart Job Tracker needs JavaScript enabled to run.</p>
         </main>
-    </div>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
 </body>
 

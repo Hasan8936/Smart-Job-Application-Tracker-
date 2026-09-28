@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import CookieBanner from './components/CookieBanner'
+import PageLoader from './components/PageLoader'
 
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
@@ -25,17 +26,9 @@ const Admin = lazy(() => import('./pages/Admin'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 
-function PageSpinner() {
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-    </div>
-  )
-}
-
 export default function App() {
   return (
-    <Suspense fallback={<PageSpinner />}>
+    <Suspense fallback={<PageLoader />}>
     <CookieBanner />
     <Routes>
       <Route path="/login" element={<Login />} />

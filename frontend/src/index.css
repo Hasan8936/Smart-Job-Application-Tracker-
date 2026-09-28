@@ -118,6 +118,11 @@ html[data-theme='dark'] .text-green-700 { color: #86efac !important; }
 html[data-theme='dark'] .bg-blue-50 { background-color: rgba(96, 165, 250, .10) !important; }
 html[data-theme='dark'] .text-blue-700 { color: #93c5fd !important; }
 
+/* Entrance for floating popups (cookie consent). */
+.popup-in { animation: popup-in .28s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes popup-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .popup-in { animation: none; } }
+
 .font-display {
   letter-spacing: -0.02em;
 }
