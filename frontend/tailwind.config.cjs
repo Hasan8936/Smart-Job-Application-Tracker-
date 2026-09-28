@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ['./index.html', './src/**/*.{js,jsx}'],
+    // dark: variants follow the in-app theme toggle (html[data-theme="dark"], set by ThemeContext), not the OS
+    // preference — otherwise they ignored the toggle and fired on the light theme for OS-dark users.
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
         extend: {
             colors: {

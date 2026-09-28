@@ -1,4 +1,8 @@
-import React from 'react'
+import React, { useId } from 'react'
+
+/* Gradient ids must be unique per instance: with two logos on a page (hidden desktop sidebar + mobile sidebar),
+   a shared id resolves to the first one, and a gradient inside a display:none SVG paints nothing. */
+const gradientIdFor = (reactId, kind) => `brand-${kind}-${reactId.replace(/:/g, '')}`
 
 /*
  * variant:
@@ -51,7 +55,7 @@ function PlaneIcon({ fill, bg }) {
 /* Mark-only: plane icon in rounded square */
 function MarkOnly({ variant = 'light', className = '' }) {
   const c = COLORS[variant] || COLORS.light
-  const gradientId = `brand-mark-gradient-${variant}`
+  const gradientId = gradientIdFor(useId(), 'mark')
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -79,9 +83,9 @@ function MarkOnly({ variant = 'light', className = '' }) {
 }
 
 /* Full logo: plane emblem + "Smart Job" + "── TRACKER ──" */
-function FullLogo({ variant = 'light', className = '', style }) {
+function FullLogo({ variant = 'light', className = '', style, tight = false }) {
   const c = COLORS[variant] || COLORS.light
-  const gradientId = `brand-full-gradient-${variant}`
+  const gradientId = gradientIdFor(useId(), 'full')
 
   /*
    * Layout (viewBox 490 × 112):
@@ -90,12 +94,13 @@ function FullLogo({ variant = 'light', className = '', style }) {
    *   Grad cap  : above "b" in "Job" — estimated center x≈318, y=20
    *   TRACKER   : y=96, centered below "Smart Job" (~215px center)
    *   Lines     : 104→170 and 260→328 at y=90
+   * tight crops the empty right edge (content ends at x≈336) for narrow spots like the app sidebar.
    */
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 490 112"
+      viewBox={tight ? '0 0 340 112' : '0 0 490 112'}
       className={className}
       style={style}
       role="img"
@@ -156,7 +161,7 @@ function FullLogo({ variant = 'light', className = '', style }) {
   )
 }
 
-export default function BrandLogo({ className = '', variant = 'light', markOnly = false, style }) {
+export default function BrandLogo({ className = '', variant = 'light', markOnly = false, style, tight = false }) {
   if (markOnly) return <MarkOnly variant={variant} className={className} />
-  return <FullLogo variant={variant} className={className} style={style} />
+  return <FullLogo variant={variant} className={className} style={style} tight={tight} />
 }

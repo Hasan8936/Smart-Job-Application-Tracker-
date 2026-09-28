@@ -77,9 +77,8 @@ export default function Sidebar({ variant = 'desktop', onNavigate, collapsed = f
         {isCollapsed ? (
           <BrandLogo markOnly variant={isDark ? 'void' : 'sidebar'} className="w-8 h-8" />
         ) : (
-          <div className={`dashboard-brand-art ${isDark ? 'is-dark' : 'is-light'}`}>
-            <img src="/dashboard-logo.png" alt="Smart Job Tracker" />
-          </div>
+          // Vector wordmark with a per-theme palette: the old raster had dark-navy letters on black and blurred at 38px.
+          <BrandLogo tight variant={isDark ? 'void' : 'sidebar'} className="h-10 w-auto" />
         )}
         {!isMobile && (
           <button
