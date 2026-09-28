@@ -7,8 +7,8 @@ public class AiMatchingConfig {
     private String provider = "fallback";
     private String apiKey = "";
     private String model = "gemini-embedding-001";
-    /** Text-generation model used for interview prep (separate from the embedding model). */
-    private String interviewModel = "gemini-2.0-flash";
+    /** Text-generation model for interview prep and resume tailoring (separate from the embedding model). */
+    private String interviewModel = "gemini-3.6-flash";
     private String endpoint = "https://generativelanguage.googleapis.com/v1beta/models";
     public String getProvider() { return provider; }
     public void setProvider(String value) { provider = value; }

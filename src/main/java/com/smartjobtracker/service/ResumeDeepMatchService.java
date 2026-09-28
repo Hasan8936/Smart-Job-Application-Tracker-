@@ -16,6 +16,12 @@ import java.util.regex.Pattern;
 public class ResumeDeepMatchService {
 
     private final GeminiClient geminiClient;
+
+    /** Per-user daily Gemini allowance; optional so unit tests that build this service directly need no stub. */
+    private AiUsageQuota aiQuota;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAiUsageQuota(AiUsageQuota aiQuota) { this.aiQuota = aiQuota; }
+    private void spendAi(Long userId, int units) { if (aiQuota != null) aiQuota.consume(userId, units); }
     private final ObjectMapper mapper;
     private final ResumeRepository resumes;
     private final DeepMatchAnalysisRepository analyses;
@@ -30,6 +36,7 @@ public class ResumeDeepMatchService {
     public DeepMatchResult analyze(Long userId, DeepMatchRequest request) {
         var resume = resumes.findById(request.resumeId()).filter(item -> Objects.equals(item.getUserId(), userId))
                 .orElseThrow(() -> new IllegalArgumentException("Resume not found"));
+        spendAi(userId, 1);
         RecruiterTestResult recruiterTest = runRecruiterTest(resume.getExtractedText(), request.jobDescription());
         DeepMatchAnalysis saved = new DeepMatchAnalysis();
         saved.setUserId(userId); saved.setResumeId(resume.getId()); saved.setJobDescription(request.jobDescription());

@@ -23,6 +23,12 @@ public class JobActionService {
     private final GeminiClient gemini;
     private final ObjectMapper mapper;
 
+    /** Per-user daily Gemini allowance; optional so unit tests that build this service directly need no stub. */
+    private AiUsageQuota aiQuota;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAiUsageQuota(AiUsageQuota aiQuota) { this.aiQuota = aiQuota; }
+    private void spendAi(Long userId, int units) { if (aiQuota != null) aiQuota.consume(userId, units); }
+
     public JobActionService(SavedJobRepository savedJobs, JobPostingRepository jobs, JobApplicationRepository applications,
                             JobApplicationService applicationService, GeneratedDocumentRepository documents, CandidateProfileRepository profiles,
                             ResumeRepository resumes, GeminiClient gemini, ObjectMapper mapper) {
@@ -50,7 +56,7 @@ public class JobActionService {
         String jobDescription = job.getDescription() == null || job.getDescription().isBlank()
                 ? job.getTitle() + " at " + job.getCompany() : job.getDescription();
         String content;
-        try { content = generateWithGemini(type, job, resumeText, jobDescription); }
+        try { spendAi(userId, 1); content = generateWithGemini(type, job, resumeText, jobDescription); }
         catch (RuntimeException ex) { log.warn("Gemini generation failed for type={}, falling back to template", type, ex); content = fallback(type, job, resumeText, ex); }
         GeneratedDocument document=new GeneratedDocument(); document.setUserId(userId); document.setJobPostingId(jobId); document.setType(type); document.setContent(content); return documents.save(document);
     }

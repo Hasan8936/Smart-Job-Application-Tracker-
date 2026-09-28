@@ -24,12 +24,12 @@ import org.springframework.web.client.RestClientResponseException;
 public class GeminiClient {
 
     private final GmailConfig config;
-    private final RestClient client;
+    private final GeminiGateway gateway;
     private final ObjectMapper mapper;
 
-    public GeminiClient(GmailConfig config, RestClient.Builder builder, ObjectMapper mapper) {
+    public GeminiClient(GmailConfig config, GeminiGateway gateway, ObjectMapper mapper) {
         this.config = config;
-        this.client = builder.build();
+        this.gateway = gateway;
         this.mapper = mapper;
     }
 
@@ -62,13 +62,10 @@ public class GeminiClient {
 
     private JsonNode call(ObjectNode body) {
         try {
-            return client.post()
-                    .uri(config.getClassificationEndpoint() + "/" + config.getClassificationModel()
-                            + ":generateContent?key=" + config.getClassificationApiKey())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(JsonNode.class);
+            return gateway.generate(config.getClassificationEndpoint(), config.getClassificationModel(),
+                    config.getClassificationApiKey(), body, false);
+        } catch (GeminiGateway.GeminiBusyException e) {
+            throw new GeminiApiException(e.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
         } catch (RestClientResponseException e) {
             HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
             if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {

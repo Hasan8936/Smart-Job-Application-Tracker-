@@ -28,6 +28,12 @@ public class ResumeTailoringService {
     private final TailoringSuggestionRepository suggestions;
     private final ResumeVersionRepository versions;
     private final ObjectMapper mapper;
+
+    /** Per-user daily Gemini allowance; optional so unit tests that build this service directly need no stub. */
+    private AiUsageQuota aiQuota;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAiUsageQuota(AiUsageQuota aiQuota) { this.aiQuota = aiQuota; }
+    private void spendAi(Long userId, int units) { if (aiQuota != null) aiQuota.consume(userId, units); }
     private final ResumeTailoringProvider fallback;
     private final ResumeTailoringProvider gemini;
     private final com.smartjobtracker.jobs.discovery.JobSkillExtractor skillExtractor;
@@ -74,7 +80,7 @@ public class ResumeTailoringService {
         session = sessions.save(session);
         boolean geminiWasPrimary = "gemini".equalsIgnoreCase(aiConfig.getProvider());
         List<ResumeTailoringProvider.Proposal> proposals;
-        try { proposals = geminiWasPrimary ? gemini.suggest(resumeText, providerJobDescription, atsKeywords) : fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
+        try { if (geminiWasPrimary) spendAi(userId, 1); proposals = geminiWasPrimary ? gemini.suggest(resumeText, providerJobDescription, atsKeywords) : fallback.suggest(resumeText, providerJobDescription, atsKeywords); }
         catch (RuntimeException ex) { proposals = fallback.suggest(resumeText, providerJobDescription, atsKeywords); geminiWasPrimary = false; }
         int saved = saveGrounded(session.getId(), proposals, resumeText);
         // H2: Gemini responded but every proposal failed the grounding check — use rule-based fallback

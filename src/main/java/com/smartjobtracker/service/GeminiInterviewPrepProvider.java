@@ -8,15 +8,12 @@ import com.smartjobtracker.model.InterviewQuestionCategory;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Generates interview questions + first-person draft answers grounded in the job description and the candidate's
@@ -31,7 +28,8 @@ import java.util.concurrent.*;
 public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
     private static final Logger log = LoggerFactory.getLogger(GeminiInterviewPrepProvider.class);
 
-    static final int BATCH_SIZE = 8;
+    /** With thinking off, 12 answers (~3k tokens) fit comfortably in one response and one read timeout. */
+    static final int BATCH_SIZE = 12;
     private static final int RESUME_CHARS = 12_000;
     private static final int JD_CHARS = 20_000;
     private static final List<InterviewQuestionCategory> ORDER = List.of(
@@ -39,7 +37,7 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
             InterviewQuestionCategory.SITUATIONAL, InterviewQuestionCategory.COMPANY_AND_MOTIVATION);
 
     private final AiMatchingConfig config;
-    private final RestClient client;
+    private final GeminiGateway gateway;
     private final ObjectMapper mapper;
     private final ExecutorService pool = Executors.newFixedThreadPool(5, r -> {
         Thread t = new Thread(r, "interview-prep-gemini");
@@ -47,13 +45,9 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
         return t;
     });
 
-    public GeminiInterviewPrepProvider(AiMatchingConfig config, RestClient.Builder builder, ObjectMapper mapper) {
+    public GeminiInterviewPrepProvider(AiMatchingConfig config, GeminiGateway gateway, ObjectMapper mapper) {
         this.config = config;
-        // Generation is slower than the app-wide 30 s read timeout allows for a batch of long answers.
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(10));
-        factory.setReadTimeout(Duration.ofSeconds(90));
-        this.client = builder.clone().requestFactory(factory).build();
+        this.gateway = gateway;   // timeouts, rate limit, retries and thinking budget live there
         this.mapper = mapper;
     }
 
@@ -81,7 +75,7 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
                 failed++;
                 futures.get(i).cancel(true);
                 Throwable cause = ex instanceof ExecutionException ? ex.getCause() : ex;
-                log.warn("Interview prep batch {} ({}) failed: {}", i, batches.get(i).category(), describe(cause));
+                log.warn("Interview prep batch {} ({}) failed: {}", i, batches.get(i).counts().keySet(), describe(cause));
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interview preparation was interrupted", ex);
@@ -92,19 +86,32 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
         return result;
     }
 
-    record Batch(InterviewQuestionCategory category, int size, int part, int parts) {}
+    /** How many questions of each category one Gemini call writes (insertion-ordered). */
+    record Batch(Map<InterviewQuestionCategory, Integer> counts) {
+        int size() { return counts.values().stream().mapToInt(Integer::intValue).sum(); }
+        InterviewQuestionCategory first() { return counts.keySet().iterator().next(); }
+    }
 
-    /** count split evenly across the five categories, each split into chunks of at most BATCH_SIZE. */
+    /**
+     * count split evenly across the five categories, then packed into as few calls as possible (≤ BATCH_SIZE each),
+     * a category spilling into the next call when needed. Fewer calls matters more than anything for a shared key:
+     * 15 questions = 2 calls (was 5), 50 = 5 (was 7).
+     */
     static List<Batch> plan(int count) {
         List<Batch> batches = new ArrayList<>();
+        Map<InterviewQuestionCategory, Integer> current = new LinkedHashMap<>();
+        int filled = 0;
         for (int c = 0; c < ORDER.size(); c++) {
             int n = count / ORDER.size() + (c < count % ORDER.size() ? 1 : 0);
-            int parts = (n + BATCH_SIZE - 1) / BATCH_SIZE;
-            for (int p = 0; p < parts; p++) {
-                int size = n / parts + (p < n % parts ? 1 : 0);
-                if (size > 0) batches.add(new Batch(ORDER.get(c), size, p + 1, parts));
+            while (n > 0) {
+                int take = Math.min(n, BATCH_SIZE - filled);
+                current.merge(ORDER.get(c), take, Integer::sum);
+                filled += take;
+                n -= take;
+                if (filled == BATCH_SIZE) { batches.add(new Batch(current)); current = new LinkedHashMap<>(); filled = 0; }
             }
         }
+        if (filled > 0) batches.add(new Batch(current));
         return batches;
     }
 
@@ -115,10 +122,9 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
                 mapper.createArrayNode().add(mapper.createObjectNode().put("text", prompt)))));
         body.set("generationConfig", mapper.createObjectNode()
                 .put("responseMimeType", "application/json")
-                .put("temperature", 0.5)
+                .put("temperature", 0.3)   // low: answers must stay close to the resume
                 .put("maxOutputTokens", 8192));
-        JsonNode root = client.post().uri(config.getEndpoint() + "/" + config.getInterviewModel() + ":generateContent?key=" + config.getApiKey())
-                .contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(JsonNode.class);
+        JsonNode root = gateway.generate(config.getEndpoint(), config.getInterviewModel(), config.getApiKey(), body, false);
         JsonNode candidate = root == null ? null : root.path("candidates").path(0);
         String raw = candidate == null ? null : candidate.path("content").path("parts").path(0).path("text").asText(null);
         if (raw == null) throw new IllegalStateException("Gemini returned no content (finishReason=" + (candidate == null ? "none" : candidate.path("finishReason").asText("unknown")) + ")");
@@ -128,7 +134,13 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
                 String question = item.path("question").asText("").trim();
                 String answer = item.path("suggestedAnswer").asText("").trim();
                 if (question.isEmpty() || answer.isEmpty()) continue;
-                result.add(new QuestionAnswer(batch.category(), question, answer, item.path("sourceEvidence").asText("").trim()));
+                InterviewQuestionCategory category;
+                // Tolerate "ROLE-SPECIFIC" / "Company and motivation" style variants of the enum names.
+                String label = item.path("category").asText("").trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z]+", "_");
+                try { category = InterviewQuestionCategory.valueOf(label); }
+                catch (IllegalArgumentException ex) { category = batch.first(); }
+                if (!batch.counts().containsKey(category)) category = batch.first();
+                result.add(new QuestionAnswer(category, question, answer, item.path("sourceEvidence").asText("").trim()));
             }
             if (result.isEmpty()) throw new IllegalStateException("Gemini returned zero interview questions");
             return result;
@@ -146,14 +158,18 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
         }
         return "You are an expert interview coach preparing a specific candidate for a real interview for the job below.\n"
                 + "Return ONLY a JSON object (no markdown) of this exact shape:\n"
-                + "{\"questions\":[{\"question\":\"...\",\"suggestedAnswer\":\"...\",\"sourceEvidence\":\"...\"}]}\n\n"
-                + "Write EXACTLY " + batch.size() + " " + describe(batch.category()) + " questions"
-                + (batch.parts() > 1 ? " (this is batch " + batch.part() + " of " + batch.parts() + " for this category — cover different topics than a generic first batch would, e.g. vary which responsibilities and skills you draw on)" : "")
-                + ".\n\nRules for every suggestedAnswer:\n"
+                + "{\"questions\":[{\"category\":\"BEHAVIORAL\",\"question\":\"...\",\"suggestedAnswer\":\"...\",\"sourceEvidence\":\"...\"}]}\n\n"
+                + "Write EXACTLY " + batch.size() + " questions, with these counts per category (use the category names exactly):\n"
+                + batch.counts().entrySet().stream().map(e -> "- " + e.getValue() + " x " + describe(e.getKey())).collect(Collectors.joining("\n"))
+                + "\n\nRules for every suggestedAnswer:\n"
                 + "- Write the answer itself, in first person, exactly as the candidate would say it out loud: 90-160 words.\n"
                 + "- Build it from concrete material in RESUME: name the actual employer or project, the tools used, what the candidate did, and the numbers/results stated there.\n"
                 + "- NEVER write advice about answering (no \"use the STAR method\", \"mention...\", \"talk about...\", \"highlight...\"). The candidate needs a model answer, not instructions.\n"
-                + "- Never invent employers, projects, tools, metrics, dates or experience that are not in RESUME. If RESUME has nothing relevant, say so honestly in the answer and describe the concrete approach the candidate would take.\n"
+                + "- GROUNDING (most important): every action, tool, library, number, event and result the candidate claims MUST appear in RESUME. "
+                + "You may explain why a decision mattered, but you may NOT add actions or details the resume doesn't state (e.g. do not claim they analyzed logs, "
+                + "configured a connection pool, used an annotation or handled an incident unless RESUME says so).\n"
+                + "- When the question asks about something RESUME doesn't show, start the answer with \"My resume doesn't show direct experience with <thing>,\" "
+                + "then bridge to the closest real RESUME experience and describe how the candidate would approach it, framed as \"I would...\", never \"I did...\".\n"
                 + "- For conflict, mistake or feedback questions the resume won't contain the story: set the answer in a real project from RESUME and put the personal details the candidate must fill in inside [square brackets].\n"
                 + "- sourceEvidence: quote the RESUME line(s) the answer relies on, or \"\" if none.\n\n"
                 + "Rules for questions: specific to THIS job's responsibilities, stack and seniority; realistic and probing, the way a strong interviewer would ask; no duplicates.\n\n"
@@ -164,9 +180,9 @@ public class GeminiInterviewPrepProvider implements InterviewPrepProvider {
         return switch (category) {
             case BEHAVIORAL -> "BEHAVIORAL (past situations; answers told as a short story: situation, what I did, result)";
             case TECHNICAL -> "TECHNICAL (the specific languages, frameworks, tools and concepts this job lists; include at least one deeper follow-up style question)";
-            case ROLE_SPECIFIC -> "ROLE-SPECIFIC (the day-to-day responsibilities named in the job description)";
+            case ROLE_SPECIFIC -> "ROLE_SPECIFIC (the day-to-day responsibilities named in the job description)";
             case SITUATIONAL -> "SITUATIONAL (concrete hypothetical scenarios this role will face; answers give the approach, backed by a real example from RESUME when one fits)";
-            case COMPANY_AND_MOTIVATION -> "COMPANY AND MOTIVATION (why this role, fit, goals; ground answers in what the job description says and the candidate's real experience, never in invented facts about the company)";
+            case COMPANY_AND_MOTIVATION -> "COMPANY_AND_MOTIVATION (why this role, fit, goals; ground answers in what the job description says and the candidate's real experience, never in invented facts about the company)";
         };
     }
 

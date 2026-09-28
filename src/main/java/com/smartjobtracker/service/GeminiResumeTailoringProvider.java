@@ -12,11 +12,11 @@ import java.util.List;
 @Component
 public class GeminiResumeTailoringProvider implements ResumeTailoringProvider {
     private final AiMatchingConfig config;
-    private final RestClient client;
+    private final GeminiGateway gateway;
     private final ObjectMapper mapper;
 
-    public GeminiResumeTailoringProvider(AiMatchingConfig config, RestClient.Builder builder, ObjectMapper mapper) {
-        this.config = config; this.client = builder.build(); this.mapper = mapper;
+    public GeminiResumeTailoringProvider(AiMatchingConfig config, GeminiGateway gateway, ObjectMapper mapper) {
+        this.config = config; this.gateway = gateway; this.mapper = mapper;
     }
 
     @Override
@@ -32,8 +32,9 @@ public class GeminiResumeTailoringProvider implements ResumeTailoringProvider {
         JsonNode body = mapper.createObjectNode();
         ((com.fasterxml.jackson.databind.node.ObjectNode) body).set("contents", mapper.createArrayNode().add(mapper.createObjectNode().set("parts", mapper.createArrayNode().add(mapper.createObjectNode().put("text", prompt)))));
         ((com.fasterxml.jackson.databind.node.ObjectNode) body).set("generationConfig", mapper.createObjectNode().put("responseMimeType", "application/json"));
-        JsonNode root = client.post().uri(config.getEndpoint() + "/" + config.getModel() + ":generateContent?key=" + config.getApiKey())
-                .contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(JsonNode.class);
+        // Text-generation model, not config.getModel(): that is the embedding model and can't generateContent.
+        JsonNode root = gateway.generate(config.getEndpoint(), config.getInterviewModel(), config.getApiKey(),
+                (com.fasterxml.jackson.databind.node.ObjectNode) body, false);
         String raw = root == null ? null : root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
         if (raw == null) throw new IllegalStateException("Gemini returned no tailoring suggestions");
         try {

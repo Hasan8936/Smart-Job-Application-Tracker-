@@ -12,9 +12,9 @@ import java.util.OptionalDouble;
 
 @Component
 public class GeminiSemanticSimilarityProvider implements SemanticSimilarityProvider {
-    private final AiMatchingConfig config; private final RestClient client; private final ObjectMapper mapper;
-    public GeminiSemanticSimilarityProvider(AiMatchingConfig config, RestClient.Builder builder, ObjectMapper mapper) {
-        this.config = config; this.client = builder.build(); this.mapper = mapper;
+    private final AiMatchingConfig config; private final com.smartjobtracker.service.GeminiGateway gateway; private final ObjectMapper mapper;
+    public GeminiSemanticSimilarityProvider(AiMatchingConfig config, com.smartjobtracker.service.GeminiGateway gateway, ObjectMapper mapper) {
+        this.config = config; this.gateway = gateway; this.mapper = mapper;
     }
     @Override public OptionalDouble similarity(String resumeText, String jobText) {
         if (!"gemini".equalsIgnoreCase(config.getProvider()) || config.getApiKey() == null || config.getApiKey().isBlank()) return OptionalDouble.empty();
@@ -24,10 +24,10 @@ public class GeminiSemanticSimilarityProvider implements SemanticSimilarityProvi
                 var parts = mapper.createArrayNode();
                 parts.add(mapper.createObjectNode().put("text", text));
                 var content = mapper.createObjectNode().set("parts", parts);
-                var payload = mapper.createObjectNode().set("content", content);
-                JsonNode root = client.post().uri(config.getEndpoint() + "/" + config.getModel() + ":embedContent?key=" + config.getApiKey())
-                    .body(payload)
-                        .retrieve().body(JsonNode.class);
+                var payload = mapper.createObjectNode();
+                payload.set("content", content);
+                // Cached by the gateway: the same resume embeds once, not once per job it is compared with.
+                JsonNode root = gateway.embed(config.getEndpoint(), config.getModel(), config.getApiKey(), payload);
                 JsonNode values = root.path("embedding").path("values");
                 if (!values.isArray() || values.isEmpty()) return OptionalDouble.empty();
                 List<Double> vector = new ArrayList<>(); values.forEach(node -> vector.add(node.isNumber() ? node.asDouble() : Double.NaN)); vectors.add(vector);

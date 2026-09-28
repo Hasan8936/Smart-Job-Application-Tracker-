@@ -11,8 +11,8 @@ import java.util.Locale;
 
 @Component
 public class GeminiEmailClassifier implements EmailClassifier {
-    private final GmailConfig config; private final RestClient client; private final ObjectMapper mapper;
-    public GeminiEmailClassifier(GmailConfig config, RestClient.Builder builder, ObjectMapper mapper) { this.config=config; client=builder.build(); this.mapper=mapper; }
+    private final GmailConfig config; private final GeminiGateway gateway; private final ObjectMapper mapper;
+    public GeminiEmailClassifier(GmailConfig config, GeminiGateway gateway, ObjectMapper mapper) { this.config=config; this.gateway=gateway; this.mapper=mapper; }
     @Override public Classification classify(EmailInput input) {
         if (!"gemini".equalsIgnoreCase(config.getClassificationProvider()) || config.getClassificationApiKey()==null || config.getClassificationApiKey().isBlank()) throw new IllegalStateException("Gemini email classification is not configured");
         String prompt = "Return JSON only with keys category,company,jobTitle,status,interviewDate,interviewTime,deadline,actionRequired,applicationReference,confidence. "
@@ -21,7 +21,8 @@ public class GeminiEmailClassifier implements EmailClassifier {
         JsonNode payload=mapper.createObjectNode().put("contents", "");
         ((com.fasterxml.jackson.databind.node.ObjectNode) payload).set("contents", mapper.createArrayNode().add(mapper.createObjectNode().set("parts", mapper.createArrayNode().add(mapper.createObjectNode().put("text", prompt)))));
         ((com.fasterxml.jackson.databind.node.ObjectNode) payload).set("generationConfig", mapper.createObjectNode().put("responseMimeType", "application/json"));
-        JsonNode root=client.post().uri(config.getClassificationEndpoint()+"/"+config.getClassificationModel()+":generateContent?key="+config.getClassificationApiKey()).contentType(MediaType.APPLICATION_JSON).body(payload).retrieve().body(JsonNode.class);
+        // Cacheable: the same email (e.g. re-synced) classifies to the same result.
+        JsonNode root=gateway.generate(config.getClassificationEndpoint(),config.getClassificationModel(),config.getClassificationApiKey(),(com.fasterxml.jackson.databind.node.ObjectNode) payload,true);
         String raw=root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null); if(raw==null)throw new IllegalStateException("Gemini returned no classification");
         try { return parse(mapper.readTree(raw.replace("```json","").replace("```",""))); } catch(Exception ex) { throw new IllegalStateException("Invalid Gemini classification JSON",ex); }
     }

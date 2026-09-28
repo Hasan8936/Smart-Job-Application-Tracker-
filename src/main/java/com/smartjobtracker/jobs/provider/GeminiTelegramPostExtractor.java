@@ -19,12 +19,12 @@ import java.util.List;
 @Component
 public class GeminiTelegramPostExtractor implements TelegramPostExtractor {
     private final GmailConfig config;
-    private final RestClient client;
+    private final com.smartjobtracker.service.GeminiGateway gateway;
     private final ObjectMapper mapper;
 
-    public GeminiTelegramPostExtractor(GmailConfig config, RestClient.Builder builder, ObjectMapper mapper) {
+    public GeminiTelegramPostExtractor(GmailConfig config, com.smartjobtracker.service.GeminiGateway gateway, ObjectMapper mapper) {
         this.config = config;
-        this.client = builder.build();
+        this.gateway = gateway;
         this.mapper = mapper;
     }
 
@@ -54,9 +54,9 @@ public class GeminiTelegramPostExtractor implements TelegramPostExtractor {
         ((com.fasterxml.jackson.databind.node.ObjectNode) payload).set("generationConfig",
                 mapper.createObjectNode().put("responseMimeType", "application/json"));
 
-        JsonNode root = client.post()
-                .uri(config.getClassificationEndpoint() + "/" + config.getClassificationModel() + ":generateContent?key=" + config.getClassificationApiKey())
-                .contentType(MediaType.APPLICATION_JSON).body(payload).retrieve().body(JsonNode.class);
+        // Cacheable: every sync re-reads the channel's recent posts; each post is extracted once.
+        JsonNode root = gateway.generate(config.getClassificationEndpoint(), config.getClassificationModel(),
+                config.getClassificationApiKey(), (com.fasterxml.jackson.databind.node.ObjectNode) payload, true);
         String raw = root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
         if (raw == null) throw new IllegalStateException("Gemini returned no extraction");
         try {

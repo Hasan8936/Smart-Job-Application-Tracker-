@@ -30,6 +30,12 @@ public class ResumeBuilderService {
     private final ResumeRepository resumeRepository;
     private final ResumeProfileExtractor profileExtractor;
     private final GeminiClient geminiClient;
+
+    /** Per-user daily Gemini allowance; optional so unit tests that build this service directly need no stub. */
+    private AiUsageQuota aiQuota;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAiUsageQuota(AiUsageQuota aiQuota) { this.aiQuota = aiQuota; }
+    private void spendAi(Long userId, int units) { if (aiQuota != null) aiQuota.consume(userId, units); }
     private final ObjectMapper objectMapper;
     private final ResumeTemplateRenderer templateRenderer;
 
@@ -173,6 +179,7 @@ public class ResumeBuilderService {
         String userMessage = String.format("Target role: %s\n\nResume:\n%s", targetRole, resumeText);
 
         try {
+            spendAi(userId, 1);
             String raw = geminiClient.complete(systemPrompt, userMessage, 2048);
             JsonNode node = objectMapper.readTree(raw);
             @SuppressWarnings("unchecked")

@@ -69,10 +69,24 @@ app:
     model: ${ANTHROPIC_MODEL:claude-sonnet-4-20250514}
   ai-matching:
     provider: ${AI_MATCHING_PROVIDER:fallback}
-    api-key: ${AI_MATCHING_API_KEY:}
+    # GEMINI_API_KEY is the single-key shortcut; the feature-specific names still win when set.
+    api-key: ${AI_MATCHING_API_KEY:${GEMINI_API_KEY:}}
     model: ${AI_MATCHING_MODEL:gemini-embedding-001}
-    interview-model: ${AI_INTERVIEW_MODEL:gemini-2.0-flash}
+    # Text-generation model for interview prep and resume tailoring. gemini-2.0-flash was retired (404).
+    interview-model: ${AI_INTERVIEW_MODEL:gemini-3.6-flash}
     endpoint: ${AI_MATCHING_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+  # Shared limits for every Gemini call (GeminiGateway) so one key can serve many users.
+  # Match requests-per-minute to your Gemini tier's RPM; calls beyond it wait up to queue-wait, then fall back offline.
+  gemini:
+    # 10 = Google free tier per-model RPM (the supplied key hit 429 at ~10 calls/2 min). Raise on a paid tier.
+    requests-per-minute: ${GEMINI_REQUESTS_PER_MINUTE:10}
+    max-concurrent: ${GEMINI_MAX_CONCURRENT:4}
+    queue-wait: ${GEMINI_QUEUE_WAIT:PT20S}
+    max-retries: ${GEMINI_MAX_RETRIES:2}
+    thinking-budget: ${GEMINI_THINKING_BUDGET:0}
+    cache-ttl: ${GEMINI_CACHE_TTL:PT12H}
+    cache-max-entries: ${GEMINI_CACHE_MAX_ENTRIES:2000}
+    user-daily-units: ${GEMINI_USER_DAILY_UNITS:40}
   gmail:
     enabled: ${GMAIL_ENABLED:false}
     client-id: ${GOOGLE_CLIENT_ID:}
@@ -80,7 +94,7 @@ app:
     redirect-uri: ${GMAIL_REDIRECT_URI:${RENDER_EXTERNAL_URL:http://localhost:8080}/api/gmail/callback}
     encryption-key: ${GMAIL_TOKEN_ENCRYPTION_KEY:}
     classification-provider: ${GMAIL_CLASSIFICATION_PROVIDER:fallback}
-    classification-api-key: ${GMAIL_CLASSIFICATION_API_KEY:}
+    classification-api-key: ${GMAIL_CLASSIFICATION_API_KEY:${GEMINI_API_KEY:}}
     classification-model: ${GMAIL_CLASSIFICATION_MODEL:gemini-3.6-flash}
     classification-endpoint: ${GMAIL_CLASSIFICATION_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
     classification-min-confidence: ${GMAIL_CLASSIFICATION_MIN_CONFIDENCE:0.80}

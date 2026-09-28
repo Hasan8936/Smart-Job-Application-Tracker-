@@ -21,6 +21,12 @@ public class InterviewPrepService {
     private static final int RESUME_TEXT_CHARS = 12_000;
     static final String GENERATOR_AI = "AI", GENERATOR_OFFLINE = "OFFLINE", GENERATOR_MIXED = "MIXED";
 
+    /** Per-user daily Gemini allowance; optional so unit tests that build this service directly need no stub. */
+    private AiUsageQuota aiQuota;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAiUsageQuota(AiUsageQuota aiQuota) { this.aiQuota = aiQuota; }
+    private void spendAi(Long userId, int units) { if (aiQuota != null) aiQuota.consume(userId, units); }
+
     private final InterviewPrepSessionRepository sessions;
     private final InterviewPrepQuestionRepository questions;
     private final ResumeRepository resumes;
@@ -78,6 +84,7 @@ public class InterviewPrepService {
             generator = GENERATOR_OFFLINE;
         } else {
             try {
+                spendAi(userId, GeminiInterviewPrepProvider.plan(count).size());   // one unit per Gemini batch
                 generated = geminiProvider.generate(jobDescription, facts, count);
                 generator = GENERATOR_AI;
             } catch (RuntimeException ex) {

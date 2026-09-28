@@ -99,22 +99,54 @@ class InterviewPrepGroundingTest {
         List<GeminiInterviewPrepProvider.Batch> batches = GeminiInterviewPrepProvider.plan(50);
         assertEquals(50, batches.stream().mapToInt(GeminiInterviewPrepProvider.Batch::size).sum());
         assertTrue(batches.stream().allMatch(b -> b.size() <= GeminiInterviewPrepProvider.BATCH_SIZE));
-        Map<InterviewQuestionCategory, Integer> perCategory = batches.stream().collect(Collectors.groupingBy(
-                GeminiInterviewPrepProvider.Batch::category, Collectors.summingInt(GeminiInterviewPrepProvider.Batch::size)));
+        assertEquals(5, batches.size(), "packed into as few calls as possible");
+        Map<InterviewQuestionCategory, Integer> perCategory = new java.util.EnumMap<>(InterviewQuestionCategory.class);
+        batches.forEach(b -> b.counts().forEach((c, n) -> perCategory.merge(c, n, Integer::sum)));
         assertEquals(5, perCategory.size());
         perCategory.values().forEach(n -> assertEquals(10, n));
+        assertEquals(2, GeminiInterviewPrepProvider.plan(15).size(), "15 questions = 2 calls");
         assertEquals(7, GeminiInterviewPrepProvider.plan(7).stream().mapToInt(GeminiInterviewPrepProvider.Batch::size).sum());
     }
 
     @Test
     void geminiPromptDemandsConcreteFirstPersonAnswersFromTheResume() {
         GeminiInterviewPrepProvider provider = new GeminiInterviewPrepProvider(new com.smartjobtracker.config.AiMatchingConfig(),
-                org.springframework.web.client.RestClient.builder(), new com.fasterxml.jackson.databind.ObjectMapper());
-        String prompt = provider.prompt(JD, facts(), new GeminiInterviewPrepProvider.Batch(InterviewQuestionCategory.TECHNICAL, 5, 1, 2));
-        assertTrue(prompt.contains("EXACTLY 5 TECHNICAL"));
+                null, new com.fasterxml.jackson.databind.ObjectMapper());   // prompt() needs no gateway
+        Map<InterviewQuestionCategory, Integer> counts = new java.util.LinkedHashMap<>();
+        counts.put(InterviewQuestionCategory.TECHNICAL, 3); counts.put(InterviewQuestionCategory.SITUATIONAL, 2);
+        String prompt = provider.prompt(JD, facts(), new GeminiInterviewPrepProvider.Batch(counts));
+        assertTrue(prompt.contains("EXACTLY 5 questions"));
+        assertTrue(prompt.contains("- 3 x TECHNICAL") && prompt.contains("- 2 x SITUATIONAL"));
+        assertTrue(prompt.contains("My resume doesn't show direct experience with"));
         assertTrue(prompt.contains("NEVER write advice about answering"));
-        assertTrue(prompt.contains("Never invent"));
+        assertTrue(prompt.contains("MUST appear in RESUME"), "grounding rule: no actions/tools beyond the resume");
         assertTrue(prompt.contains("cutting manual refund handling time by 60%"), "the resume text itself is sent");
+    }
+
+    @Test
+    void geminiCategoryLabelsAreNormalisedNotDumpedIntoTheFirstCategory() {
+        org.springframework.web.client.RestClient.Builder builder = org.springframework.web.client.RestClient.builder();
+        var server = org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).build();
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        GeminiGateway gateway = new GeminiGateway(builder.build(), mapper, 60, 2, java.time.Duration.ofSeconds(1), 0, 0,
+                java.time.Duration.ofMinutes(1), 10, ms -> { });
+        var config = new com.smartjobtracker.config.AiMatchingConfig();
+        config.setApiKey("test-key");
+        String questions = "{\\\"questions\\\":["
+                + "{\\\"category\\\":\\\"behavioral\\\",\\\"question\\\":\\\"B?\\\",\\\"suggestedAnswer\\\":\\\"b\\\",\\\"sourceEvidence\\\":\\\"\\\"},"
+                + "{\\\"category\\\":\\\"TECHNICAL\\\",\\\"question\\\":\\\"T?\\\",\\\"suggestedAnswer\\\":\\\"t\\\",\\\"sourceEvidence\\\":\\\"\\\"},"
+                + "{\\\"category\\\":\\\"ROLE-SPECIFIC\\\",\\\"question\\\":\\\"R?\\\",\\\"suggestedAnswer\\\":\\\"r\\\",\\\"sourceEvidence\\\":\\\"\\\"},"
+                + "{\\\"category\\\":\\\"Situational\\\",\\\"question\\\":\\\"S?\\\",\\\"suggestedAnswer\\\":\\\"s\\\",\\\"sourceEvidence\\\":\\\"\\\"},"
+                + "{\\\"category\\\":\\\"Company and motivation\\\",\\\"question\\\":\\\"C?\\\",\\\"suggestedAnswer\\\":\\\"c\\\",\\\"sourceEvidence\\\":\\\"\\\"}]}";
+        server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.anything())
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"" + questions + "\"}]}}]}",
+                        org.springframework.http.MediaType.APPLICATION_JSON));
+        List<InterviewPrepProvider.QuestionAnswer> qas = new GeminiInterviewPrepProvider(config, gateway, mapper).generate(JD, facts(), 5);
+        assertEquals(List.of(InterviewQuestionCategory.BEHAVIORAL, InterviewQuestionCategory.TECHNICAL, InterviewQuestionCategory.ROLE_SPECIFIC,
+                InterviewQuestionCategory.SITUATIONAL, InterviewQuestionCategory.COMPANY_AND_MOTIVATION),
+                qas.stream().map(InterviewPrepProvider.QuestionAnswer::category).toList());
+        server.verify();   // 5 questions = one Gemini call
     }
 
     @Test
