@@ -83,7 +83,8 @@ export default function Profile() {
 
         <section className="border-t border-line pt-5 mb-6">
           <div className="flex items-center justify-between mb-2"><h2 className="font-display text-base">Gmail</h2>{gmail.connected && <span className="inline-flex items-center gap-1 text-xs text-status-offer"><CheckCircle2 size={13} /> Connected</span>}</div>
-          <p className="text-sm text-muted mb-3">Read-only access for job email tracking.</p>
+          <p className="text-sm text-muted mb-2">Optional read-only access for job email tracking. We use it only to identify recruitment messages and prepare review suggestions.</p>
+          <p className="text-xs text-muted mb-3">You can disconnect at any time. <Link to="/privacy#google-data" className="text-accent hover:underline">See how Google data is used</Link>.</p>
           {gmail.configurationError && <p className="flex items-start gap-1.5 text-xs text-status-rejected mb-3"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> {gmail.configurationError}</p>}
           {!gmail.connected ? <button onClick={connectGmail} disabled={!!gmail.configurationError} className="inline-flex items-center gap-2 border border-line rounded-full px-3 py-2.5 text-sm text-ink-soft disabled:opacity-40 disabled:cursor-not-allowed"><Link2 size={15} /> Connect Gmail</button> : <div className="flex flex-wrap gap-2"><button disabled={gmailBusy} onClick={sync} className="inline-flex items-center gap-2 btn-gradient rounded-full px-3 py-2.5 text-sm">{gmailBusy && <Loader2 size={14} className="animate-spin" />} Sync job emails</button><button disabled={gmailBusy} onClick={disconnect} className="inline-flex items-center gap-2 border border-line rounded-full px-3 py-2.5 text-sm text-ink-soft"><Unlink size={15} /> Disconnect</button></div>}
           {gmailMessage && <p className={`text-xs mt-2 ${gmailMessageIsError ? 'text-status-rejected' : 'text-muted'}`}>{gmailMessage}</p>}

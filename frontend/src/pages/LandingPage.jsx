@@ -42,7 +42,7 @@ const FEATURES = [
     icon: '📧',
     iconBg: 'linear-gradient(135deg,rgba(245,158,11,.2),rgba(251,191,36,.1))',
     title: 'Gmail Auto-Sync',
-    desc: 'Connect Gmail and let AI classify recruitment emails — interview invites, rejections, and status updates flow straight into your pipeline.',
+    desc: 'Optionally connect Gmail with read-only access so AI can classify recruitment emails — interview invites, rejections, and status updates flow into your pipeline.',
     detail: { bg: 'rgba(245,158,11,.08)', border: 'rgba(245,158,11,.2)', text: 'Auto-import from inbox', sub: 'No manual entry needed' },
   },
   {
@@ -98,7 +98,7 @@ export const FAQS = [
   { q: 'Is Smart Job Tracker free?', a: 'Yes. You can create an account with email or Google and use it without a credit card.' },
   { q: 'How is the resume match score calculated?', a: 'The score combines exact matching of skills found in your resume (required skills weigh more than preferred ones), semantic similarity between your resume and the job description, and experience and role relevance. It lists matched and missing skills, and the score is an estimate, not a hiring prediction.' },
   { q: 'Where do the job listings come from?', a: 'Listings come from public company career boards on Greenhouse, Lever, and Ashby, along with other configured job sources. Each listing links to the original posting, where you apply. Smart Job Tracker is not affiliated with these platforms.' },
-  { q: 'Does Smart Job Tracker read my Gmail?', a: 'Only if you connect Gmail. It uses read-only access to find job-related emails, such as interview invites and rejections, and suggests status updates. Access tokens are encrypted at rest, and you can disconnect Gmail from the dashboard at any time.' },
+  { q: 'Does Smart Job Tracker read my Gmail?', a: 'Only if you explicitly connect Gmail. It uses read-only access to find job-related emails, such as interview invites and rejections, and suggests status updates. Google Sign-In alone does not grant Gmail or Calendar access. Access tokens are encrypted at rest, the data is not sold or used for advertising, and you can disconnect Gmail from your profile at any time. See our Privacy Policy for the full Google data disclosure.' },
   { q: 'What happens to my resume?', a: 'The text is extracted from your PDF or DOCX and stored in your account for matching and profile building. The original file is not kept, and your resume is never modified.' },
   { q: 'Will the AI invent skills or experience?', a: 'No. Resume tailoring and profile features only rephrase or re-emphasize information that already appears in your resume.' },
 ]

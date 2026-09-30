@@ -33,6 +33,7 @@ export default function Privacy() {
           <ol className="list-decimal list-inside space-y-1 text-sm text-accent">
             {[
               ['#collect', 'Data We Collect'],
+              ['#google-data', 'Google User Data'],
               ['#use',     'How We Use It'],
               ['#retention','Data Retention'],
               ['#soc2',    'SOC 2 Alignment'],
@@ -68,7 +69,51 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <Section id="use" title="2. How We Use It">
+        <Section id="google-data" title="2. Google User Data">
+          <p>
+            Google integrations are optional. Smart Job Tracker requests only the access needed for the feature you choose,
+            and does not sell Google user data or use it for advertising.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <p className="font-medium text-ink">Google Sign-In</p>
+              <p>
+                When you choose Google Sign-In, Google shares your basic OpenID profile information—email address, display name,
+                and account identifier—so we can create or authenticate your Smart Job Tracker account. Sign-in alone does not grant
+                access to Gmail or Google Calendar.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-ink">Gmail and Calendar connections</p>
+              <p>
+                If you explicitly connect Gmail, we request read-only Gmail access to identify recruitment messages and read-only
+                Calendar access to help identify interview events. The app stores only the job-related message fields and derived
+                classification needed for your tracker, plus encrypted OAuth tokens needed to keep the connection working.
+                If you connect Calendar reminders, we may also request permission to create events that you ask us to add.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-ink">How Google data is used and shared</p>
+              <p>
+                Google data is used only to provide the connected feature: finding recruitment emails, preparing review suggestions,
+                identifying interview events, and creating requested reminders. When AI email classification is enabled, the minimum
+                message content needed for classification may be sent to Google Gemini; it is not used for advertising or sold to third parties.
+                We do not share Google user data with employers, data brokers, or unrelated third parties.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-ink">Controls, retention, and deletion</p>
+              <p>
+                You can disconnect Gmail or Calendar from your Profile at any time. Disconnecting stops future access; stored tokens
+                are deleted and previously ingested Google-derived records are removed when you delete your account. Account deletion
+                also revokes stored Google tokens where Google permits revocation, and personal data is removed within 30 days except
+                where retention is required by law.
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        <Section id="use" title="3. How We Use It">
           <p>We use your data only to provide the service you signed up for:</p>
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li>Authenticate your account and keep it secure</li>
@@ -83,7 +128,7 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <Section id="retention" title="3. Data Retention">
+        <Section id="retention" title="4. Data Retention">
           <p>
             Your account data is retained for as long as your account is active.
             You may delete your account at any time; upon deletion all personal data is removed within 30 days, except where retention is required by law.
@@ -94,7 +139,7 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <Section id="soc2" title="4. SOC 2 Alignment">
+        <Section id="soc2" title="5. SOC 2 Alignment">
           <p>
             Smart Job Tracker is designed to align with SOC 2 Trust Service Criteria. We are not currently SOC 2 certified,
             but the architecture and controls are built to meet those standards:
@@ -115,7 +160,7 @@ export default function Privacy() {
           </div>
         </Section>
 
-        <Section id="cookies" title="5. Cookie Policy">
+        <Section id="cookies" title="6. Cookie Policy">
           <p>
             Smart Job Tracker uses a small number of browser storage mechanisms to make the app work:
           </p>
@@ -155,7 +200,7 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <Section id="rights" title="6. Your Rights">
+        <Section id="rights" title="7. Your Rights">
           <p>Under GDPR and similar frameworks you have the right to:</p>
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li><strong className="text-ink">Access</strong> — request a copy of all data we hold about you</li>
@@ -167,7 +212,7 @@ export default function Privacy() {
           <p>To exercise any of these rights, contact us using the details below.</p>
         </Section>
 
-        <Section id="contact" title="7. Contact &amp; Data Requests">
+        <Section id="contact" title="8. Contact &amp; Data Requests">
           <p>
             For data requests, privacy questions, or to report a concern, email us at{' '}
             <a href="mailto:hasanryan052@gmail.com" className="text-accent hover:underline">hasanryan052@gmail.com</a>.

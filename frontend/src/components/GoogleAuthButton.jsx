@@ -19,6 +19,10 @@ export default function GoogleAuthButton() {
       >
         <GoogleIcon /> Continue with Google
       </a>
+      <p className="text-[11px] leading-relaxed text-muted text-center mt-2">
+        Google Sign-In shares your basic profile details only. Gmail and Calendar require separate, optional connections.{' '}
+        <a href="/privacy#google-data" className="text-accent hover:underline">Privacy details</a>
+      </p>
     </>
   )
 }
