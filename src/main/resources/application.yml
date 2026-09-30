@@ -129,7 +129,9 @@ app:
       boards: ${ASHBY_BOARDS:}
     jobspy:
       enabled: ${JOBSPY_ENABLED:false}
-      service-url: ${JOBSPY_SERVICE_URL:}
+      # Set JOBSPY_SERVICE_URL in Render when possible; this fallback keeps the
+      # backend connected to the currently active JobSpy service.
+      service-url: ${JOBSPY_SERVICE_URL:https://smart-job-application-tracker-1-k9jt.onrender.com}
       site-names: ${JOBSPY_SITE_NAMES:linkedin,indeed}
       results-wanted: ${JOBSPY_RESULTS_WANTED:20}
       hours-old: ${JOBSPY_HOURS_OLD:168}

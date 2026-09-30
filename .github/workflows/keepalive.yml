@@ -16,5 +16,5 @@ jobs:
 
       - name: Ping JobSpy Python service
         run: |
-          curl -sf https://smart-job-application-tracker-i1hc.onrender.com/health \
+          curl -sf https://smart-job-application-tracker-1-k9jt.onrender.com/health \
             --max-time 30 --retry 2 || echo "JobSpy ping failed (may be cold-starting)"

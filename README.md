@@ -91,7 +91,7 @@ To deploy on Render:
 2. Runtime: Docker (uses the `Dockerfile` in that folder).
 3. Set env vars on the main backend service:
    * `JOBSPY_ENABLED=true`
-   * `JOBSPY_SERVICE_URL=https://your-jobspy-service.onrender.com`
+   * `JOBSPY_SERVICE_URL=https://smart-job-application-tracker-1-k9jt.onrender.com`
    * Optional: `JOBSPY_RESULTS_WANTED=20`, `JOBSPY_HOURS_OLD=168`
 
 ## Google Calendar reminders
@@ -122,4 +122,3 @@ To activate:
 UI: the Reminders page shows a "Google Calendar" section at the bottom —
 users click "Connect Google Calendar", authorize in Google's popup, and land
 back at `/reminders?calendar=connected`.
-
