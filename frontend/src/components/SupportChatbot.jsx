@@ -82,7 +82,9 @@ export default function SupportChatbot() {
       setMessages((current) => [...current, {
         id: `${Date.now()}-assistant`,
         role: 'assistant',
-        text: data.draft_reply || 'Thanks for reaching out. A support specialist will review your message.',
+        text: escalated
+          ? (data.fallback?.message || data.draft_reply || 'A support specialist will review your message.')
+          : (data.draft_reply || 'Thanks for reaching out. A support specialist will review your message.'),
         decision: escalated ? 'escalate' : 'handled',
         reason: data.reason,
       }])
