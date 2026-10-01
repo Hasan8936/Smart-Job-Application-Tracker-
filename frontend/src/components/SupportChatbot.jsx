@@ -24,6 +24,7 @@ export default function SupportChatbot() {
   const [messages, setMessages] = useState([makeWelcome()])
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
+  const [avatarState, setAvatarState] = useState('idle')
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const inputRef = useRef(null)
   const panelRef = useRef(null)
@@ -43,6 +44,11 @@ export default function SupportChatbot() {
     setTilt({ x: 0, y: 0 })
   }
 
+  function finishAvatarState(state) {
+    setAvatarState(state)
+    window.setTimeout(() => setAvatarState('idle'), state === 'thinking' ? 1200 : 1800)
+  }
+
   async function sendMessage(event, suppliedText) {
     event?.preventDefault()
     const text = (suppliedText ?? draft).trim()
@@ -50,6 +56,7 @@ export default function SupportChatbot() {
     setDraft('')
     setMessages((current) => [...current, { id: `${Date.now()}-user`, role: 'user', text }])
     setBusy(true)
+    setAvatarState('thinking')
     if (!API_URL) {
       setMessages((current) => [...current, {
         id: `${Date.now()}-config`,
@@ -58,6 +65,7 @@ export default function SupportChatbot() {
         error: true,
       }])
       setBusy(false)
+      finishAvatarState('error')
       return
     }
     try {
@@ -78,6 +86,7 @@ export default function SupportChatbot() {
         decision: escalated ? 'escalate' : 'handled',
         reason: data.reason,
       }])
+      finishAvatarState('success')
     } catch (error) {
       setMessages((current) => [...current, {
         id: `${Date.now()}-error`,
@@ -86,13 +95,14 @@ export default function SupportChatbot() {
         error: true,
         detail: error.message,
       }])
+      finishAvatarState('error')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className={`support-chatbot ${open ? 'is-open' : ''}`} ref={panelRef}>
+    <div className={`support-chatbot ${open ? 'is-open' : ''} avatar-${avatarState}`} ref={panelRef}>
       {open && (
         <section id="support-chat-panel" className="support-chat-panel" aria-label="Smart Job Tracker support chat">
           <header className="support-chat-header">
@@ -130,7 +140,7 @@ export default function SupportChatbot() {
       )}
       <button
         type="button"
-        className="support-chat-launcher"
+        className={`support-chat-launcher ${busy ? 'is-thinking' : ''}`}
         aria-expanded={open}
         aria-controls="support-chat-panel"
         aria-label={open ? 'Close support chat' : 'Open Smart Job Tracker support chat'}
@@ -141,7 +151,7 @@ export default function SupportChatbot() {
       >
         <span className="support-chat-orbit orbit-one" />
         <span className="support-chat-orbit orbit-two" />
-        <span className="support-chat-avatar-wrap"><img src={AVATAR_SRC} alt="3D support guide" className="support-chat-avatar" /></span>
+        <span className="support-chat-avatar-wrap"><img src={AVATAR_SRC} alt="3D robot support guide" className="support-chat-avatar" /></span>
         <span className="support-chat-pulse" />
         <span className="support-chat-launch-label">Need help?</span>
         <ChevronDown className="support-chat-chevron" size={16} aria-hidden="true" />
