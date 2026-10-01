@@ -4,7 +4,7 @@ import './SupportChatbot.css'
 
 const API_URL = (import.meta.env.VITE_SUPPORT_AGENT_URL || '').replace(/\/$/, '')
 const API_KEY = import.meta.env.VITE_SUPPORT_AGENT_API_KEY || ''
-const AVATAR_SRC = '/support-agent-avatar.jpg'
+const AVATAR_SRC = '/support-agent-robot.png'
 const QUICK_PROMPTS = [
   'How do I track an application?',
   'I forgot my password.',
