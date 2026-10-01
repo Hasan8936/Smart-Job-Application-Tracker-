@@ -41,8 +41,13 @@ spring:
       # on Render's free-tier PostgreSQL. Schema correctness is enforced by Flyway.
       ddl-auto: none
     show-sql: false
-    properties:
+      properties:
       hibernate:
+        # The PostgreSQL dialect is fixed explicitly so Hibernate does not
+        # consume another scarce Supabase pooler connection just to infer it.
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        boot:
+          allow_jdbc_metadata_access: false
         jdbc:
           batch_size: 50
         order_inserts: true
