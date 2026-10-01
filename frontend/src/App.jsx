@@ -4,7 +4,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import CookieBanner from './components/CookieBanner'
 import PageLoader from './components/PageLoader'
-import SupportChatbot from './components/SupportChatbot'
 
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
@@ -31,7 +30,6 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
     <CookieBanner />
-    <SupportChatbot />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

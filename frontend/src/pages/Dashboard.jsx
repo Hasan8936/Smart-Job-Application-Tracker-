@@ -21,6 +21,7 @@ import { getMatchingResume } from '../api/resumeBuilder'
 import JobCard from '../components/JobCard'
 import JobDetails from '../components/JobDetails'
 import JobPreferencesModal from '../components/JobPreferencesModal'
+import SupportChatbot from '../components/SupportChatbot'
 import { getJobPreferences, listRecommendedJobs } from '../api/jobPreferences'
 import { getGmailStatus, beginGmailConnect, disconnectGmail } from '../api/gmail'
 import { getCalendarStatus, getCalendarConnectUrl, disconnectCalendar } from '../api/calendar'
@@ -581,6 +582,7 @@ export default function Dashboard() {
         onClose={() => { if (prefsModal === 'onboarding' && prefs === null) setPrefs({ status: 'SKIPPED' }); setPrefsModal(null) }}
         onSaved={onPreferencesSaved}
       />
+      <SupportChatbot />
     </Layout>
   )
 }
