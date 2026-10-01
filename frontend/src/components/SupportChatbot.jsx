@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Bot, Check, ChevronDown, Loader2, Send, ShieldAlert, Sparkles, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { createTicket } from '../api/support'
 import './SupportChatbot.css'
 
 const API_URL = (import.meta.env.VITE_SUPPORT_AGENT_URL || '').replace(/\/$/, '')
@@ -49,6 +51,26 @@ export default function SupportChatbot() {
     window.setTimeout(() => setAvatarState('idle'), state === 'thinking' ? 1200 : 1800)
   }
 
+  async function createEscalationRequest(text, data) {
+    try {
+      const ticket = await createTicket({
+        subject: `AI support escalation: ${text.slice(0, 150)}`,
+        category: 'BUG',
+        description: [
+          'Automatically created from the Smart Job Tracker AI support chatbot.',
+          `Escalation event: ${data.fallback?.event_id || 'not provided'}`,
+          `Reason: ${data.reason || 'Human review required.'}`,
+          '',
+          'Customer message:',
+          text,
+        ].join('\n'),
+      })
+      return ticket?.id || null
+    } catch {
+      return null
+    }
+  }
+
   async function sendMessage(event, suppliedText) {
     event?.preventDefault()
     const text = (suppliedText ?? draft).trim()
@@ -79,6 +101,7 @@ export default function SupportChatbot() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.detail || `Support service returned ${response.status}`)
       const escalated = data.decision === 'escalate_to_human'
+      const ticketId = escalated ? await createEscalationRequest(text, data) : null
       setMessages((current) => [...current, {
         id: `${Date.now()}-assistant`,
         role: 'assistant',
@@ -87,6 +110,7 @@ export default function SupportChatbot() {
           : (data.draft_reply || 'Thanks for reaching out. A support specialist will review your message.'),
         decision: escalated ? 'escalate' : 'handled',
         reason: data.reason,
+        ticketId,
       }])
       finishAvatarState('success')
     } catch (error) {
@@ -123,7 +147,10 @@ export default function SupportChatbot() {
                 <div className={`support-chat-message ${message.error ? 'error' : ''}`}>
                   <p>{message.text}</p>
                   {message.decision === 'handled' && <span className="support-chat-result handled"><Check size={12} /> Suggested answer</span>}
-                  {message.decision === 'escalate' && <span className="support-chat-result escalated"><ShieldAlert size={12} /> Human review recommended</span>}
+                  {message.decision === 'escalate' && <>
+                    <span className="support-chat-result escalated"><ShieldAlert size={12} /> Human review recommended</span>
+                    {message.ticketId ? <Link className="support-chat-ticket" to="/support">Request #{message.ticketId} created in Help &amp; support</Link> : <span className="support-chat-ticket pending">We could not create the support request automatically.</span>}
+                  </>}
                 </div>
               </div>
             ))}

@@ -20,7 +20,7 @@ export default function Layout({ title, subtitle, actions, children }) {
   }
 
   return (
-    <div className="min-h-screen bg-paper overflow-x-hidden">
+    <div className="dashboard-shell min-h-screen bg-paper overflow-x-hidden">
       <Sidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
 
       {/* mobile drawer */}

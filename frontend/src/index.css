@@ -51,6 +51,34 @@ html[data-theme='dark'] .shadow-card { box-shadow: 0 18px 40px rgba(0, 0, 0, .28
 html[data-theme='dark'] input, html[data-theme='dark'] select, html[data-theme='dark'] textarea { color-scheme: dark; }
 html[data-theme='light'] .theme-toggle { background: #ffffff !important; color: #4f46e5 !important; border-color: #c7d2fe !important; box-shadow: 0 3px 12px rgba(79, 70, 229, .12); }
 html[data-theme='light'] .theme-toggle:hover { background: #eef2ff !important; color: #312e81 !important; border-color: #818cf8 !important; }
+
+/* Dashboard light mode: a calm gradient canvas with high-contrast white glass cards. */
+html[data-theme='light'] .dashboard-shell {
+  background:
+    radial-gradient(circle at 7% 4%, rgba(129, 140, 248, .18), transparent 28%),
+    radial-gradient(circle at 92% 10%, rgba(56, 189, 248, .16), transparent 30%),
+    radial-gradient(circle at 70% 92%, rgba(244, 114, 182, .12), transparent 34%),
+    linear-gradient(135deg, #f7f9ff 0%, #f5f3ff 48%, #effaff 100%) !important;
+}
+html[data-theme='light'] .dashboard-shell > div > header {
+  background: linear-gradient(100deg, rgba(255,255,255,.88), rgba(245,243,255,.82), rgba(239,250,255,.84)) !important;
+  border-bottom-color: rgba(129, 140, 248, .20) !important;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, .06);
+}
+html[data-theme='light'] .dashboard-shell .bg-surface {
+  background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(248,250,255,.84)) !important;
+  border-color: rgba(129, 140, 248, .18) !important;
+  box-shadow: 0 14px 34px rgba(79, 70, 229, .07);
+}
+html[data-theme='light'] .dashboard-shell .bg-paper {
+  background-color: rgba(255,255,255,.60) !important;
+}
+html[data-theme='light'] .dashboard-shell .border-line {
+  border-color: rgba(129, 140, 248, .18) !important;
+}
+html[data-theme='light'] .dashboard-shell .hover\:bg-mist:hover {
+  background: linear-gradient(100deg, rgba(238,242,255,.92), rgba(236,254,255,.82)) !important;
+}
 html[data-theme='dark'] .theme-toggle { background-color: #172a49 !important; color: #fde68a !important; border-color: rgba(129, 140, 248, .55) !important; box-shadow: 0 3px 14px rgba(0, 0, 0, .28); }
 html[data-theme='dark'] .theme-toggle:hover { background-color: #223b65 !important; color: #fef3c7 !important; border-color: #a5b4fc !important; }
 
