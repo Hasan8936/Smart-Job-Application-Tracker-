@@ -59,7 +59,15 @@ Optional (only if you change defaults):
 | `APIFY_ENABLED` | `false` | Optional provider seam; enable only for an approved compliant actor |
 | `APIFY_TOKEN` / `APIFY_ACTOR` | *(empty)* | Required only for an explicitly configured Apify integration |
 
-Your database vars (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`) should already be set — leave them as they are.
+Your database vars (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`) should already be set. For Supabase, `SPRING_DATASOURCE_URL` must use the **transaction pooler** hostname and port `6543`, not the direct/session-mode port `5432`. Keep the existing Supabase pooler hostname, changing only the port if necessary. Also set `DB_MAX_POOL_SIZE=1` and `DB_MIN_IDLE=0` on the Render service so overlapping deploys cannot exhaust the pooler session limit.
+
+Example shape (do not copy the placeholder host):
+
+```text
+jdbc:postgresql://aws-0-<region>.pooler.supabase.com:6543/postgres
+```
+
+The application fallback in `src/main/resources/application.yml` also uses port `6543`.
 
 ---
 

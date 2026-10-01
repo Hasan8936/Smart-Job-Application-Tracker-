@@ -17,7 +17,10 @@ spring:
       max-file-size: ${UPLOAD_MAX_FILE_SIZE:5MB}
       max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:6MB}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smart_job_tracker}
+    # Supabase transaction pooler uses port 6543. Render should set
+    # SPRING_DATASOURCE_URL explicitly to the Supabase pooler hostname with
+    # this port; the fallback keeps local/container startup pooler-compatible.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:6543/smart_job_tracker}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
     hikari:
