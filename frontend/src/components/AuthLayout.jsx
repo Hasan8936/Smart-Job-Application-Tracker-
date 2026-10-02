@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import BrandLogo from './BrandLogo'
+import HeroCareerArtwork from './HeroCareerArtwork'
 import ThemeToggle from './ThemeToggle'
 import { useTheme } from '../context/ThemeContext'
 
@@ -39,8 +40,7 @@ export default function AuthLayout({ heading, copy, children, id }) {
             <>
               <div className="auth-login-glow auth-login-glow-a" />
               <div className="auth-login-glow auth-login-glow-b" />
-              <img
-                src="/hero-career-agents.png"
+              <HeroCareerArtwork
                 alt="Three glowing AI career assistant agents"
                 className="auth-login-agents"
               />
@@ -118,7 +118,7 @@ export default function AuthLayout({ heading, copy, children, id }) {
             <BrandLogo className="w-40 h-auto mb-6 lg:hidden" variant={mobileLogoVariant} />
             {id === 'login' && (
               <div className="auth-mobile-visual" aria-hidden="true">
-                <img src="/hero-career-agents.png" alt="" />
+                <HeroCareerArtwork alt="" />
                 <span>SMART JOB TRACKER / 01</span>
               </div>
             )}

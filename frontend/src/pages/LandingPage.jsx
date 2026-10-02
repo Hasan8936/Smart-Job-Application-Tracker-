@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useContext, useEffect, useRef, useState } from '
 import { usePageMeta, useJsonLd } from '../lib/pageMeta'
 import { Link } from 'react-router-dom'
 import BrandLogo from '../components/BrandLogo'
+import HeroCareerArtwork from '../components/HeroCareerArtwork'
 import { AuthContext } from '../context/AuthContext'
 import './landing-page.css'
 
@@ -123,6 +124,26 @@ export default function LandingPage() {
   const [activeSlide, setActiveSlide] = useState(0)
   const [isCarouselPaused, setIsCarouselPaused] = useState(false)
   const [dragStart, setDragStart] = useState(null)
+  const [showGlobe, setShowGlobe] = useState(false)
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+
+    let idleId
+    let timeoutId
+    const show = () => setShowGlobe(true)
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(show, { timeout: 1800 })
+    } else {
+      timeoutId = window.setTimeout(show, 1800)
+    }
+
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [])
 
   useEffect(() => {
     if (isCarouselPaused) return undefined
@@ -236,7 +257,7 @@ export default function LandingPage() {
         aria-label="Smart Job Tracker AI career workspace showcase"
       >
         <div className="lp-dot-grid" />
-        <div className="lp-globe-wrap"><Suspense fallback={null}><GlobeCanvas /></Suspense></div>
+        <div className="lp-globe-wrap">{showGlobe && <Suspense fallback={null}><GlobeCanvas /></Suspense>}</div>
         <div className="lp-vignette" />
         <div className="lp-reference-glow lp-reference-glow-one" />
         <div className="lp-reference-glow lp-reference-glow-two" />
@@ -251,7 +272,7 @@ export default function LandingPage() {
 
           <div className="lp-reference-art">
             <div className="lp-art-ring lp-art-ring-one" /><div className="lp-art-ring lp-art-ring-two" />
-            <img src="/hero-career-agents.png" alt="Three glowing AI career assistant agents" className="lp-agent-art" />
+            <HeroCareerArtwork alt="Three glowing AI career assistant agents" className="lp-agent-art" />
             <div className="lp-art-label"><span>LIVE</span><strong>your career<br />has momentum</strong></div>
           </div>
 
