@@ -80,7 +80,7 @@ The application fallback in `src/main/resources/application.yml` also uses port 
 5. Under **Authorized redirect URIs**, add this **exact** URL (this is your backend, not the frontend):
 
    ```
-   https://smart-job-tracker-api-iflm.onrender.com/login/oauth2/code/google
+   https://smart-job-application-tracker-k46t.onrender.com/login/oauth2/code/google
    ```
 
    It must match character-for-character (`https`, no trailing slash). A mismatch here is the #1 cause of `redirect_uri_mismatch` errors.
@@ -107,7 +107,7 @@ Gmail blocks normal-password SMTP, so you need a 16-character App Password:
 2. Ensure this exists for **Production**:
 
    ```
-   VITE_API_BASE = https://smart-job-tracker-api-iflm.onrender.com/api
+   VITE_API_BASE = https://smart-job-application-tracker-k46t.onrender.com/api
    ```
 
    (Include `/api`, no trailing slash.)
@@ -119,14 +119,14 @@ Gmail blocks normal-password SMTP, so you need a 16-character App Password:
 
 After Render finishes redeploying with the new vars:
 
-1. **Backend health** — open `https://smart-job-tracker-api-iflm.onrender.com/actuator/health` → should show `{"status":"UP"}`.
+1. **Backend health** — open `https://smart-job-application-tracker-k46t.onrender.com/actuator/health` → should show `{"status":"UP"}`.
 2. **Google login** — from your site, click **Continue with Google**. It should now redirect to the Google consent screen (a 302), *not* show a 403. After consent it returns to `/oauth2/callback` and logs you in.
 3. **Password reset** — use **Forgot password?** with a real address. You should receive the email within a minute. If it still fails, open the Render service **Logs** and look for the line `Failed to send password reset email …` — it prints the exact SMTP cause (bad credentials, TLS, etc.).
 
 ## Common gotchas
 
 - **Still 403 on Google** → the env vars didn't take effect; confirm the Render deploy finished *after* you added them, and that the names are exactly `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
-- **`redirect_uri_mismatch`** → the Google Console redirect URI doesn't exactly match `https://smart-job-tracker-api-iflm.onrender.com/login/oauth2/code/google`.
+- **`redirect_uri_mismatch`** → the Google Console redirect URI doesn't exactly match `https://smart-job-application-tracker-k46t.onrender.com/login/oauth2/code/google`.
 - **Google login works but lands on the wrong site / localhost** → `FRONTEND_URL` on Render is unset or wrong.
 - **Reset email "sent" locally but nothing arrives** → App Password wrong, or 2-Step Verification is off on that Gmail account.
 

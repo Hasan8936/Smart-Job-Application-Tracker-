@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Ping Spring Boot backend
         run: |
-          curl -sf https://smart-job-tracker-api-iflm.onrender.com/api/health \
+          curl -sf https://smart-job-application-tracker-k46t.onrender.com/api/health \
             --max-time 30 --retry 2 || echo "Backend ping failed (may be cold-starting)"
 
       - name: Ping JobSpy Python service
