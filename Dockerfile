@@ -15,4 +15,4 @@ COPY --from=builder /build/target/*.jar app.jar
 EXPOSE 8080
 # Render's free instance has a 512 MB memory ceiling. Leave room for the JVM,
 # metaspace, native libraries (PDFBox/POI), Tomcat, and temporary upload buffers.
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Xms128m","-Xmx256m","-Xss256k","-XX:MaxMetaspaceSize=96m","-XX:ActiveProcessorCount=1","-XX:+UseSerialGC","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Xms128m","-Xmx256m","-Xss256k","-XX:MaxMetaspaceSize=160m","-XX:ActiveProcessorCount=1","-XX:+UseSerialGC","-jar","/app/app.jar"]
