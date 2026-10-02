@@ -380,6 +380,7 @@ export default function Dashboard() {
 
   return (
     <Layout
+      className="dashboard-home"
       title={firstName ? `${timeGreeting()}, ${firstName}! 👋` : 'Dashboard'}
       subtitle="Here's where your search stands today"
       actions={

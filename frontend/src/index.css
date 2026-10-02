@@ -79,6 +79,28 @@ html[data-theme='light'] .dashboard-shell .border-line {
 html[data-theme='light'] .dashboard-shell .hover\:bg-mist:hover {
   background: linear-gradient(100deg, rgba(238,242,255,.92), rgba(236,254,255,.82)) !important;
 }
+html[data-theme='dark'] .dashboard-home {
+  background:
+    radial-gradient(ellipse at 8% 2%, rgba(34, 211, 238, .10), transparent 34%),
+    radial-gradient(ellipse at 94% 4%, rgba(245, 158, 11, .07), transparent 31%),
+    radial-gradient(ellipse at 64% 100%, rgba(16, 185, 129, .08), transparent 42%),
+    linear-gradient(135deg, #070d18 0%, #0d1927 48%, #0b1421 100%) !important;
+}
+html[data-theme='dark'] .dashboard-home > div > header {
+  background: linear-gradient(100deg, rgba(9, 19, 33, .94), rgba(14, 30, 47, .90), rgba(12, 30, 35, .92)) !important;
+  border-bottom-color: rgba(103, 232, 249, .16) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .24);
+}
+html[data-theme='dark'] .dashboard-home .bg-surface {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(13, 148, 136, .16), transparent 56%),
+    linear-gradient(145deg, rgba(20, 39, 57, .98), rgba(10, 27, 39, .96)) !important;
+  border-color: rgba(103, 232, 249, .20) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .20), inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+html[data-theme='dark'] .dashboard-home .bg-paper {
+  background: linear-gradient(140deg, rgba(8, 18, 30, .82), rgba(11, 27, 36, .72)) !important;
+}
 html[data-theme='dark'] .theme-toggle { background-color: #172a49 !important; color: #fde68a !important; border-color: rgba(129, 140, 248, .55) !important; box-shadow: 0 3px 14px rgba(0, 0, 0, .28); }
 html[data-theme='dark'] .theme-toggle:hover { background-color: #223b65 !important; color: #fef3c7 !important; border-color: #a5b4fc !important; }
 

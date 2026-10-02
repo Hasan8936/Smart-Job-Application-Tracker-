@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, CalendarClock, CheckCircle2, Link2, Loader2, LogOut, Sparkles, Unlink, X } from 'lucide-react'
 import Layout from '../components/Layout'
 import AccountSettings from '../components/AccountSettings'

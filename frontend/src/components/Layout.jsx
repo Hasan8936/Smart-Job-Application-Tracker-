@@ -5,7 +5,7 @@ import ThemeToggle from './ThemeToggle'
 
 const COLLAPSE_KEY = 'sidebar-collapsed'
 
-export default function Layout({ title, subtitle, actions, children }) {
+export default function Layout({ title, subtitle, actions, children, className = '' }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(COLLAPSE_KEY) === '1' } catch { return false }
@@ -20,7 +20,7 @@ export default function Layout({ title, subtitle, actions, children }) {
   }
 
   return (
-    <div className="dashboard-shell min-h-screen bg-paper overflow-x-hidden">
+    <div className={`dashboard-shell ${className} min-h-screen bg-paper overflow-x-hidden`}>
       <Sidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
 
       {/* mobile drawer */}
@@ -30,7 +30,7 @@ export default function Layout({ title, subtitle, actions, children }) {
             <Sidebar variant="mobile" onNavigate={() => setMobileOpen(false)} />
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-[-52px] h-11 w-11 rounded-full bg-surface border border-line text-ink shadow-pop flex items-center justify-center"
+              className="absolute top-4 right-[-52px] z-10 h-11 w-11 rounded-full bg-surface border border-line text-ink shadow-pop flex items-center justify-center"
               aria-label="Close menu"
             >
               <X size={20} />

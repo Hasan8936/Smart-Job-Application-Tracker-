@@ -134,7 +134,7 @@ export default function JobPreferencesModal({ open, mode = 'onboarding', initial
   const title = step === 1 ? 'What jobs should we recommend?' : 'Where and how do you want to work?'
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="job-prefs-title">
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="job-prefs-title">
       <button aria-label="Close" tabIndex={-1} className="absolute inset-0 bg-ink/50 backdrop-blur-[1px]" onClick={dismiss} />
       <div
         ref={dialogRef}
