@@ -13,4 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends fontconfig font
 WORKDIR /app
 COPY --from=builder /build/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Xmx300m","-jar","/app/app.jar"]
+# Render's free instance has a 512 MB memory ceiling. Leave room for the JVM,
+# metaspace, native libraries (PDFBox/POI), Tomcat, and temporary upload buffers.
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Xms128m","-Xmx256m","-Xss256k","-XX:MaxMetaspaceSize=96m","-XX:ActiveProcessorCount=1","-XX:+UseSerialGC","-jar","/app/app.jar"]

@@ -3,8 +3,12 @@ server:
   forward-headers-strategy: framework
   tomcat:
     threads:
-      max: 40
-      min-spare: 5
+      # Keep the thread stack footprint bounded on Render's 512 MB instance.
+      max: ${TOMCAT_MAX_THREADS:12}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:2}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:100}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:20}
+    connection-timeout: ${TOMCAT_CONNECTION_TIMEOUT:20s}
   compression:
     enabled: true
     mime-types: application/json,application/javascript,text/html,text/css,text/plain,text/xml
@@ -39,6 +43,8 @@ spring:
         # prepared statements across backend connections.
         prepareThreshold: 0
   jpa:
+    # Do not keep a database connection attached through response rendering.
+    open-in-view: false
     hibernate:
       # Flyway owns and validates the schema. "none" skips Hibernate's per-entity
       # metadata scan (24+ DB round-trips at startup) which caused 13-minute hangs
@@ -179,8 +185,7 @@ management:
 logging:
   level:
     root: INFO
-    # Verbose on purpose: this is the one flow (Google authorization-code exchange,
-    # user-info fetch) that fails silently by default if left at INFO, since Spring
-    # doesn't log per-request details or non-exceptional OAuth2 flow steps otherwise.
-    org.springframework.security.oauth2: DEBUG
-    com.smartjobtracker.security: DEBUG
+    # DEBUG OAuth logging is useful during setup but adds log I/O and allocation
+    # pressure on the free instance. Enable temporarily via environment variables.
+    org.springframework.security.oauth2: ${LOG_LEVEL_OAUTH2:INFO}
+    com.smartjobtracker.security: ${LOG_LEVEL_SECURITY:INFO}
