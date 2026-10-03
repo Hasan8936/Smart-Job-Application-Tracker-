@@ -47,7 +47,7 @@ public class GmailService {
     public String begin(Long userId) {
         requireEnabled();
         GmailConnection connection=connections.findByUserId(userId).orElseGet(GmailConnection::new);
-        connection.setUserId(userId); connection.setStatus("PENDING"); connection.setOauthState(UUID.randomUUID().toString());
+        connection.setUserId(userId); connection.setStatus("PENDING"); connection.setAutoSyncFailures(0); connection.setAutoSyncNextAttemptAt(null); connection.setAutoSyncDisabledReason(null); connection.setOauthState(UUID.randomUUID().toString());
         connection.setStateExpiresAt(OffsetDateTime.now().plusMinutes(10)); connections.save(connection);
         return "https://accounts.google.com/o/oauth2/v2/auth?client_id="+enc(config.getClientId())
                 +"&redirect_uri="+enc(config.getRedirectUri())+"&response_type=code&scope="
@@ -67,7 +67,7 @@ public class GmailService {
         if (refresh==null || access==null) throw new IllegalArgumentException("Google did not return Gmail tokens");
         connection.setEncryptedRefreshToken(cipher.encrypt(refresh)); connection.setEncryptedAccessToken(cipher.encrypt(access));
         connection.setAccessTokenExpiresAt(OffsetDateTime.now().plusSeconds(token.path("expires_in").asLong(3600)-60));
-        connection.setOauthState(null); connection.setStateExpiresAt(null); connection.setStatus("CONNECTED");
+        connection.setOauthState(null); connection.setStateExpiresAt(null); connection.setStatus("CONNECTED"); connection.setAutoSyncFailures(0); connection.setAutoSyncNextAttemptAt(null); connection.setAutoSyncDisabledReason(null);
         connection.setConnectedAt(OffsetDateTime.now()); connection.setUpdatedAt(OffsetDateTime.now()); connections.save(connection);
     }
 
@@ -87,21 +87,32 @@ public class GmailService {
         connection.setOauthState(null);
         connection.setStateExpiresAt(null);
         connection.setStatus("CONNECTED");
+        connection.setAutoSyncFailures(0);
+        connection.setAutoSyncNextAttemptAt(null);
+        connection.setAutoSyncDisabledReason(null);
         connections.save(connection);
     }
 
     @Transactional(readOnly=true)
     public Map<String,Object> status(Long userId) {
         String configurationError = config.configurationError();
-        Map<String,Object> connectionState = connections.findByUserId(userId).map(c -> Map.<String,Object>of(
-            "connected", "CONNECTED".equals(c.getStatus()), "status", c.getStatus(), "email", c.getGoogleEmail()==null?"":c.getGoogleEmail(), "connectedAt", c.getConnectedAt()==null?"":c.getConnectedAt())).orElse(Map.of("connected",false,"status","DISCONNECTED"));
+        Map<String,Object> connectionState = connections.findByUserId(userId).map(c -> {
+            Map<String,Object> state = new LinkedHashMap<>();
+            state.put("connected", "CONNECTED".equals(c.getStatus()));
+            state.put("status", c.getStatus());
+            state.put("email", c.getGoogleEmail()==null?"":c.getGoogleEmail());
+            state.put("connectedAt", c.getConnectedAt()==null?"":c.getConnectedAt());
+            if (c.getAutoSyncDisabledReason() != null) state.put("syncDisabledReason", c.getAutoSyncDisabledReason());
+            if (c.getAutoSyncNextAttemptAt() != null) state.put("syncNextAttemptAt", c.getAutoSyncNextAttemptAt());
+            return state;
+        }).orElse(Map.of("connected",false,"status","DISCONNECTED"));
         if (configurationError == null) return connectionState;
         Map<String,Object> withError = new HashMap<>(connectionState);
         withError.put("configurationError", configurationError);
         return withError;
     }
 
-    @Transactional public void disconnect(Long userId) { connections.findByUserId(userId).ifPresent(c -> { c.setEncryptedAccessToken(null); c.setEncryptedRefreshToken(null); c.setStatus("DISCONNECTED"); c.setOauthState(null); c.setUpdatedAt(OffsetDateTime.now()); connections.save(c); }); }
+    @Transactional public void disconnect(Long userId) { connections.findByUserId(userId).ifPresent(c -> { c.setEncryptedAccessToken(null); c.setEncryptedRefreshToken(null); c.setStatus("DISCONNECTED"); c.setAutoSyncFailures(0); c.setAutoSyncNextAttemptAt(null); c.setAutoSyncDisabledReason(null); c.setOauthState(null); c.setUpdatedAt(OffsetDateTime.now()); connections.save(c); }); }
 
     @Transactional
     public int sync(Long userId) {

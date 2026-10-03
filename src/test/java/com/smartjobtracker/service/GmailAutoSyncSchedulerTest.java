@@ -4,9 +4,14 @@ import com.smartjobtracker.config.GmailConfig;
 import com.smartjobtracker.model.GmailConnection;
 import com.smartjobtracker.repository.GmailConnectionRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class GmailAutoSyncSchedulerTest {
@@ -52,5 +57,43 @@ class GmailAutoSyncSchedulerTest {
         new GmailAutoSyncScheduler(connections, gmail, broken, true).syncConnectedAccounts();
 
         verifyNoInteractions(gmail, connections);
+    }
+
+    @Test
+    void backsOffTransientFailuresAndSkipsUntilNextAttempt() {
+        GmailConnectionRepository connections = mock(GmailConnectionRepository.class);
+        GmailConnection c = connection(4);
+        when(connections.findByStatus("CONNECTED")).thenReturn(List.of(c));
+        GmailService gmail = mock(GmailService.class);
+        when(gmail.sync(4L)).thenThrow(new RuntimeException("temporary Gmail outage"));
+        GmailAutoSyncScheduler scheduler = new GmailAutoSyncScheduler(connections, gmail, configured(), true);
+
+        scheduler.syncConnectedAccounts();
+        assertEquals(1, c.getAutoSyncFailures());
+        assertTrue(c.getAutoSyncNextAttemptAt().isAfter(OffsetDateTime.now()));
+
+        scheduler.syncConnectedAccounts();
+        verify(gmail, times(1)).sync(4L);
+        verify(connections, atLeastOnce()).save(c);
+    }
+
+    @Test
+    void disconnectsAccountWhenGoogleForbidsToken() {
+        GmailConnectionRepository connections = mock(GmailConnectionRepository.class);
+        GmailConnection c = connection(5);
+        c.setEncryptedAccessToken("access");
+        c.setEncryptedRefreshToken("refresh");
+        when(connections.findByStatus("CONNECTED")).thenReturn(List.of(c));
+        GmailService gmail = mock(GmailService.class);
+        when(gmail.sync(5L)).thenThrow(HttpClientErrorException.create(
+                HttpStatus.FORBIDDEN, "Forbidden", HttpHeaders.EMPTY, new byte[0], null));
+
+        new GmailAutoSyncScheduler(connections, gmail, configured(), true).syncConnectedAccounts();
+
+        assertEquals("DISCONNECTED", c.getStatus());
+        assertNull(c.getEncryptedAccessToken());
+        assertNull(c.getEncryptedRefreshToken());
+        assertEquals("GOOGLE_TOKEN_FORBIDDEN", c.getAutoSyncDisabledReason());
+        verify(connections).save(c);
     }
 }
