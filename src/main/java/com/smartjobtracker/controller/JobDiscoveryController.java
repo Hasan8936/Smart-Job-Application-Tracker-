@@ -6,6 +6,8 @@ import com.smartjobtracker.jobs.discovery.JobSearch;
 import com.smartjobtracker.jobs.discovery.JobSyncService;
 import com.smartjobtracker.jobs.discovery.SyncProgressStore;
 import com.smartjobtracker.jobs.discovery.SyncRunner;
+import com.smartjobtracker.jobs.discovery.JobDiscoveryQueueService;
+import com.smartjobtracker.model.JobDiscoveryTask;
 import com.smartjobtracker.jobs.provider.JobProvider.JobQuery;
 import com.smartjobtracker.model.JobPosting;
 import com.smartjobtracker.model.JobSkill;
@@ -34,6 +36,7 @@ public class JobDiscoveryController {
     private final JobSyncService syncService;
     private final SyncRunner syncRunner;
     private final SyncProgressStore progressStore;
+    private final JobDiscoveryQueueService discoveryQueue;
     private final JobPostingRepository repository;
     private final JobPostingSearchRepository searchRepository;
     private final JobSkillRepository skillRepository;
@@ -46,11 +49,11 @@ public class JobDiscoveryController {
     private String preferredCountry;
 
     public JobDiscoveryController(JobSyncService syncService, SyncRunner syncRunner,
-                                   SyncProgressStore progressStore,
+                                   SyncProgressStore progressStore, JobDiscoveryQueueService discoveryQueue,
                                    JobPostingRepository repository, JobPostingSearchRepository searchRepository, JobSkillRepository skillRepository,
                                    DiscoveryPersonalization personalization, UserRepository userRepository,
                                    JobPreferenceService preferences) {
-        this.syncService = syncService; this.syncRunner = syncRunner; this.progressStore = progressStore;
+        this.syncService = syncService; this.syncRunner = syncRunner; this.progressStore = progressStore; this.discoveryQueue = discoveryQueue;
         this.repository = repository; this.searchRepository = searchRepository; this.skillRepository = skillRepository;
         this.personalization = personalization; this.userRepository = userRepository;
         this.preferences = preferences;
@@ -77,7 +80,17 @@ public class JobDiscoveryController {
     @GetMapping("/discover/progress/{syncId}")
     public ResponseEntity<JobDtos.SyncProgressDto> syncProgress(@PathVariable String syncId) {
         SyncProgressStore.SyncProgress p = progressStore.get(syncId);
-        if (p == null) return ResponseEntity.notFound().build();
+        JobDiscoveryTask task = discoveryQueue.find(syncId).orElse(null);
+        if (task != null && ("DONE".equals(task.getStatus()) || "FAILED".equals(task.getStatus()))) {
+            boolean done = "DONE".equals(task.getStatus()) || "FAILED".equals(task.getStatus());
+            Map<String, String> errors = task.getErrorMessage() == null ? Map.of() : Map.of("error", task.getErrorMessage());
+            p = new SyncProgressStore.SyncProgress(task.getStatus().toLowerCase(Locale.ROOT), null, 0,
+                    task.getTotalSaved(), done, errors, List.of());
+        } else if (p == null) {
+            if (task == null) return ResponseEntity.notFound().build();
+            p = new SyncProgressStore.SyncProgress(task.getStatus().toLowerCase(Locale.ROOT), null, 0,
+                    task.getTotalSaved(), false, Map.of(), List.of());
+        }
         return ResponseEntity.ok(new JobDtos.SyncProgressDto(
                 p.status(), p.currentProvider(), p.providerJobs(), p.totalSaved(), p.done(), p.errors(), p.upToDate()));
     }

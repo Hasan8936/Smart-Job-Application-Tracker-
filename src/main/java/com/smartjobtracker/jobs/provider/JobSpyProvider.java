@@ -60,6 +60,7 @@ public class JobSpyProvider implements JobProvider {
             body.put("results_wanted", config.getResultsWanted());
             body.put("hours_old", query.postedWithinHours() != null ? query.postedWithinHours() : config.getHoursOld());
             body.set("site_names", mapper.valueToTree(config.getSiteNames()));
+            body.put("linkedin_fetch_description", config.isLinkedinFetchDescription());
             if (config.getCountry() != null && !config.getCountry().isBlank()) body.put("country_indeed", config.getCountry());
 
             JsonNode root = http.post(config.getServiceUrl() + "/search", body);

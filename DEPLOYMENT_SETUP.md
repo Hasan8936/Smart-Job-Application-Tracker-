@@ -58,6 +58,13 @@ Optional (only if you change defaults):
 | `JOB_PROVIDER_MAX_RETRIES` | `3` | Retries for provider `429` and `5xx` responses |
 | `APIFY_ENABLED` | `false` | Optional provider seam; enable only for an approved compliant actor |
 | `APIFY_TOKEN` / `APIFY_ACTOR` | *(empty)* | Required only for an explicitly configured Apify integration |
+| `JOB_DISCOVERY_FETCH_THREADS` | `1` | Keep at `1` on the 0.1-CPU instance |
+| `JOB_DISCOVERY_QUEUE_POLL_MS` | `1500` | Queue worker poll interval |
+| `JOB_DISCOVERY_QUEUE_MAX_ATTEMPTS` | `3` | Transient discovery retry limit |
+| `JOBSPY_ENABLED` | `false` | Enable the separate JobSpy service only when its URL is healthy |
+| `JOBSPY_SERVICE_URL` | *(service URL)* | The JobSpy Render service base URL, without `/search` |
+| `JOBSPY_LINKEDIN_FETCH_DESCRIPTION` | `false` | Keep disabled on free instances; it adds one request per LinkedIn result |
+| `JOBSPY_RESULTS_WANTED` | `20` | Keep at `30` or below to bound response memory |
 
 Your database vars (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`) should already be set. For Supabase, `SPRING_DATASOURCE_URL` must use the **transaction pooler** hostname and port `6543`, not the direct/session-mode port `5432`. Keep the existing Supabase pooler hostname, changing only the port if necessary. Also set `DB_MAX_POOL_SIZE=1` and `DB_MIN_IDLE=0` on the Render service so overlapping deploys cannot exhaust the pooler session limit.
 
@@ -68,6 +75,16 @@ jdbc:postgresql://aws-0-<region>.pooler.supabase.com:6543/postgres
 ```
 
 The application fallback in `src/main/resources/application.yml` also uses port `6543`.
+
+### Discovery event queue
+
+`POST /api/jobs/discover` now writes a `job_discovery_tasks` event to Postgres and returns `202` immediately. A single bounded worker drains the queue, retries only transient failures with backoff, and persists `QUEUED`, `RUNNING`, `DONE`, or `FAILED` state. Progress can be recovered after a Render restart. This replaces the previous in-memory `@Async` execution, so bursts do not create one thread and one provider scrape per user request.
+
+The queue improves burst handling and protects the 0.1-CPU / 512-MB process, but it does not make one free Render instance capable of 10,000 simultaneous scrapes. For that scale, run the API and worker as separate autoscaled services backed by a managed queue (or a dedicated Postgres worker pool); keep JobSpy isolated from the web API.
+
+### Render cold starts
+
+Render's free web service sleeps after inactivity. The first request after sleep will still show a Render wake-up delay; a queue cannot remove that platform behavior. It can keep requests short and prevent concurrent scraping from taking the service down. An always-on instance or a separate paid worker is required for a no-cold-start production SLA.
 
 ---
 

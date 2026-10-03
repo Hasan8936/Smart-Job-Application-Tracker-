@@ -10,6 +10,7 @@ import com.smartjobtracker.repository.JobSkillRepository;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -44,23 +45,36 @@ public class JobSyncService {
     private final ScriptFilter scriptFilter;
     private final TransactionTemplate transactions;
     private final int resyncCooldownMinutes;
-    private final ExecutorService fetchPool = Executors.newFixedThreadPool(4, r -> {
-        Thread t = new Thread(r, "job-source-fetch-" + THREAD_COUNT.incrementAndGet());
-        t.setDaemon(true);
-        return t;
-    });
+    private final ExecutorService fetchPool;
 
+    @Autowired
     public JobSyncService(List<JobProvider> providers, JobNormalizer normalizer, JobDeduplicator deduplicator,
                           JobPostingRepository postingRepository, JobProviderSyncRepository syncRepository,
                           JobSkillRepository skillRepository, JobSkillExtractor skillExtractor,
                           SyncProgressStore progressStore, SalaryEstimator salaryEstimator, ScriptFilter scriptFilter,
                           PlatformTransactionManager transactionManager,
-                          @Value("${app.job-discovery.resync-cooldown-minutes:10}") int resyncCooldownMinutes) {
+                          @Value("${app.job-discovery.resync-cooldown-minutes:10}") int resyncCooldownMinutes,
+                          @Value("${app.job-discovery.fetch-threads:1}") int fetchThreads) {
         this.providers = providers; this.normalizer = normalizer; this.deduplicator = deduplicator; this.postingRepository = postingRepository; this.syncRepository = syncRepository; this.skillRepository = skillRepository; this.skillExtractor = skillExtractor; this.progressStore = progressStore;
         this.salaryEstimator = salaryEstimator;
         this.scriptFilter = scriptFilter;
         this.transactions = new TransactionTemplate(transactionManager);
         this.resyncCooldownMinutes = resyncCooldownMinutes;
+        int threads = Math.max(1, Math.min(fetchThreads, 4));
+        this.fetchPool = Executors.newFixedThreadPool(threads, r -> {
+            Thread t = new Thread(r, "job-source-fetch-" + THREAD_COUNT.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        });
+    }
+
+    JobSyncService(List<JobProvider> providers, JobNormalizer normalizer, JobDeduplicator deduplicator,
+                   JobPostingRepository postingRepository, JobProviderSyncRepository syncRepository,
+                   JobSkillRepository skillRepository, JobSkillExtractor skillExtractor,
+                   SyncProgressStore progressStore, SalaryEstimator salaryEstimator, ScriptFilter scriptFilter,
+                   PlatformTransactionManager transactionManager, int resyncCooldownMinutes) {
+        this(providers, normalizer, deduplicator, postingRepository, syncRepository, skillRepository, skillExtractor,
+                progressStore, salaryEstimator, scriptFilter, transactionManager, resyncCooldownMinutes, 4);
     }
 
     @PreDestroy

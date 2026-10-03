@@ -1,63 +1,60 @@
 import os
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 import pandas as pd
 import jobspy
 
-app = FastAPI(title="JobSpy Service", version="1.2.0")
+app = FastAPI(title="JobSpy Service", version="1.3.0")
 
-# Indeed/Glassdoor search one country at a time; JobSpy's own default is "usa".
 DEFAULT_COUNTRY = os.getenv("JOBSPY_COUNTRY", "India")
-# Identical searches within this window are answered from memory instead of hitting the job boards again.
 CACHE_SECONDS = int(os.getenv("JOBSPY_CACHE_SECONDS", "600"))
-MAX_QUERIES = 3
+MAX_QUERIES = int(os.getenv("JOBSPY_MAX_QUERIES", "3"))
+MAX_RESULTS = int(os.getenv("JOBSPY_MAX_RESULTS", "30"))
+DESCRIPTION_LIMIT = int(os.getenv("JOBSPY_DESCRIPTION_LIMIT", "12000"))
+# Render's smallest instances cannot run several browser-like scrapes at once.
+# A second request receives 429 and the Java client retries it instead of exhausting RAM.
+_SEARCH_SLOT = threading.BoundedSemaphore(1)
 _cache = {}
 _cache_lock = threading.Lock()
 
 
 class SearchRequest(BaseModel):
-    keywords: str = ""
-    # Several searches (e.g. one per role) run in parallel and are merged; falls back to `keywords` when empty.
-    queries: List[str] = []
-    location: str = ""
-    # Checked for India (Sep 2026): Naukri requires a reCAPTCHA (never bypassed), Glassdoor rejects the location,
-    # Google returns nothing. LinkedIn and Indeed work.
-    site_names: List[str] = ["linkedin", "indeed"]
-    results_wanted: int = 20
-    hours_old: Optional[int] = 168  # 1 week default
-    country_indeed: str = DEFAULT_COUNTRY
-    # LinkedIn only returns a description when asked (one extra request per job); without it the JD is empty.
-    linkedin_fetch_description: bool = True
+    keywords: str = Field(default="", max_length=200)
+    queries: List[str] = Field(default_factory=list, max_length=MAX_QUERIES)
+    location: str = Field(default="", max_length=120)
+    site_names: List[str] = Field(default_factory=lambda: ["linkedin", "indeed"], max_length=4)
+    results_wanted: int = Field(default=20, ge=1, le=MAX_RESULTS)
+    hours_old: Optional[int] = Field(default=168, ge=1, le=720)
+    country_indeed: str = Field(default=DEFAULT_COUNTRY, max_length=80)
+    # LinkedIn description fetches add one extra request per job and are disabled by default.
+    linkedin_fetch_description: bool = False
 
 
 @app.post("/search")
 def search_jobs(req: SearchRequest):
-    queries = [q.strip() for q in (req.queries or []) if q and q.strip()][:MAX_QUERIES]
-    if not queries:
-        queries = [req.keywords.strip()]
+    if not _SEARCH_SLOT.acquire(blocking=False):
+        raise HTTPException(status_code=429, detail="JobSpy worker is busy; retry shortly")
     try:
-        if len(queries) == 1:
-            batches = [_search_cached(req, queries[0])]
-        else:
-            with ThreadPoolExecutor(max_workers=len(queries)) as pool:
-                batches = list(pool.map(lambda q: _search_cached(req, q), queries))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    # Merge, dropping the same posting found by more than one search.
-    seen, result = set(), []
-    for batch in batches:
-        for job in batch:
-            key = job["externalId"] or job["applyUrl"]
-            if key in seen:
-                continue
-            seen.add(key)
-            result.append(job)
-    return {"jobs": result}
+        queries = [q.strip() for q in (req.queries or []) if q and q.strip()][:MAX_QUERIES]
+        if not queries:
+            queries = [req.keywords.strip()]
+        # Keep one scrape active at a time. The Java API queue serializes bursts before they reach here.
+        batches = [_search_cached(req, query) for query in queries]
+        seen, result = set(), []
+        for batch in batches:
+            for job in batch:
+                key = job["externalId"] or job["applyUrl"]
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append(job)
+        return {"jobs": result[: min(MAX_RESULTS, req.results_wanted * max(1, len(queries)))]}
+    finally:
+        _SEARCH_SLOT.release()
 
 
 def _search_cached(req: SearchRequest, query: str):
@@ -85,11 +82,11 @@ def _search(req: SearchRequest, query: str):
         hours_old=req.hours_old,
         country_indeed=req.country_indeed,
         linkedin_fetch_description=req.linkedin_fetch_description,
-        # HTML keeps paragraphs and lists; the backend normalizer turns it into clean plain text.
         description_format="html",
     )
     result = []
     for _, row in jobs_df.iterrows():
+        description = _str(row.get("description"))
         result.append({
             "externalId": _str(row.get("id")),
             "title": _str(row.get("title")),
@@ -99,7 +96,7 @@ def _search(req: SearchRequest, query: str):
             "workMode": "remote" if row.get("is_remote") else "",
             "applyUrl": _str(row.get("job_url")),
             "postedAt": _str(row.get("date_posted")),
-            "description": _str(row.get("description")),
+            "description": description[:DESCRIPTION_LIMIT],
             "salaryMin": _num(row.get("min_amount")),
             "salaryMax": _num(row.get("max_amount")),
             "salaryCurrency": _str(row.get("currency")),
@@ -133,9 +130,9 @@ def _num(val) -> Optional[float]:
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "jobspy"}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "jobspy", "cacheEntries": len(_cache)}

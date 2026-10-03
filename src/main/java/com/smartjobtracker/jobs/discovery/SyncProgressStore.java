@@ -29,6 +29,12 @@ public class SyncProgressStore {
                 new SyncProgress("done", null, 0, totalSaved, true, errors, upToDate == null ? List.of() : List.copyOf(upToDate)));
     }
 
+    public void retry(String syncId, String error) {
+        store.computeIfPresent(syncId, (k, p) ->
+                new SyncProgress("queued", null, p.providerJobs(), p.totalSaved(), false,
+                        Map.of("retrying", error == null ? "discovery task retrying" : error), p.upToDate()));
+    }
+
     public SyncProgress get(String syncId) {
         return store.get(syncId);
     }

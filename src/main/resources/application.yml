@@ -144,6 +144,13 @@ app:
     blocked-scripts: ${JOB_BLOCKED_SCRIPTS:ARABIC}
     # Jobs in this ISO country are listed first in Discover and dashboard recommendations. Blank = no preference.
     preferred-country: ${JOB_PREFERRED_COUNTRY:IN}
+    fetch-threads: ${JOB_DISCOVERY_FETCH_THREADS:1}
+    queue:
+      worker-enabled: ${JOB_DISCOVERY_QUEUE_WORKER_ENABLED:true}
+      poll-ms: ${JOB_DISCOVERY_QUEUE_POLL_MS:1500}
+      initial-delay-ms: ${JOB_DISCOVERY_QUEUE_INITIAL_DELAY_MS:5000}
+      max-attempts: ${JOB_DISCOVERY_QUEUE_MAX_ATTEMPTS:3}
+      retry-base-ms: ${JOB_DISCOVERY_QUEUE_RETRY_BASE_MS:5000}
   job-providers:
     min-interval-ms: ${JOB_PROVIDER_MIN_INTERVAL_MS:500}
     max-retries: ${JOB_PROVIDER_MAX_RETRIES:3}
@@ -166,6 +173,7 @@ app:
       hours-old: ${JOBSPY_HOURS_OLD:168}
       country: ${JOBSPY_COUNTRY:India}
       default-location: ${JOBSPY_DEFAULT_LOCATION:India}
+      linkedin-fetch-description: ${JOBSPY_LINKEDIN_FETCH_DESCRIPTION:false}
     telegram:
       enabled: ${TELEGRAM_ENABLED:false}
       channels: ${TELEGRAM_CHANNELS:}
